@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>部署缺陷检测推理服务并与业务系统联调 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">LF4 AI 数据服务部署与运维</span>
+  <span class="meta">教师授课包 · V1.0 · 蓝色GitBook风 · 承载 LF4-Q1 部署缺陷检测推理服务并与业务系统联调 · 生成于 2026-10-25 · D类红线 5 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">授课包信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">36 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub"><li><a href="#assume">口径与假设说明</a></li></ol>
+  </nav>
+  <main>
+    <h1>部署缺陷检测推理服务并与业务系统联调 · 教师授课包</h1>
+    <div class="subtitle">LF4 AI 数据服务部署与运维 ｜ 学习情境 LF4-Q1 ｜ 36h / 2.25cr · S5 · L2 ｜ 对应任务 4.1（推理服务部署与接口联调）</div>
+    <section id="info"><h2><span class="num">01</span>授课包信息</h2><div class="kv"><div><b>课程</b>AI 数据服务部署与运维（LF4，112h/7cr）</div><div><b>情境</b>LF4-Q1 部署缺陷检测推理服务并与业务系统联调（36h/2.25cr·S5·L2）</div><div><b>对应任务</b>Table1 任务 4.1</div><div><b>绑定原子</b>LF4-Q1-A19 / A20（首次教学）、A30（变更审批与发布授权）</div><div><b>核心决策点</b>切流量前双人确认＋回滚脚本先备</div><div><b>授课对象</b>2026 级 32 人 · 云上沙箱＋物理机混合</div><div><b>场所</b>部署运维实训室</div><div><b>本情境交付</b>B-01 部署清单、B-02 接口测试报告、B-03 联调报告、B-04 发布授权单、B-05 回滚脚本</div></div><div class="card"><span class="label">本情境的能力落点</span><p style="margin:4px 0;">学生从"能起服务"走到"压得准、联得通、回得掉"：能按上线申请单完成镜像打包、编排部署、基线压测、10% 灰度放量与回滚脚本交付（A19/A20）；能走变更审批与发布授权流程（A30）。</p></div></section><section id="scene"><h2><span class="num">02</span>情境描述与教学目标</h2><p><b>情境描述</b>（课标原文）：承接 LF3 交付的模型包，按上线申请单在校内实训集群部署为推理 API。已知：输入 640×640 图像、输出 4 类缺陷框与置信度；可申请 GPU 1 卡、2 副本；先接 10% 灰度流量。约束：不得接入任何生产环境；性能验收只看"不劣于联调前实测基线"——基线由本组在同一集群、同样本量（≥200 条）、同压测口径下先测一次并记录；企业提供 SLA 则以 SLA 为准并写入工单。</p><p><b>已知条件</b>：上线申请单、部署规范、接口用例模板、LF3 交付的模型包与模型卡、云上沙箱账号。</p><p><b>交付物</b>（课标原文）：B-01 部署清单、B-02 接口测试报告、B-03 联调报告（含基线实测值与压测口径）、B-04 发布授权单、B-05 回滚脚本。</p><p><b>评价要点</b>（课标原文）：专业维看用例覆盖与联调结果；方法维看基线可比性与回滚可执行；社会维看审批与双人确认；发展维看改进条是否指向流程。</p><h3>六步总表（课标原文·教师／学生活动与学时）</h3><div class="tablewrap"><table><thead><tr><th style="width:80px">步骤</th><th>教师活动</th><th>学生活动</th><th class="c" style="width:56px">学时</th><th style="width:190px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td>发上线申请单、部署规范、接口用例模板；只答疑不讲授</td><td>读契约与规格，划出 5 项硬约束，标出基线未定一项</td><td class="c">5</td><td>工单信息栏+部署清单</td></tr><tr><td class="c">② 计划</td><td>给编排模板，巡组查"是否写了基线测法"</td><td>写打包与部署步骤、副本与资源申请、压测方案、回退触发条件</td><td class="c">5</td><td>部署与压测计划表</td></tr><tr><td class="c">③ 决策</td><td>组织评审，必问"基线怎么测、和谁比、超了怎么办"</td><td>讲方案与备选（单副本 vs 双副本、直连 vs 网关），答质疑后签字</td><td class="c">4</td><td>决策记录（签字）</td></tr><tr><td class="c">④ 实施</td><td>巡视，卡"是否连生产环境"；不代做任何变更</td><td>镜像打包与重建验证→编排部署→接口测试→测基线→联调→灰度 10%→出回滚脚本</td><td class="c">14</td><td>镜像+部署包+测试报告+联调报告</td></tr><tr><td class="c">⑤ 检查</td><td>抽查 20%，核压测口径与样本量是否与基线一致</td><td>自检清单逐项打勾；互检接口用例覆盖度与回滚脚本可执行性</td><td class="c">4</td><td>检查表+口径核对表</td></tr><tr><td class="c">⑥ 评价</td><td>按 Rubric 打分，讲评"拿不同口径比指标"的典型错</td><td>自评互评、写改进条、签署发布授权单</td><td class="c">4</td><td>评分表+发布授权单</td></tr><tr><td class="c"><b>合计</b></td><td colspan="2">六步加平 36＝情境学时 ✅；实施 实施 14h 占 38.9%（&lt;50%）</td><td class="c"><b>36</b></td><td>—</td></tr></tbody></table></div><p class="small" style="color:var(--ink-3)">原子：A19、A20（首次教学）；A30（变更审批与发布授权，本课首次教学）。</p><h3>教学目标（PGSD-KSA 分层口径）</h3><div class="tablewrap"><table><thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:150px">达标线</th></tr></thead><tbody><tr><td class="c">P 专业能力</td><td>能完成镜像打包、编排部署、接口测试、基线压测与 10% 灰度，联调通过；交付可执行回滚脚本</td><td>LF4-Q1-A19/A20</td><td>联调通过＋回滚可执行</td></tr><tr><td class="c">G 方法能力</td><td>基线测法可比（同集群/同口径/同样本量），压测结果不劣于基线可复算</td><td>LF4-Q1-A20</td><td>口径核对表</td></tr><tr><td class="c">S 社会能力</td><td>切流量前双人确认、变更走审批、发布授权单齐全</td><td>LF4-Q1-A30</td><td>双人确认＋审批齐全</td></tr><tr><td class="c">D 发展能力</td><td>从本次沉淀 1 条部署/联调规则，说出对上线稳定性的影响</td><td>LF4-Q1-A19/A20</td><td>≥1 条规则建议</td></tr></tbody></table></div></section><section id="grid"><h2><span class="num">03</span>6×4 网格教学活动表</h2><p>行＝六步，列＝四层。每格写"这一层在这一步做什么、教师给什么支持"。四层红线要求完全相同。</p><div class="tablewrap"><table class="grid-table"><thead><tr><th>六步</th><th>A 领跑型（20%）</th><th>B 主力型（50%）</th><th>C 跟进型（20%）</th><th>D 兜底型（10%）</th></tr></thead><tbody><tr><td>① 资讯<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>独立读契约，预判"基线未定"与"灰度比例"两处风险</td><td>按引导文读契约、划 5 项硬约束、填部署清单</td><td>用填空式清单逐项勾 5 项硬约束</td><td>教师带读"基线未定"一条，同伴领读"回滚脚本"</td></tr><tr><td>② 计划<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>自定压测方案并预估基线测法，做"超基线怎么办"预案</td><td>按模板写部署步骤+压测方案+回退触发条件</td><td>从给定 2 套部署方案中选 1 套并写理由</td><td>用"部署步骤卡"贴出打包→部署→压测→灰度</td></tr><tr><td>③ 决策<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>讲基线测法与备选方案，答质疑后签字</td><td>组内讲方案、答质疑（基线怎么测/超了怎么办）</td><td>教师逐组审并签字；方案取舍给 2 选项</td><td>教师一对一确认先做哪步、何时举手</td></tr><tr><td>④ 实施<br><span style="font-weight:400;color:#6b7c93">14 学时</span></td><td>独立完成部署+压测+灰度，指导 C/D 层</td><td>按方案打包、部署、测试、测基线、联调、灰度 10%、写回滚</td><td>在 B 层帮扶下完成打包与测试，灰度由 B 层操作</td><td>在陪同下做记录与日志核对，不独立切流量</td></tr><tr><td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>交叉复核回滚脚本可执行性并签字</td><td>自检清单逐项勾、互检用例覆盖与回滚脚本</td><td>用打勾式检查卡逐项过</td><td>教师带着做 3 项核心检查并复述</td></tr><tr><td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>自评+互评+讲 1 个联调坑，签发布授权单</td><td>自评互评、写改进条、签发布授权单</td><td>教师点评为主，复述"不同口径比指标错在哪"</td><td>口头复述"今天学了什么+一条红线"</td></tr></tbody></table></div></section><section id="time"><h2><span class="num">04</span>36 学时时间分配</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td class="c">5 学时</td><td>发上线申请单+部署规范+用例模板；划 5 项硬约束、标基线未定</td><td>部署清单</td></tr><tr><td class="c">② 计划</td><td class="c">5 学时</td><td>编排模板；压测方案（样本量/并发/口径）与回退触发条件</td><td>部署与压测计划表</td></tr><tr><td class="c">③ 决策</td><td class="c">4 学时</td><td>评审必问"基线怎么测/和谁比/超了怎么办"；签字放行</td><td>决策记录</td></tr><tr><td class="c">④ 实施</td><td class="c">14 学时</td><td>打包重建→编排部署→接口测试→测基线→联调→灰度 10%→回滚脚本</td><td>镜像+部署包+测试报告+联调报告</td></tr><tr><td class="c">⑤ 检查</td><td class="c">4 学时</td><td>抽查 20%；核压测口径与样本量是否与基线一致</td><td>检查表+口径核对表</td></tr><tr><td class="c">⑥ 评价</td><td class="c">4 学时</td><td>Rubric 打分，讲评"拿不同口径比指标"；签发布授权单</td><td>评分表+发布授权单</td></tr><tr><td class="c"><b>合计</b></td><td class="c"><b>36 学时</b></td><td colspan="2">5+5+4+14+4+4 = 36</td></tr></tbody></table></div><div class="card ok"><span class="label">时间弹性方案</span><p style="margin:4px 0;">云上沙箱排队可压⑥评价 1h；<b>④实施中的基线压测与⑤检查不得压</b>。缺回滚脚本不予发布；任何疑似连接生产环境的动作先停线报告。</p></div></section><section id="order"><h2><span class="num">05</span>任务工单（学生版·八栏）</h2><div class="order"><div class="row"><div class="k">1 任务名称与编号</div><div class="v">缺陷检测推理服务部署与联调 · 编号 LF4-Q1-A19/A20/A30｜工单号 T-DP-2027-0108</div></div><div class="row"><div class="k">2 情境描述</div><div class="v">承接 LF3 模型包，部署为推理 API（640×640 输入、4 类缺陷框输出）；GPU 1 卡 2 副本；先接 10% 灰度。验收只看"不劣于联调前实测基线"。</div></div><div class="row"><div class="k">3 交付要求</div><div class="v"><ol><li>B-01 部署清单</li><li>B-02 接口测试报告（单条/批量/异常入参）</li><li>B-03 联调报告（含基线实测值与压测口径）</li><li>B-04 发布授权单</li><li>B-05 回滚脚本（可执行）</li></ol><p style="margin:6px 0 0">合格标准：联调通过；压测不劣于基线；灰度 10% 成功；回滚脚本可执行；授权单齐全。</p></div></div><div class="row"><div class="k">4 已知条件</div><div class="v">上线申请单、部署规范、接口用例模板、LF3 模型包与模型卡、云上沙箱账号、GPU 1 卡 2 副本。</div></div><div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v"><ol><li>连接或尝试连接生产环境/真实业务系统 → 本情境 0 分＋上报。</li><li>未经审批即切流或跳过灰度直接 100% → 本情境 0 分＋重做。</li><li>变更前未备份当前版本与配置 → 重做。</li><li>用不同口径/不同样本量对比基线并宣称达标 → 该指标不计分。</li><li>未交回滚脚本 → 不予发布。</li></ol></div></div><div class="row"><div class="k">6 工作过程记录</div><div class="v"><ol><li>资讯：我划出的 5 项硬约束；基线未定怎么处理……</li><li>计划：基线怎么测、和谁比；超了怎么办……</li><li>决策：评审问了什么、我怎么答的……</li><li>实施：打包→部署→测试→测基线→联调→灰度；每步结果……</li><li>检查：压测口径与基线一致吗；回滚脚本别人能跑吗……</li><li>评价：这次联调最卡的接口是……；改进项……</li></ol></div></div><div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全勾并签字后方可申请发布授权。</div></div><div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 发布授权：通过/驳回 ｜ 签字：学生 ______ 复核人 ______ 教师 ______</div></div></div></section><section id="guide"><h2><span class="num">06</span>引导文六问</h2><p>学生自己找答案，教师只回答"往哪找"，不直接给结论。</p><ol class="q6"><li><b>资讯</b>：性能验收"不劣于联调前实测基线"——这个基线是谁测、怎么测、样本量多少？为什么不能用别人的口径？</li><li><b>计划</b>：你的压测方案（样本量/并发/口径）和基线比得起来吗？灰度 10% 后下一步什么条件下放 100%？</li><li><b>决策</b>：单副本还是双副本？直连还是网关？回滚脚本在切流量前还是之后写？</li><li><b>实施</b>：镜像重建验证跑通了吗？异常入参的接口返回符合契约吗？压测结果和基线差多少？</li><li><b>检查</b>：你怎么证明压测口径与基线一致？回滚脚本在干净环境跑通了吗？</li><li><b>评价</b>：这次"拿不同口径比指标"的坑在哪？能不能写成一条可复用规则？</li></ol></section><section id="check"><h2><span class="num">07</span>检查表（8 项）</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead><tbody><tr><td class="c">1</td><td>契约核对</td><td>输入输出格式、模型版本与工单一致</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">2</td><td>备份</td><td>变更前已备份当前版本与配置</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">3</td><td>接口覆盖</td><td>单条/批量/异常入参用例覆盖齐全</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">4</td><td>基线口径</td><td>压测口径与样本量与基线一致</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">5</td><td>不劣于基线</td><td>时延/吞吐不劣于联调前实测基线</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">6</td><td>灰度比例</td><td>先 10% 灰度，未跳过直接 100%</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">7</td><td>回滚脚本</td><td>回滚脚本可执行，干净环境跑通</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">8</td><td>审批授权</td><td>切流前双人确认，发布授权单齐全</td><td class="c">□合格 □不合格</td></tr></tbody></table></div></section><section id="rubric"><h2><span class="num">08</span>Rubric 评分表</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead><tbody><tr><td class="c">专业能力</td><td class="c">40%</td><td>联调一次通过、基线压测可比、灰度成功、回滚脚本一次执行成功</td><td>联调通过、不劣于基线、灰度合规（达标）</td><td>联调通过但口径有瑕疵，整改后复验</td><td>未测基线即宣称达标，或回滚脚本不可执行</td><td class="c"></td></tr><tr><td class="c">方法能力</td><td class="c">25%</td><td>基线测法完全可比，压测方案可复算</td><td>压测口径与基线一致，记录齐全</td><td>口径部分缺失，需提示才补</td><td>照抄模板无基线依据</td><td class="c"></td></tr><tr><td class="c">社会能力</td><td class="c">20%</td><td>切流量前双人确认、审批齐全、主动指出他人风险</td><td>审批齐全、双人确认</td><td>需提醒才审批</td><td>跳过审批或代签</td><td class="c"></td></tr><tr><td class="c">发展能力</td><td class="c">15%</td><td>提出 1 条被采纳的部署/联调规则并说明对稳定性的影响</td><td>改进项具体可执行</td><td>改进项笼统</td><td>无改进项或抄袭</td><td class="c"></td></tr><tr><td class="c"><b>合计</b></td><td class="c">100%</td><td colspan="4">总分 = 四维加权；<b>情境达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td><td class="c"></td></tr></tbody></table></div></section><section id="err"><h2><span class="num">09</span>典型错误案例卡</h2><details open><summary>ERR-LF4-001：拿不同口径比指标——"时延降了一半"其实是样本量不同</summary><div class="body"><p><b>现象</b>：某组用 50 条样本测出时延"优于基线"，宣称达标；复验用基线同口径 200 条，时延反而劣化。</p><p><b>错误做法</b>：压测时换了样本量和并发，拿不同口径的结果和基线比。</p><p><b>真实原因</b>：基线对比必须同口径：同集群/同样本量（≥200）/同压测口径，否则结论无效。</p><p><b>纠正</b>：纠正：压测方案锁死口径；检查表第 4/5 项；讲评"拿不同口径比指标"为典型错。</p><p><b>关联原子</b>：LF4-Q1-A20（基线压测）</p></div></details><details open><summary>ERR-LF4-002：跳灰度直接 100%——一次发布全量上线出事故</summary><div class="body"><p><b>现象</b>：某组"赶进度"跳过灰度直接全量，接口异常导致业务方大量报错。</p><p><b>错误做法</b>：把灰度当形式，觉得"测试过了就能上"。</p><p><b>真实原因</b>：灰度是放量的安全阀；未经审批跳过灰度＝一票否决。</p><p><b>纠正</b>：纠正：发布流程强制 10% 灰度→观察→审批→放量；检查表第 6 项。</p><p><b>关联原子</b>：LF4-Q1-A30（发布授权）</p></div></details><details open><summary>ERR-LF4-003：没写回滚脚本——上线后故障无法回退</summary><div class="body"><p><b>现象</b>：某组交付时没有可执行回滚脚本，故障时只能手工回退，恢复超时。</p><p><b>错误做法</b>：只关注"能起服务"，没备"退路"。</p><p><b>真实原因</b>：回滚脚本是上线的前置交付物，缺则不予发布。</p><p><b>纠正</b>：纠正：回滚脚本在切流量前写好并干净环境跑通；检查表第 7 项。</p><p><b>关联原子</b>：LF4-Q1-A19（部署与回滚）</p></div></details></section><section id="safe"><h2><span class="num">10</span>安全提示卡（D 类红线·5 条）</h2><div class="card warn"><span class="label">红线即一票否决，四层要求完全相同</span><div class="tablewrap" style="margin:10px 0 0;background:#fff"><table><thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead><tbody><tr><td class="c">1</td><td>连接或尝试连接生产环境/真实业务系统</td><td>本情境 0 分＋上报</td><td>出口日志</td></tr><tr><td class="c">2</td><td>未经审批切流或跳灰度直接 100%</td><td>本情境 0 分＋重做</td><td>发布流程核对</td></tr><tr><td class="c">3</td><td>变更前未备份当前版本与配置</td><td>重做</td><td>备份记录</td></tr><tr><td class="c">4</td><td>用不同口径/样本量对比基线并宣称达标</td><td>该指标不计分</td><td>口径核对表</td></tr><tr><td class="c">5</td><td>未交回滚脚本</td><td>不予发布</td><td>回滚脚本验收</td></tr></tbody></table></div></div><p style="color:#6b7c93;font-size:13px;margin-top:8px">Q1 开课前签《部署安全承诺》；云上沙箱与生产环境网络隔离；切流动作双人确认并留痕；回滚脚本开课前经教师验收。</p></section><section id="notes"><h2><span class="num">11</span>教师备课备注</h2><details open><summary>高频错判 Top3 与处置</summary><div class="body"><ol><li><b>拿不同口径比指标</b>（最高发）。纠法——压测方案锁死口径；ERR-LF4-001 的"时延反而劣化"摆出来。</li><li><b>跳过灰度/审批</b>。纠法——发布流程强制灰度→观察→审批→放量；ERR-LF4-002。</li><li><b>不写回滚脚本</b>。纠法——回滚脚本是前置交付物，开课前验收；ERR-LF4-003。</li></ol></div></details><details open><summary>答疑口径：只指条文，不判结论</summary><div class="body"><ul><li>问"这样算不算达标"——答"你的基线怎么测、口径和样本量多少"。</li><li>问"能不能直接全量"——答"看发布授权单和灰度观察结果"。</li><li>问"接口报错怎么办"——答"看契约与用例覆盖，别连生产环境"。</li></ul></div></details><details open><summary>分层调整建议</summary><div class="body"><ul><li><b>A 层加做</b>：补 1 条灰度观察指标；担任"回滚脚本验收第一人"。</li><li><b>B 层标准</b>：部署+压测+灰度全流程独立完成。</li><li><b>C 层减量</b>：打包与接口测试独立，灰度由 B 层操作。</li><li><b>D 层减动作不减要求</b>：只做记录与日志核对，不独立切流量；红线五条相同。</li></ul></div></details><details open><summary>设备与耗材准备</summary><div class="body"><ul><li>云上沙箱账号按学号分配、物理机 8 人 1 台；生产环境网络隔离。</li><li>上线申请单、部署规范、接口用例模板、模型卡打印件各 32 份。</li><li>回滚脚本模板、压测脚本模板、口径核对表各 1 套。</li></ul></div></details><details open><summary>企业介入与衔接</summary><div class="body"><p>企业平台运维工程师远程参与④实施步联调指导 2h、⑥评价步发布评审 2h。Q1 交付的上线服务是 Q2 漂移监测的对象，基线实测值就是 Q2 判漂移的参照。</p></div></details></section>
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属课程标准 112h/7crh，情境 LF4-Q1 共 36h（六步 5+5+4+14+4+4），本包为情境级授课包，六步学时为情境总账；若拆为单次课按课标⑦.4 弹性条款执行。</p>
+      <p>② 能力原子编号按课标④.2 绑定；本包不训练、不考核超出情境边界的能力（如定级裁定权、架构定稿权、越权承诺）。</p>
+      <p>③ 资产名称、工单号、验收线数值均为教学虚构载体，不对应任何真实企业；模块与仿真内数据全部标注"教学样例"。</p>
+      <p>④ 本页交互仅用锚点与 CSS（:target、details），无脚本、无外部依赖，可离线打开与打印。</p>
+    </section>
+  </main>
+</div>
+<footer>
+  LF4 AI 数据服务部署与运维 · 教师授课包 V1.0 ｜ 承载 LF4-Q1 部署缺陷检测推理服务并与业务系统联调 ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+</body>
+</html>

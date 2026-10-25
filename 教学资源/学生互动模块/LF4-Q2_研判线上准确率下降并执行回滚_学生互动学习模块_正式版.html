@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF4-Q2 研判线上准确率下降并执行回滚 · 学生互动学习模块</title>
+<style>
+/* ========== 主题变量（与金标准同一套体系） ========== */
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1a2b3c; --ink2:#5a6b7c;
+  --brand:#0e7c66; --brand2:#0b5f4e; --brand-soft:#e3f2ee;
+  --warn:#b3541e; --warn-soft:#fdeee2; --ok:#1e7d3c; --ok-soft:#e6f4ea;
+  --bad:#b3261e; --bad-soft:#fdecea; --line:#d8e2ea; --gold:#b8860b;
+  --shadow:0 2px 10px rgba(14,60,80,.08); --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.75;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* ========== ① 顶部条 ========== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#0e7c66,#0b5f4e);
+  color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+  font-size:14px;box-shadow:var(--shadow)}
+.topbar b{font-size:15px}
+.topbar .chip{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 12px;white-space:nowrap}
+.topbar .spacer{flex:1}
+.progress-mini{background:rgba(255,255,255,.2);border-radius:20px;height:8px;width:130px;overflow:hidden}
+.progress-mini i{display:block;height:100%;background:#ffd54d;width:0;transition:width .4s}
+
+/* ========== 通用卡片/区块 ========== */
+section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 28px;margin:22px 0}
+h2.sec{font-size:21px;border-left:6px solid var(--brand);padding-left:12px;margin-bottom:14px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0}
+.small{font-size:13.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font-size:15px;padding:9px 22px;border-radius:10px;
+  transition:.2s;font-family:inherit}
+.btn:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn:disabled{background:#b8c4ce;cursor:not-allowed;transform:none}
+.btn.warn{background:var(--warn)}
+.btn.warn:hover{background:#8f4115}
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand2);
+  border-radius:6px;padding:1px 10px;font-size:13px;margin:2px 4px 2px 0}
+.feedback{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px;display:none}
+.feedback.show{display:block;animation:pop .3s}
+.feedback.good{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.feedback.bad{background:var(--bad-soft);border-left:5px solid var(--bad)}
+.feedback.info{background:var(--warn-soft);border-left:5px solid var(--warn)}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ========== ② 情境引入 ========== */
+.story{background:linear-gradient(135deg,#f0f7f5,#e8f0f6);border-radius:12px;
+  padding:18px 20px;border:1px dashed var(--brand);margin:12px 0}
+.mission{border:2px solid var(--brand);border-radius:12px;padding:16px 20px;margin:14px 0;background:#fff}
+.mission h3{color:var(--brand2);margin-top:0}
+.constraints li{margin:6px 0 6px 22px}
+
+/* ========== ③ 知识预习：翻卡 ========== */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.flip{perspective:900px;height:150px;cursor:pointer;outline:none}
+.flip:focus-visible{box-shadow:0 0 0 3px var(--brand-soft)}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px;text-align:center}
+.flip-f{background:var(--brand);color:#fff;font-weight:600;font-size:16px}
+.flip-f small{font-weight:400;font-size:12px;opacity:.85;margin-top:4px}
+.flip-b{background:#fff;border:2px solid var(--brand);color:var(--ink);transform:rotateY(180deg);font-size:13.5px}
+.spec-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+.spec-table th,.spec-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.spec-table th{background:var(--brand-soft)}
+.spec-table tr:hover td{background:#fafdfc}
+
+/* ========== ④ 六步闯关 ========== */
+.level{border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.level-head{display:flex;align-items:center;gap:12px;background:#eef3f7;padding:12px 16px;cursor:pointer;user-select:none}
+.level-head .no{background:var(--brand);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.level-head .tt{font-weight:700;flex:1}
+.level-head .tt small{font-weight:400;color:var(--ink2)}
+.level-head .stars{color:#c9d4dd;font-size:18px;letter-spacing:2px}
+.level-head .stars b{color:var(--gold)}
+.level.locked .level-head{opacity:.55;cursor:not-allowed}
+.level-body{display:none;padding:16px 20px;border-top:1px solid var(--line)}
+.level.open .level-body{display:block}
+.quiz-q{margin:14px 0}
+.quiz-q .q{font-weight:600;margin-bottom:8px}
+.opts{display:grid;gap:8px}
+.opt{border:2px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:#fff;
+  font-size:15px;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.opt:hover{border-color:var(--brand)}
+.opt.picked{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.drag-list{list-style:none;display:grid;gap:8px}
+.drag-list li{border:2px solid var(--line);border-radius:10px;padding:9px 14px;background:#fff;cursor:grab}
+.drag-list li.dragging{opacity:.4}
+.drag-list li.over{border-color:var(--brand);border-style:dashed}
+.fillin{border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;width:100%;
+  font-family:inherit;margin:6px 0}
+.fillin:focus{border-color:var(--brand);outline:none}
+
+/* ========== ⑤ 仿真实训：漂移监测模拟器 ========== */
+.sim{background:#0f1e2a;color:#e8f0f6;border-radius:14px;padding:20px;margin:14px 0}
+.sim h3{color:#7fd6c0;margin-top:0}
+.sim label{font-size:13.5px;color:#9fb8c9;display:block;margin:10px 0 2px}
+.dash{background:#0a141d;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.dash-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip2{background:#16293a;border:1px solid #2c4a63;border-radius:20px;padding:2px 12px;font-size:12.5px;color:#9fb8c9}
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chartbox{background:#0f1e2a;border:1px solid #2c4a63;border-radius:8px;padding:8px}
+.chartbox .ct{font-size:12.5px;color:#9fb8c9;margin-bottom:4px}
+.alertbar{background:#2a1618;border:1px solid #5a2422;border-left:4px solid #ff6b60;border-radius:8px;
+  padding:10px 14px;margin-top:10px;font-size:14px;color:#ffd9d6}
+.phase{display:none;margin:12px 0}
+.phase.on{display:block}
+.sim-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sim-controls label{font-size:13.5px;color:#9fb8c9;display:block;margin-bottom:4px}
+.sim-controls select,.sim-controls button{border:none;border-radius:8px;padding:9px 12px;font-size:14.5px;font-family:inherit}
+.sim-controls select{background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63}
+.meter{background:#0a141d;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14.5px}
+.meter b{color:#ffd54d;font-size:18px}
+.sim-log{background:#0a141d;border-radius:10px;padding:12px 16px;font-size:13.5px;max-height:220px;overflow-y:auto;margin-top:10px}
+.sim-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.ap-form{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.ap-log{background:#0a141d;border-radius:8px;padding:10px 14px;font-size:13.5px;margin-top:10px}
+.ap-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.conseq{background:#2a1618;border:1px solid #5a2422;border-left:4px solid #ff6b60;border-radius:10px;
+  padding:14px 16px;margin:10px 0;color:#ffd9d6;font-size:14.5px}
+.conseq b{color:#ff9b94}
+.ck{display:flex;gap:8px;align-items:center;font-size:14px;color:#e8f0f6;margin:8px 0;cursor:pointer}
+.ck input{width:18px;height:18px}
+.boom{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);z-index:999;
+  align-items:center;justify-content:center;padding:20px}
+.boom.on{display:flex}
+.boom-card{background:#1c1214;border:3px solid var(--bad);border-radius:16px;max-width:560px;
+  padding:30px;text-align:center;color:#ffd9d6}
+.boom-card h2{color:#ff6b60;font-size:26px;margin-bottom:10px}
+.boom-card .rule{background:#2a1618;border-radius:10px;padding:12px;margin:14px 0;text-align:left;font-size:14.5px}
+
+/* ========== ⑥ 检测 ========== */
+.quiz-score{display:flex;gap:18px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.score-ring{width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--brand) 0%,#e3eaf0 0);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--ink)}
+.score-ring i{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal}
+.locked-box{background:var(--warn-soft);border-left:5px solid var(--warn);border-radius:10px;
+  padding:14px 18px;margin:12px 0;display:none}
+.locked-box.on{display:block}
+
+/* ========== ⑦ 成就 ========== */
+.badges{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.badge{width:104px;text-align:center;opacity:.28;filter:grayscale(1);transition:.3s}
+.badge.got{opacity:1;filter:none}
+.badge .ico{width:76px;height:76px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:34px;background:linear-gradient(135deg,#ffd54d,#ffb300);
+  box-shadow:0 3px 10px rgba(255,179,0,.35)}
+.badge .nm{font-size:13.5px;font-weight:600}
+.checklist{list-style:none;margin:12px 0}
+.checklist li{padding:8px 12px;border:1px dashed var(--line);border-radius:8px;margin:6px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+.checklist li.done{background:var(--ok-soft);border-color:var(--ok);text-decoration:line-through}
+.checklist li::before{content:"☐";font-size:18px}
+.checklist li.done::before{content:"☑";color:var(--ok)}
+
+/* ========== 响应式/打印 ========== */
+@media(max-width:720px){
+  .sim-controls{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr}
+  section{padding:18px 16px}
+  .topbar{font-size:12.5px}
+}
+@media print{
+  .topbar,.btn,.sim-controls,.boom,.trap-row,.dash-row,.chip2{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .level-body{display:block!important}
+  .feedback{display:block!important}
+  .opt.right,.opt.wrong{outline:1px solid #999}
+  .badge{opacity:1;filter:none}
+  .sim{background:#fff;color:#000;border:1px solid #999}
+  .sim h3,.sim label,.meter b{color:#000}
+  .dash,.chartbox,.ap-form,.ap-log,.sim-log,.meter{background:#fff;border:1px solid #999;color:#000}
+  .alertbar,.conseq{background:#fff;color:#000;border:1px solid #999}
+  .phase{display:block!important}
+  .flip{height:auto;perspective:none}
+  .flip-in{transform:none!important;display:block}
+  .flip-f{display:none}
+  .flip-b{position:static;transform:none;height:auto;border:1px solid #999}
+  .sim-log{max-height:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ ① 顶部条 ═══════════ -->
+<div class="topbar">
+  <b>LF4-Q2 研判线上准确率下降并执行回滚</b>
+  <span class="chip">学习情境 · 40h</span>
+  <span class="chip">任务等级 L3 · 对应任务 4.2</span>
+  <span class="chip">达标线 80%</span>
+  <span class="chip">数据均为教学样例</span>
+  <span class="spacer"></span>
+  <span id="progressTxt">进度 0%</span>
+  <div class="progress-mini"><i id="progressBar"></i></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ ② 情境引入 ═══════════ -->
+<section id="s2">
+  <h2 class="sec">② 情境引入：半夜的告警工单</h2>
+  <div class="story">
+    <p>你是 AI 平台实训室的值班运维工程师。你们组部署的缺陷检测推理服务 <b>defect-qc-svc v2.4.0</b> 已经<b>上线 3 周</b>。
+    今晚看板突然告警：<b>准确率下降、输入分布偏移、时延上升</b>。业务方只在群里反馈了一句<b>"判得不准"</b>——
+    <b>没有真值标签</b>，人工抽检还<b>滞后 2 天</b>。</p>
+    <p>值班长把你叫到监控大屏前："<b>先保业务。漂移了，先回滚还是先排查——这个判断错了，代价是不一样的。</b>"</p>
+  </div>
+  <div class="mission">
+    <h3>你的任务</h3>
+    <p>按课标情境完成一次完整的告警处置闭环：<b>判漂移类型 → 定处置 → 二级审批 → 灰度切回 → 记录恢复用时 → 根因复盘 → 出补标单</b>，
+    交付 B-06—B-09 四件套（漂移分析表、回滚记录、事件复盘报告、补标需求单）。</p>
+    <h3>硬约束（违反任何一条，后果见 D 类红线）</h3>
+    <ul class="constraints">
+      <li><b>先恢复业务再溯因</b>——不得为查根因而延长业务中断（业务可用优先）</li>
+      <li><b>回滚须二级审批</b>——审批签字是切流与回滚的唯一放行凭证</li>
+      <li><b>恢复时限按企业预案</b>（迁移参考值 15min，须企业确认）</li>
+      <li><b>无真值标签</b>——只能用代理指标验证，不得直接宣称"模型退化"</li>
+      <li><b>数据不出域</b>——线上数据、日志不得导出到个人设备</li>
+      <li><b>灰度切流 10%→50%→100%</b>，双人操作（1 人操作、1 人复核）</li>
+      <li><b>回滚前必须留下当前版本号与备份</b></li>
+    </ul>
+    <p class="small">已知条件：告警工单、监控看板与截图、训练基线分布、应急预案；旧版本 v2.3.1 备份可用；2 人 1 工位。<b>本模块所有指标、版本号、工单号均为教学样例，不含任何真实业务数据。</b></p>
+  </div>
+  <button class="btn" onclick="go('s3')">开始预习 →</button>
+</section>
+
+<!-- ═══════════ ③ 知识预习 ═══════════ -->
+<section id="s3">
+  <h2 class="sec">③ 知识预习：先把概念搞清楚</h2>
+  <p>点击卡片翻转查看定义（键盘focus后按 Enter/空格也可翻转）。带着问题进关。</p>
+  <div class="flipgrid">
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：数据漂移" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">数据漂移<small>data drift</small></div>
+      <div class="flip-b">线上输入分布偏离训练基线。<br>判据：<b>PSI、KL、缺失率、长度/亮度分布</b>比对。<br>漂移≠模型坏，先取证再下结论</div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：模型退化" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">模型退化<small>model degradation</small></div>
+      <div class="flip-b">模型本身变"不准"。<br><b>无真值时不能直接下这个结论</b>——<br>必须先做代理指标验证（红线⑤）</div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：PSI" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">PSI<small>群体稳定性指数</small></div>
+      <div class="flip-b">线上分布 vs 训练基线的差异度量。<br><b>&lt;0.10 基本一致；0.10—0.25 轻度；≥0.25 显著偏移</b><br>（教学口径，以企业预案为准）</div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：KL 散度" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">KL 散度<small>Kullback-Leibler</small></div>
+      <div class="flip-b">两个分布差异的另一种度量，<br>对局部差异更敏感。<br>常与 PSI 并用，互相印证</div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：代理指标" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">代理指标<small>proxy metrics</small></div>
+      <div class="flip-b">无真值时的间接证据：<br><b>置信度分布、预测类别分布、<br>人工抽检一致率、输入统计特征</b></div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：灰度切流" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">灰度切流<small>10%→50%→100%</small></div>
+      <div class="flip-b">逐步把流量切回旧版本，<br>边切边看指标——<br><b>判断错了也只影响 10% 流量</b></div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：二级审批" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">二级审批<small>回滚的唯一放行凭证</small></div>
+      <div class="flip-b">回滚/切流须两级授权签字：<br>一级 值班主管 → 二级 部门负责人。<br><b>无审批即回滚 = 红线①</b></div></div></div>
+    <div class="flip" tabindex="0" role="button" aria-label="术语卡：先恢复后溯因" onclick="this.classList.toggle('on')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}"><div class="flip-in">
+      <div class="flip-f">先恢复后溯因<small>值班第一纪律</small></div>
+      <div class="flip-b">先把业务恢复（回滚/切回），<br>再查根因。<br><b>不得为查根因延长业务中断</b></div></div></div>
+  </div>
+  <h3>判定标准速查表（课标 LF4-Q2 摘要）</h3>
+  <table class="spec-table">
+    <tr><th>看板信号</th><th>初步判读</th><th>必做验证</th><th>依据</th></tr>
+    <tr><td>准确率下降 + PSI≥0.25</td><td><b>输入数据漂移</b>嫌疑</td><td>补缺失率/长度/亮度分布比对 + 代理指标验证</td><td>课标②计划：比对方案（PSI/KL、缺失率、长度与亮度分布）</td></tr>
+    <tr><td>准确率下降 + 输入分布稳定</td><td>模型退化<b>嫌疑</b></td><td>代理指标（置信度分布 + 人工抽检 100 条）验证后才可谈</td><td>红线⑤：无真值不得直接宣称"模型退化"</td></tr>
+    <tr><td>时延上升</td><td>负载/输入长度变化嫌疑</td><td>看长度分布与副本状态</td><td>课标②计划</td></tr>
+    <tr><td>业务方"判得不准"</td><td><b>现象，不是结论</b></td><td>区分现象与结论，标出"无真值"缺口</td><td>课标①资讯</td></tr>
+    <tr><td>代理指标验证后不符</td><td>可能<b>误告警</b></td><td>仍要复盘：修订告警阈值与验证流程，案例入库</td><td>课标⑥评价：复盘会 + 案例卡</td></tr>
+  </table>
+  <p class="small">记不清时随时回到本表。正式关卡里不提供此表——但"先恢复后溯因"和"审批才放行"这两条，走到哪都要带着。</p>
+  <button class="btn" onclick="go('s4')">进入六步闯关 →</button>
+</section>
+
+<!-- ═══════════ ④ 六步闯关 ═══════════ -->
+<section id="s4">
+  <h2 class="sec">④ 六步闯关：按真实值班流程练</h2>
+  <p class="small">关卡按顺序解锁，与课标六步一一对应（资讯5/计划5/决策6/实施16/检查5/评价3，共 40 学时）。答错会告诉你是课标哪一条没说清——回去翻速查表，比背答案有用。</p>
+
+  <!-- 第①关 资讯 -->
+  <div class="level" id="lv1">
+    <div class="level-head" onclick="toggleLevel('lv1')">
+      <span class="no">1</span><span class="tt">① 资讯 · 读懂告警工单 <small>（5 学时）</small></span><span class="stars" id="st1">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：值班长发来告警工单、监控截图、训练基线分布和应急预案。课标对你的要求是：<b>区分"现象"与"结论"，划出可用的 4 类代理指标，标出"无真值"这一信息缺口</b>。先自测有没有真读懂。</p>
+      <div class="quiz-q" data-q="l1q1">
+        <div class="q">1. 看板上"准确率下降、输入分布偏移、时延上升"，按课标①的要求，这些应当被看作？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q1','A')">A. 结论——已经可以下判断了</button>
+          <button class="opt" onclick="pick(this,'l1q1','B')">B. 现象——结论要验证之后才能下</button>
+          <button class="opt" onclick="pick(this,'l1q1','C')">C. 根因——直接按根因处置</button>
+          <button class="opt" onclick="pick(this,'l1q1','D')">D. 误报——不用管</button>
+        </div>
+        <div class="feedback" id="fb-l1q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q2">
+        <div class="q">2. 以下哪一组是课标①要求划出的"可用代理指标"？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q2','A')">A. 看板弹窗次数、值班人数、群里消息条数</button>
+          <button class="opt" onclick="pick(this,'l1q2','B')">B. 置信度分布、预测类别分布、人工抽检一致率、输入统计特征（缺失率/长度/亮度）</button>
+          <button class="opt" onclick="pick(this,'l1q2','C')">C. 业务方语气、回复速度、催问次数</button>
+          <button class="opt" onclick="pick(this,'l1q2','D')">D. 模型参数量、训练轮次、显卡型号</button>
+        </div>
+        <div class="feedback" id="fb-l1q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q3">
+        <div class="q">3. 【填空】本案例中最大的信息缺口是什么？（提示：课标情境描述里的原话，四个字）</div>
+        <input class="fillin" id="l1q3" placeholder="输入你的答案">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l1q3','无真值|真值|没有真值|缺真值','fb-l1q3','对。无真值 → 一切"退化"结论都必须经代理指标验证，这就是红线⑤的由来。')">提交</button>
+        <div class="feedback" id="fb-l1q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv1','st1',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第②关 计划 -->
+  <div class="level locked" id="lv2">
+    <div class="level-head" onclick="toggleLevel('lv2')">
+      <span class="no">2</span><span class="tt">② 计划 · 写研判与处置计划 <small>（5 学时）</small></span><span class="stars" id="st2">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：课标②对你的要求：<b>写比对方案（PSI/KL、缺失率、长度与亮度分布）、抽检方案（样本量与判读人）、回滚与切流步骤、恢复时限倒排</b>。产出"研判与处置计划表"。</p>
+      <div class="quiz-q" data-q="l2q1">
+        <div class="q">1. 漂移分析表（B-06）的比对方案，课标②明确写了哪些分布？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1','A')">A. 只比准确率一条曲线</button>
+          <button class="opt" onclick="pick(this,'l2q1','B')">B. PSI/KL、缺失率、长度与亮度分布</button>
+          <button class="opt" onclick="pick(this,'l2q1','C')">C. 只比时延和副本数</button>
+          <button class="opt" onclick="pick(this,'l2q1','D')">D. 比模型参数量和训练轮次</button>
+        </div>
+        <div class="feedback" id="fb-l2q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q2">
+        <div class="q">2. 课标④实施中，人工抽检的样本量定为多少？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q2','A')">A. 10 条，看看就行</button>
+          <button class="opt" onclick="pick(this,'l2q2','B')">B. 100 条，与置信度分布互相印证</button>
+          <button class="opt" onclick="pick(this,'l2q2','C')">C. 全量线上流量</button>
+          <button class="opt" onclick="pick(this,'l2q2','D')">D. 不用抽检，看板说了算</button>
+        </div>
+        <div class="feedback" id="fb-l2q2"></div>
+      </div>
+      <div class="quiz-q" data-q="sortLF4">
+        <div class="q">3. 【排序】把课标④实施的处置链排成正确顺序（鼠标拖拽，或键盘focus后用↑↓移动）：</div>
+        <ul class="drag-list" id="sortLF4">
+          <li draggable="true" data-k="1">比对线上与训练基线，出漂移分析表</li>
+          <li draggable="true" data-k="2">代理指标验证（置信度分布 + 人工抽检 100 条）</li>
+          <li draggable="true" data-k="3">灰度切回</li>
+          <li draggable="true" data-k="4">必要时全量回滚</li>
+          <li draggable="true" data-k="5">记录恢复用时</li>
+          <li draggable="true" data-k="6">根因定位</li>
+          <li draggable="true" data-k="7">出复盘报告与补标单</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortLF4','fb-l2q3')">检查顺序</button>
+        <div class="feedback" id="fb-l2q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv2','st2',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第③关 决策 -->
+  <div class="level locked" id="lv3">
+    <div class="level-head" onclick="toggleLevel('lv3')">
+      <span class="no">3</span><span class="tt">③ 决策 · 两套方案与三条硬条件 <small>（6 学时）</small></span><span class="stars" id="st3">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：课标③：教师<b>故意不给结论</b>，追问"你凭什么说这是漂移不是模型退化""如果判断错了代价多大"；你要<b>给 2 套处置方案与取舍，写"触发回滚的三条硬条件"</b>，答质疑后签批。</p>
+      <div class="quiz-q" data-q="l3q1">
+        <div class="q">1. 业务方在群里催"到底多久能恢复"，正确的处置优先序是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q1','A')">A. 先查根因，查清楚了再恢复业务，免得白回滚</button>
+          <button class="opt" onclick="pick(this,'l3q1','B')">B. 先恢复业务（回滚/切回），再溯因</button>
+          <button class="opt" onclick="pick(this,'l3q1','C')">C. 等业务方不催了再说</button>
+          <button class="opt" onclick="pick(this,'l3q1','D')">D. 先写一份详细分析报告再说</button>
+        </div>
+        <div class="feedback" id="fb-l3q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q2">
+        <div class="q">2. "触发回滚的三条硬条件"（课标⑦.1 决策步硬规则：缺项不签批），下列哪组最完整？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q2','A')">A. 业务方催得急、看板变红、值班长发话</button>
+          <button class="opt" onclick="pick(this,'l3q2','B')">B. 代理指标验证确认非误报、业务影响达到预案口径、旧版本备份可用且授权可拿</button>
+          <button class="opt" onclick="pick(this,'l3q2','C')">C. PSI 大于 0、有人在群里抱怨、晚上有空</button>
+          <button class="opt" onclick="pick(this,'l3q2','D')">D. 准确率下降、时延上升、输入偏移（看板三条都算）</button>
+        </div>
+        <div class="feedback" id="fb-l3q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q3">
+        <div class="q">3. 决策评审上，教师追问"你凭什么说这是漂移不是模型退化？"哪条回答站得住？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q3','A')">A. "我感觉是漂移，上次也出过类似的事"</button>
+          <button class="opt" onclick="pick(this,'l3q3','B')">B. "PSI 0.31≥0.25、缺失率 0.4%→2.1%、长度与亮度分布同步偏移；置信度分布变化与输入变化同向，再以人工抽检 100 条交叉验证"</button>
+          <button class="opt" onclick="pick(this,'l3q3','C')">C. "AI 告警平台聚类结果说是漂移"</button>
+          <button class="opt" onclick="pick(this,'l3q3','D')">D. "业务方说判得不准，那就是模型退化"</button>
+        </div>
+        <div class="feedback" id="fb-l3q3"></div>
+      </div>
+      <p class="small">↳ 本关通过后，决策记录进入<b>二级签批</b>——在下方仿真实训区里真签一次。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv3','st3',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第④关 实施 -->
+  <div class="level locked" id="lv4">
+    <div class="level-head" onclick="toggleLevel('lv4')">
+      <span class="no">4</span><span class="tt">④ 实施 · 真刀真枪值班 <small>（16 学时）</small></span><span class="stars" id="st4">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：授权下达，开始执行。课标④全链：<b>比对出漂移分析表→代理指标→灰度切回→必要时全量回滚→记录恢复用时→根因定位→出复盘与补标单</b>。本关先过理论关，再进仿真。</p>
+      <div class="quiz-q" data-q="l4q1">
+        <div class="q">1. 灰度切流的正确路径与操作要求？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q1','A')">A. 直接 100%，一个人操作快点搞完</button>
+          <button class="opt" onclick="pick(this,'l4q1','B')">B. 10%→50%→100%，双人操作（1 人操作、1 人复核，可轮换）</button>
+          <button class="opt" onclick="pick(this,'l4q1','C')">C. 随机比例切，看心情</button>
+          <button class="opt" onclick="pick(this,'l4q1','D')">D. 先 50% 再 10%，倒着来</button>
+        </div>
+        <div class="feedback" id="fb-l4q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q2">
+        <div class="q">2. "恢复用时"应该怎么记？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q2','A')">A. 估个差不多就行</button>
+          <button class="opt" onclick="pick(this,'l4q2','B')">B. 按企业预案口径如实记录，写入 B-07 回滚记录（含授权签字与恢复用时）</button>
+          <button class="opt" onclick="pick(this,'l4q2','C')">C. 往好看了记，汇报漂亮</button>
+          <button class="opt" onclick="pick(this,'l4q2','D')">D. 不用记，看板上有曲线</button>
+        </div>
+        <div class="feedback" id="fb-l4q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q3">
+        <div class="q">3. 回滚前必须留下什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q3','A')">A. 当前版本号与备份（回滚后要核对一致）</button>
+          <button class="opt" onclick="pick(this,'l4q3','B')">B. 只需要心里记得当前是哪个版本</button>
+          <button class="opt" onclick="pick(this,'l4q3','C')">C. 业务方的微信聊天记录</button>
+          <button class="opt" onclick="pick(this,'l4q3','D')">D. 什么都不用留，直接回</button>
+        </div>
+        <div class="feedback" id="fb-l4q3"></div>
+      </div>
+      <p class="small">↳ 通过本关三问后，下方<b>仿真实训区</b>的漂移监测模拟器已经准备就绪（也可以直接下去玩）。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv4','st4',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑤关 检查 -->
+  <div class="level locked" id="lv5">
+    <div class="level-head" onclick="toggleLevel('lv5')">
+      <span class="no">5</span><span class="tt">⑤ 检查 · 恢复没恢复，看证据 <small>（5 学时）</small></span><span class="stars" id="st5">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：切回完成。课标⑤对你的要求：<b>复核切流后指标回升；核对回滚后版本号与备份一致；互检复盘证据链</b>。教师还会抽查 20%，核"恢复用时"是否按预案口径计。</p>
+      <div class="quiz-q" data-q="l5q1">
+        <div class="q">1. 灰度切回后，第一件事做什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q1','A')">A. 关单下班，曲线看起来回来了</button>
+          <button class="opt" onclick="pick(this,'l5q1','B')">B. 复核切流后指标是否回升，再核对回滚后版本号与备份一致性</button>
+          <button class="opt" onclick="pick(this,'l5q1','C')">C. 立刻写复盘报告，趁热乎</button>
+          <button class="opt" onclick="pick(this,'l5q1','D')">D. 在群里通知业务方"搞定了"</button>
+        </div>
+        <div class="feedback" id="fb-l5q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q2">
+        <div class="q">2. 互检复盘证据链，重点看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q2','A')">A. 报告排版好不好看</button>
+          <button class="opt" onclick="pick(this,'l5q2','B')">B. 时间线、每个决策点的依据、代价是否写明并可追溯</button>
+          <button class="opt" onclick="pick(this,'l5q2','C')">C. 报告字数够不够</button>
+          <button class="opt" onclick="pick(this,'l5q2','D')">D. 谁的字迹更工整</button>
+        </div>
+        <div class="feedback" id="fb-l5q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q3">
+        <div class="q">3. 代理指标验证后发现是误告警（指标其实正常），还复盘吗？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q3','A')">A. 不用，没出事复什么盘</button>
+          <button class="opt" onclick="pick(this,'l5q3','B')">B. 要——误告警也复盘：修订告警阈值与验证流程，案例入库</button>
+          <button class="opt" onclick="pick(this,'l5q3','C')">C. 只口头跟值班长提一句</button>
+          <button class="opt" onclick="pick(this,'l5q3','D')">D. 把告警记录删掉，就当没发生</button>
+        </div>
+        <div class="feedback" id="fb-l5q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv5','st5',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑥关 评价 -->
+  <div class="level locked" id="lv6">
+    <div class="level-head" onclick="toggleLevel('lv6')">
+      <span class="no">6</span><span class="tt">⑥ 评价 · 复盘会与 Rubric <small>（3 学时）</small></span><span class="stars" id="st6">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：事件复盘会。课标⑥：<b>组织事件复盘会（时间线 + 决策点 + 代价），按 Rubric 打分</b>；你负责陈述时间线与每个决策点的依据，自评互评，写改进条与案例卡。</p>
+      <div class="quiz-q" data-q="l6q1">
+        <div class="q">1. 事件复盘报告必须包含的三件套是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q1','A')">A. 时间线、决策点、代价</button>
+          <button class="opt" onclick="pick(this,'l6q1','B')">B. 感受、态度、决心</button>
+          <button class="opt" onclick="pick(this,'l6q1','C')">C. 只写最终结论</button>
+          <button class="opt" onclick="pick(this,'l6q1','D')">D. 只写改进措施</button>
+        </div>
+        <div class="feedback" id="fb-l6q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q2">
+        <div class="q">2. Rubric 四维里，"发展维"看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q2','A')">A. 打字快不快、报告长不长</button>
+          <button class="opt" onclick="pick(this,'l6q2','B')">B. 是否把事件转成可复用预案修订（≥1 条可执行改进并入库）</button>
+          <button class="opt" onclick="pick(this,'l6q2','C')">C. 加班时长</button>
+          <button class="opt" onclick="pick(this,'l6q2','D')">D. 和业务方关系好不好</button>
+        </div>
+        <div class="feedback" id="fb-l6q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q3">
+        <div class="q">3. 【填空】漂移根因若指向某类场景样本系统性缺失，补标单（B-09）必须怎么写？</div>
+        <input class="fillin" id="l6q3" placeholder="输入你的答案">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l6q3','补标|写明|场景|缺失|不能只报|总体|回升','fb-l6q3','对。课标⑩.2 公平性提示：须在补标单写明，不得只报总体指标回升——这是 B-09 的良心项。')">提交</button>
+        <div class="feedback" id="fb-l6q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv6','st6',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑤ 仿真实训 ═══════════ -->
+<section id="s5">
+  <h2 class="sec">⑤ 仿真实训：漂移监测模拟器</h2>
+  <p>这里是监控值班位的模拟。<b>核心决策点只有一个：漂移了，先回滚还是先排查？</b>（纪律：先恢复后溯因。）
+  你会经历完整五段：<b>判类型 → 定处置 → 二级审批 → 灰度切回 → 复盘</b>。每一步都有后果——
+  界面里藏着 5 个"看起来能省事"的按钮，每一个都对应一条 D 类红线。<b>看板所有数据均为教学样例。</b></p>
+  <div class="sim">
+    <h3>🚨 应急演练：告警工单 AL-2026-1025-07（教学样例）</h3>
+    <div class="dash">
+      <div class="dash-row">
+        <span class="chip2">服务：defect-qc-svc v2.4.0</span>
+        <span class="chip2">上线 3 周</span>
+        <span class="chip2">值班组：第 3 组（2 人 1 工位）</span>
+        <span class="chip2">旧版本备份：v2.3.1 可用</span>
+        <span class="chip2">预案时限：迁移参考值 15min（须企业确认）</span>
+      </div>
+      <div class="dash-grid">
+        <div class="chartbox"><div class="ct">抽检一致率（代理指标）%</div><div id="chart-agree"></div></div>
+        <div class="chartbox"><div class="ct">输入分布 PSI</div><div id="chart-psi"></div></div>
+        <div class="chartbox"><div class="ct">时延 P95（ms）</div><div id="chart-p95"></div></div>
+      </div>
+      <div class="alertbar">⚠ 告警：准确率连续 3 天下降；PSI 0.31（≥0.25 显著偏移）；时延 P95 上升。业务方反馈"判得不准"。已知信息缺口：<b>无真值标签，人工抽检滞后 2 天</b>。</div>
+    </div>
+
+    <div class="phase" id="simIdle">
+      <p>值班长："别愣着，先读板。<b>哪些是现象、哪些是结论，分清楚了再动手。</b>"</p>
+    </div>
+
+    <div class="phase" id="simP1">
+      <p><b>第一段 · 判类型</b>：看板已经给你三个信号。现在选你的第一个动作：</p>
+      <div class="sim-controls">
+        <button class="btn" onclick="judgeCompare()">🔍 跑分布比对：PSI/KL＋缺失率＋长度/亮度 vs 训练基线</button>
+        <button class="btn warn" onclick="judgeDegrade()">💢 直接下结论：模型退化，建议重训</button>
+      </div>
+      <div class="sim-controls">
+        <button class="btn ghost" style="background:#1d3450;color:#7fd6c0;border-color:#2c4a63" onclick="judgeRestart()">🔄 先重启服务，看看能不能好</button>
+      </div>
+      <div class="feedback" id="fb-judge"></div>
+    </div>
+
+    <div class="phase" id="simP1Res">
+      <p><b>漂移分析表（B-06，教学样例）</b>已生成：</p>
+      <table class="spec-table" style="background:#fff">
+        <tr><th>比对项</th><th>训练基线</th><th>线上当前</th><th>判读</th></tr>
+        <tr><td>PSI（输入分布）</td><td>—</td><td>0.31</td><td><b>≥0.25 显著偏移</b></td></tr>
+        <tr><td>KL 散度</td><td>—</td><td>0.18</td><td>与 PSI 同向，互相印证</td></tr>
+        <tr><td>缺失率</td><td>0.4%</td><td>2.1%</td><td>上升，需在补标单体现</td></tr>
+        <tr><td>长度分布</td><td>基线分布</td><td>右移</td><td>输入侧变化</td></tr>
+        <tr><td>亮度分布</td><td>基线分布</td><td>明显偏移</td><td>疑似来料光照变化</td></tr>
+        <tr><td>置信度分布</td><td>基线分布</td><td>同步变化</td><td>与输入变化同向</td></tr>
+      </table>
+      <p>结论：<b>输入数据漂移</b>（不是模型退化）。业务方催得急，进入处置决策。</p>
+      <button class="btn" onclick="goDecide()">进入处置决策 →</button>
+    </div>
+
+    <div class="phase" id="simP2">
+      <p><b>第二段 · 定处置（核心决策点）</b>：漂移确认了。业务方群里第 3 次催"多久恢复"。你选：</p>
+      <div class="sim-controls">
+        <button class="btn" onclick="decideGray()">✅ 先灰度切回 v2.3.1 恢复业务，同时启动根因排查</button>
+        <button class="btn ghost" style="background:#1d3450;color:#7fd6c0;border-color:#2c4a63" onclick="decideFull()">⏩ 直接全量回滚到 v2.3.1，一步到位</button>
+      </div>
+      <div class="sim-controls">
+        <button class="btn warn" onclick="decideFirst()">🔍 先排查根因，业务先将就着（查清楚再动）</button>
+      </div>
+      <div class="feedback" id="fb-decide"></div>
+    </div>
+
+    <div class="phase" id="simP2Con">
+      <div class="conseq">
+        <p><b>后果链 · 先排查的代价</b></p>
+        <p>00:12 告警确认 → 你开始查根因 → 00:52 根因还没定位，业务方第 3 次催问 →
+        <b>恢复用时 47 分钟，超过预案参考值 15min（须企业确认）→ 事故升级</b>：复盘会上你作为值班长被定责，业务方投诉进了周报。</p>
+        <p>课标⑩.2 算法伦理·业务可用优先：<b>处置遵循"先恢复后溯因"，不得为查根因而延长业务中断。</b>
+        课标⑤工作方法同样写着"先恢复后溯因"。排查没有错——错在把业务当人质。</p>
+      </div>
+      <button class="btn" onclick="goDecide()">重新决策（这次先恢复） →</button>
+    </div>
+
+    <div class="phase" id="simP3">
+      <p><b>第三段 · 二级审批</b>：回滚/切流须走二级审批——一级：值班主管；二级：部门负责人（审批人）。
+      <b>审批签字是切流与回滚的唯一放行凭证</b>（课标⑩.3）。填写回滚申请四项要素：</p>
+      <div class="ap-form">
+        <label>① 回滚前版本号（当前 v2.4.0 → 回滚到？）</label>
+        <input class="fillin" id="apVer" placeholder="例：v2.3.1（当前 v2.4.0）">
+        <label>② 备份确认（版本与配置已备份，时间戳）</label>
+        <input class="fillin" id="apBak" placeholder="例：v2.4.0 与配置已于 09:30 备份，时间戳在案">
+        <label>③ 恢复时限（按企业预案口径）</label>
+        <input class="fillin" id="apSla" placeholder="例：自告警确认起 15min 内指标回升（迁移参考值，须企业确认）">
+        <label>④ 证据摘要（凭什么切回）</label>
+        <input class="fillin" id="apEvd" placeholder="例：PSI 0.31≥0.25、缺失率 0.4%→2.1%、亮度分布偏移、置信度分布同步变化">
+        <div class="sim-controls">
+          <button class="btn" onclick="submitApproval()">提交一级审批</button>
+          <button class="btn warn" onclick="skipApproval()">⚡ 跳过审批，先执行再补单（值班长说"来得及"）</button>
+        </div>
+        <button class="btn warn" id="apForce" style="display:none;margin-top:8px" onclick="forceExec()">💢 不等了，强行执行（备份以后再说）</button>
+        <div class="ap-log" id="apLog"></div>
+        <div id="l2Box" style="display:none">
+          <label>二级审批（部门负责人）追问：如果判断错了，代价多大？怎么把这个代价控住？</label>
+          <input class="fillin" id="apL2" placeholder="例：误判代价＝业务再中断一次＋新版本收益延迟；用灰度 10% 起切控住代价，双人操作">
+          <button class="btn" onclick="submitL2()">提交二级审批</button>
+          <button class="btn warn" onclick="skipApproval()">⚡ 跳过二级，强行执行</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase" id="simP4">
+      <p><b>第四段 · 执行</b>：授权记录已生成（审批人＋值班人双签字）。按预案执行<b>灰度切回 v2.3.1</b>：10% → 50% → 100%。</p>
+      <label class="ck"><input type="checkbox" id="dualCheck"> 已与搭档完成双人确认（1 人操作、1 人复核，可轮换）</label>
+      <div class="sim-controls">
+        <button class="btn" onclick="setTraffic(10)">切回 10%</button>
+        <button class="btn" onclick="setTraffic(50)">切回 50%</button>
+        <button class="btn" onclick="setTraffic(100)">切回 100%</button>
+      </div>
+      <div class="feedback" id="fb-exec"></div>
+      <div id="execResult" style="display:none">
+        <div class="meter">恢复用时：<b>12 分钟</b>（按预案口径：告警确认 → 指标回升；迁移参考值 15min，须企业确认）</div>
+        <div class="sim-controls trap-row">
+          <button class="btn warn" onclick="tamperTime()">✍ 把恢复用时改成 8 分钟，汇报好看点</button>
+          <button class="btn warn" onclick="exportData()">📤 导出线上样本与日志到个人设备慢慢分析</button>
+        </div>
+        <button class="btn" onclick="goReview()">进入复盘 →</button>
+      </div>
+    </div>
+
+    <div class="phase" id="simP5">
+      <p><b>第五段 · 复盘</b>：开复盘会（时间线 + 决策点 + 代价）。填写 B-08 事件复盘报告与 B-09 补标需求单要点：</p>
+      <div class="ap-form">
+        <label>① 根因结论（一句话：是什么漂、凭什么）</label>
+        <input class="fillin" id="rvRoot" placeholder="例：上游来料光照变化，亮度分布偏移，PSI 0.31 → 输入数据漂移，非模型退化">
+        <label>② 补标单要点（B-09：补什么、为什么）</label>
+        <input class="fillin" id="rvLabel" placeholder="例：按新亮度分布补标；暗光/夜场景样本系统性缺失须写明，不得只报总体指标回升">
+        <label>③ 若这次代理指标验证后是误告警，还复盘吗？</label>
+        <select id="rvFalse">
+          <option value="">— 请选择 —</option>
+          <option value="yes">要——误告警也复盘：修订告警阈值与验证流程，案例入库</option>
+          <option value="no">不用——没出事就不用复盘</option>
+        </select>
+        <div class="sim-controls" style="grid-template-columns:1fr">
+          <button class="btn" onclick="submitReview()">提交复盘，生成 B-08 / B-09</button>
+        </div>
+        <div class="feedback" id="fb-rv"></div>
+      </div>
+    </div>
+
+    <div class="phase" id="simDone">
+      <div class="meter">
+        <b>演练通过 ✅</b><br>
+        复盘摘要（教学样例）：00:12 告警确认 → 00:14 分布比对（PSI 0.31）→ 00:16 判定<b>输入数据漂移</b> → 00:18 提交二级审批 → 00:20 授权下达 →
+        00:24 切回 100%、指标回升（恢复用时 12 分钟 ≤ 参考 15min）→ 复盘会：根因＝来料光照变化；补标单＝按新分布补标并写明暗光场景样本缺失。
+      </div>
+      <p>B-06 漂移分析表 ｜ B-07 回滚记录（含授权签字与恢复用时）｜ B-08 事件复盘报告 ｜ B-09 补标需求单——四件套已生成。<b>红线零接触，才算真通过。</b></p>
+    </div>
+
+    <div class="meter">演练状态：<b id="simState">待开始</b>　｜　恢复用时：<b id="simTime">—</b>　｜　红线触发：<b id="simBoom">0</b> 次</div>
+    <div class="sim-log" id="simLog"><div>系统：点击"开始应急演练"载入告警工单。本看板所有指标、版本号均为教学样例。</div></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn" id="btnStart" onclick="startSim()">▶ 开始应急演练</button>
+    <button class="btn ghost" id="btnReset" style="display:none;background:#1d3450;color:#7fd6c0;border-color:#2c4a63" onclick="resetSim()">↺ 重置演练</button>
+  </div>
+  <p class="small">演练走完五段（判类型→定处置→二级审批→切回→复盘）且红线零触发，本仿真实训通过。中途触发红线会"炸号"——本段重来，记住这个手感。</p>
+</section>
+
+<!-- ═══════════ ⑥ 检测 ═══════════ -->
+<section id="s6">
+  <h2 class="sec">⑥ 检测：10 题定过关</h2>
+  <p class="small">单选／判断／排序混合，全部出自课标 LF4-Q2。≥80%（8 题）过关；不过关会锁定"重学"入口——可以跳过，但记录会留着。</p>
+  <div id="quizBox"></div>
+  <div class="quiz-score">
+    <div class="score-ring" id="ring"><i id="ringTxt">0%</i></div>
+    <div>
+      <div id="quizVerdict" style="font-size:17px;font-weight:700">尚未提交</div>
+      <div class="small" id="quizDetail">达标线：80%（8/10）</div>
+    </div>
+    <button class="btn" onclick="gradeQuiz()">提交检测</button>
+  </div>
+  <div class="locked-box" id="lockBox">
+    <b>未达标。</b>系统已为你标出错题范围——回到③速查表和对应关卡重学，再回来测。真实的演练里，一次越权回滚的后果是<b>本情境 0 分 + 重做</b>。
+    <div style="margin-top:8px"><button class="btn ghost" onclick="go('s3')">回去重学</button></div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑦ 成就与去向 ═══════════ -->
+<section id="s7">
+  <h2 class="sec">⑦ 成就与去向</h2>
+  <div class="badges">
+    <div class="badge" id="bg1"><div class="ico">📖</div><div class="nm">告警读得懂</div></div>
+    <div class="badge" id="bg2"><div class="ico">🧭</div><div class="nm">处置有章法</div></div>
+    <div class="badge" id="bg3"><div class="ico">🛡</div><div class="nm">红线零接触</div></div>
+    <div class="badge" id="bg4"><div class="ico">🏅</div><div class="nm">检测过关</div></div>
+    <div class="badge" id="bg5"><div class="ico">🧯</div><div class="nm">演练通关</div></div>
+  </div>
+  <h3>本情境交付物自检（课前对一遍，课中交一遍）</h3>
+  <ul class="checklist" id="deliverList">
+    <li>B-06 漂移分析表（PSI/KL、缺失率、长度与亮度分布）</li>
+    <li>B-07 回滚记录（含授权签字与恢复用时）</li>
+    <li>B-08 事件复盘报告（时间线 + 决策点 + 代价）</li>
+    <li>B-09 补标需求单（写明受影响的场景类别）</li>
+  </ul>
+  <h3>接下来</h3>
+  <p>下一个情境 <b>LF4-Q3 承接新业务线排产并配置质量门</b>（32h·L3）：新业务线量级翻倍、交期 6 周，架构已由部门定——
+  你只负责盘点能力缺口、测算人天、把既定质量门配置到平台，并报试运行偏差。<b>越权承诺交期或价格，也是违规。</b></p>
+  <p class="small">教师授课包（六步×四层网格表、工单、Rubric、错误案例卡）见同目录《LF4-Q2_研判线上准确率下降并执行回滚_教师授课包_正式版.html》。</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════ 红线炸号弹窗 ═══════════ -->
+<div class="boom" id="boom">
+  <div class="boom-card">
+    <h2>💥 触发 D 类红线</h2>
+    <p id="boomMsg"></p>
+    <div class="rule" id="boomRule"></div>
+    <p class="small" style="color:#c9a9a6">在真实课程中，这意味着一票否决／本情境 0 分。在这里，意味着本段重来——记住这个手感。</p>
+    <button class="btn warn" onclick="closeBoom()">我记住了，重来</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 状态 ══════════════════ */
+var S = {
+  levels:{lv1:0,lv2:0,lv3:0,lv4:0,lv5:0,lv6:0},
+  answers:{}, fills:{}, sorts:{},
+  sim:{phase:0, traffic:0, apStage:0, apFails:0, timeTxt:'', finished:false},
+  boomCount:0,
+  quiz:{}, quizDone:false, quizPass:false,
+  checklist:{}
+};
+try{ var saved = localStorage.getItem('lf4q2_module'); if(saved) S = Object.assign(S, JSON.parse(saved)); }catch(e){}
+function save(){ try{ localStorage.setItem('lf4q2_module', JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function val(id){ return document.getElementById(id).value.trim(); }
+function show(id,on){ var el=document.getElementById(id); if(el) el.style.display = on?'block':'none'; }
+
+/* ══════════════════ 进度 ══════════════════ */
+function progress(){
+  var lv = Object.values(S.levels).filter(function(v){return v>0}).length;
+  var p = Math.round(lv/6*60) + (S.sim.finished?20:0) + (S.quizDone && S.quizPass?20:0);
+  p = Math.min(100, p);
+  document.getElementById('progressBar').style.width = p+'%';
+  document.getElementById('progressTxt').textContent = '进度 '+p+'%';
+}
+
+/* ══════════════════ 关卡 ══════════════════ */
+function go(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function toggleLevel(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('locked')){ flash('先完成上一关', 'info'); return; }
+  el.classList.toggle('open');
+}
+function unlock(){
+  var ids = ['lv1','lv2','lv3','lv4','lv5','lv6'];
+  for(var i=0;i<ids.length;i++){
+    var el = document.getElementById(ids[i]);
+    if(i===0 || S.levels[ids[i-1]]>0) el.classList.remove('locked');
+  }
+}
+function clearLevel(id, stId, stars){
+  var el = document.getElementById(id);
+  var qs = el.querySelectorAll('.quiz-q');
+  var answered = 0;
+  qs.forEach(function(q){
+    var k = q.dataset.q;
+    if(S.answers[k] || S.fills[k] || S.sorts[k]) answered++;
+  });
+  if(answered < qs.length){ flash('本关还有 '+(qs.length-answered)+' 题未作答', 'info'); return; }
+  S.levels[id] = stars;
+  var st = document.getElementById(stId);
+  st.innerHTML = '';
+  for(var i=0;i<3;i++) st.innerHTML += (i<stars?'<b>★</b>':'☆');
+  unlock(); save(); progress();
+  flash('本关完成！'+(stars<3?'（有题答错，星拿满的办法是回去改对）':'满星 ⭐⭐⭐'), 'good');
+}
+
+/* ══════════════════ 答题判定 ══════════════════ */
+var ANSWER = {
+  l1q1:'B', l1q2:'B', l1q3:'', l2q1:'B', l2q2:'B', l3q1:'B', l3q2:'B', l3q3:'B',
+  l4q1:'B', l4q2:'B', l4q3:'A', l5q1:'B', l5q2:'B', l5q3:'B', l6q1:'A', l6q2:'B'
+};
+var REASON = {
+  l1q1:'课标①资讯学生活动：读看板与预案，区分"现象"与"结论"。看板给的是现象，结论要取证之后才下。',
+  l1q2:'课标①：划出可用的 4 类代理指标，并标出"无真值"这一信息缺口。代理指标是无真值时的唯一取证手段。',
+  l2q1:'课标②计划学生活动：写比对方案（PSI/KL、缺失率、长度与亮度分布）——四项齐全才叫漂移分析表（B-06）。',
+  l2q2:'课标④实施学生活动：代理指标（置信度分布+人工抽检 100 条）。100 条是与预案对齐的样本量。',
+  l3q1:'课标⑤工作方法：先恢复后溯因；⑩.2 业务可用优先：不得为查根因而延长业务中断。',
+  l3q2:'课标③学生活动：写"触发回滚的三条硬条件"；⑦.1：Q2 必须写这三条，缺项不签批。看板变红只是现象，不是条件。',
+  l3q3:'课标③教师活动：追问"你凭什么说这是漂移不是模型退化"。AI 告警仅🟡陪同层参考，不能以告警结论直接触发回滚（附录C）。',
+  l4q1:'课标⑤工作方法：灰度切流（10%→50%→100%）；⑦.4：1 人操作 1 人复核并轮换。',
+  l4q2:'课标⑤检查：核"恢复用时"是否按预案口径计；红线②：隐瞒恢复用时 → 课程 0 分 + 重修。',
+  l4q3:'课标 D 类红线④：未留回滚前版本号与备份 → 重做；⑤检查：核对回滚后版本号与备份一致。',
+  l5q1:'课标⑤检查学生活动：复核切流后指标回升；核对回滚后版本号与备份一致。曲线回来不等于核对完成。',
+  l5q2:'课标⑤检查学生活动：互检复盘证据链；⑥评价：复盘会三件套＝时间线+决策点+代价。',
+  l5q3:'误告警也复盘——课标⑥评价：复盘会+改进条+案例卡；告警阈值修订属预案改进（发展维）。',
+  l6q1:'课标⑥评价教师活动：组织事件复盘会（时间线 + 决策点 + 代价），按 Rubric 打分。',
+  l6q2:'课标评价要点：发展维看是否把事件转成可复用预案修订。'
+};
+function pick(btn, key, val2){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.answers[key] = val2; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val2 === ANSWER[key]){
+    btn.classList.add('right');
+    fb.className = 'feedback good show';
+    fb.innerHTML = '✅ 正确。'+REASON[key];
+  }else{
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '❌ 不对。'+REASON[key];
+  }
+}
+function checkFill(key, pattern, fbId, okMsg){
+  var v = document.getElementById(key).value.trim();
+  var fb = document.getElementById(fbId);
+  var re = new RegExp(pattern);
+  if(v.length < 4){ fb.className='feedback info show'; fb.innerHTML='再写具体点——这几个字是要写进工单的。'; return; }
+  S.fills[key] = v; save();
+  if(re.test(v)){ fb.className='feedback good show'; fb.innerHTML='✅ '+okMsg; }
+  else{ fb.className='feedback bad show'; fb.innerHTML='❌ 漏了关键要素：'+pattern.split('|').join('／')+'。'; }
+}
+
+/* ══════════════════ 排序题 ══════════════════ */
+(function initDrag(){
+  var lists = document.querySelectorAll('.drag-list');
+  lists.forEach(function(ul){
+    var dragEl = null;
+    ul.addEventListener('dragstart', function(e){ dragEl = e.target; e.target.classList.add('dragging'); });
+    ul.addEventListener('dragend', function(e){ e.target.classList.remove('dragging'); });
+    ul.addEventListener('dragover', function(e){ e.preventDefault();
+      var after = getAfter(ul, e.clientY);
+      if(after == null) ul.appendChild(dragEl); else ul.insertBefore(dragEl, after);
+    });
+    ul.querySelectorAll('li').forEach(function(li){
+      li.tabIndex = 0;
+      li.addEventListener('keydown', function(e){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li);
+      });
+    });
+  });
+  function getAfter(ul, y){
+    var items = [].filter.call(ul.querySelectorAll('li:not(.dragging)'), function(el){
+      var r = el.getBoundingClientRect(); return y < r.top + r.height/2;
+    });
+    return items[0] || null;
+  }
+})();
+function checkSort(ulId, fbId){
+  var ul = document.getElementById(ulId);
+  var order = [].map.call(ul.querySelectorAll('li'), function(li){ return li.dataset.k; }).join('');
+  var fb = document.getElementById(fbId);
+  S.sorts[ulId] = order; save();
+  if(order === '1234567'){
+    fb.className='feedback good show';
+    fb.innerHTML='✅ 顺序正确。真实值班链就是这样：先取证，再验证，先恢复，再记录，最后复盘转补标。';
+  }else{
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 顺序还不对。提示：取证（漂移分析表）在切回之前；复盘与补标收尾；根因定位在记录恢复用时之后。';
+  }
+}
+
+/* ══════════════════ 仿真实训：漂移监测模拟器 ══════════════════ */
+var SIMSTATE = {0:'待开始',1:'判类型中',2:'漂移分析表已出',3:'处置决策中',4:'后果：先排查超时',5:'二级审批中',6:'切回执行中',7:'复盘中',8:'演练完成 ✅'};
+var CHART_DATA = {
+  agree:{min:60,max:100,color:'#7fd6c0',thresh:96,threshLabel:'基线96',
+    alert:[96,95,93,90,86,82,78,75,74,74], r10:[96,95,93,90,86,82,78,75,78,77],
+    r50:[96,95,93,90,86,82,78,75,85,88], r100:[96,95,93,90,86,82,78,75,90,96]},
+  psi:{min:0,max:0.4,color:'#ff9b94',thresh:0.25,threshLabel:'0.25',
+    alert:[0.05,0.06,0.08,0.12,0.18,0.24,0.31,0.33,0.34,0.35], r10:[0.05,0.06,0.08,0.12,0.18,0.24,0.31,0.33,0.28,0.27],
+    r50:[0.05,0.06,0.08,0.12,0.18,0.24,0.31,0.33,0.15,0.10], r100:[0.05,0.06,0.08,0.12,0.18,0.24,0.31,0.33,0.06,0.05]},
+  p95:{min:100,max:200,color:'#ffd54d',thresh:150,threshLabel:'参考线150',
+    alert:[120,122,125,130,138,150,165,172,175,178], r10:[120,122,125,130,138,150,165,172,168,166],
+    r50:[120,122,125,130,138,150,165,172,150,140], r100:[120,122,125,130,138,150,165,172,132,122]}
+};
+function drawChart(boxId, series, min, max, color, thresh, threshLabel){
+  var w=296,h=92,pl=10,pr=10,pt=10,pb=16;
+  var n = series.length, pts = [], i;
+  for(i=0;i<n;i++){
+    var x = pl + i*(w-pl-pr)/(n-1);
+    var y = pt + (1-(series[i]-min)/(max-min))*(h-pt-pb);
+    pts.push(x.toFixed(1)+','+y.toFixed(1));
+  }
+  var ty = pt + (1-(thresh-min)/(max-min))*(h-pt-pb);
+  var labels = ['D1','D4','D7','切回后'], lx = [pl, pl+(w-pl-pr)/3, pl+(w-pl-pr)*2/3, w-pr], lab = '';
+  for(i=0;i<4;i++) lab += '<text x="'+lx[i].toFixed(0)+'" y="'+(h-3)+'" font-size="9" fill="#7d93a8" text-anchor="middle">'+labels[i]+'</text>';
+  document.getElementById(boxId).innerHTML =
+    '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="92" role="img" aria-label="指标曲线（教学样例）">'+
+    '<line x1="'+pl+'" y1="'+ty.toFixed(1)+'" x2="'+(w-pr)+'" y2="'+ty.toFixed(1)+'" stroke="#e0a437" stroke-width="1" stroke-dasharray="4 3"/>'+
+    '<text x="'+(w-pr-2)+'" y="'+(ty-3).toFixed(1)+'" font-size="9" fill="#e0a437" text-anchor="end">'+threshLabel+'</text>'+
+    '<polyline fill="none" stroke="'+color+'" stroke-width="2.2" points="'+pts.join(' ')+'"/>'+
+    lab+'</svg>';
+}
+function refreshCharts(){
+  var st = S.sim.traffic>=100 ? 'r100' : S.sim.traffic>=50 ? 'r50' : S.sim.traffic>=10 ? 'r10' : 'alert';
+  for(var k in CHART_DATA){
+    var c = CHART_DATA[k];
+    drawChart('chart-'+k, c[st], c.min, c.max, c.color, c.thresh, c.threshLabel);
+  }
+}
+function simLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('simLog').prepend(d);
+}
+function apLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('apLog').prepend(d);
+}
+function fb(id, type, html){
+  var el = document.getElementById(id);
+  el.className = 'feedback '+type+' show';
+  el.innerHTML = html;
+}
+function renderSim(){
+  var ph = S.sim.phase;
+  show('simIdle', ph===0); show('simP1', ph===1); show('simP1Res', ph===2);
+  show('simP2', ph===3); show('simP2Con', ph===4); show('simP3', ph===5);
+  show('simP4', ph===6); show('simP5', ph===7); show('simDone', ph===8);
+  show('btnStart', ph===0);
+  show('btnReset', ph>0 && ph<8);
+  show('execResult', ph===6 && S.sim.traffic>=100);
+  refreshCharts();
+  document.getElementById('simState').textContent = SIMSTATE[ph] || '—';
+  document.getElementById('simTime').textContent = S.sim.timeTxt || '—';
+  document.getElementById('simBoom').textContent = S.boomCount;
+  progress();
+}
+function startSim(){
+  S.sim = {phase:1, traffic:0, apStage:0, apFails:0, timeTxt:'', finished:false};
+  save(); renderSim();
+  simLog('00:12 告警确认：准确率连续 3 天下降，PSI 0.31，时延 P95 上升。值班长：先保业务。', '#ffd54d');
+  document.getElementById('s5').scrollIntoView({behavior:'smooth'});
+}
+function resetSim(){
+  S.sim = {phase:0, traffic:0, apStage:0, apFails:0, timeTxt:'', finished:false};
+  save(); renderSim();
+  simLog('系统：演练已重置。重来一次——这次把每条红线都躲开。', '#9fb8c9');
+}
+/* —— 第一段：判类型 —— */
+function judgeCompare(){
+  S.sim.phase = 2; save(); renderSim();
+  simLog('00:14 分布比对完成：PSI 0.31（≥0.25 显著偏移）、KL 0.18、缺失率 0.4%→2.1%、长度右移、亮度偏移。', '#7fd6c0');
+  simLog('系统：B-06 漂移分析表已生成。结论＝输入数据漂移（非模型退化）。', '#7fd6c0');
+}
+function judgeDegrade(){
+  boom('你在没有真值标签、没有做任何分布比对的情况下，直接宣布"模型退化，建议重训"。',
+       'D 类红线⑤：在无真值时直接宣称"模型退化"而不做代理指标验证 → 研判结论不计分。\n后果链：误判方向 → 按重训排了 3 天工 → 真因是输入漂标，重训白做（参考错误案例 ERR-LF4-012）。');
+  simLog('💥 触发红线⑤：无真值直接宣称"模型退化"', '#ff6b60');
+}
+function judgeRestart(){
+  fb('fb-judge','info','🔄 重启不改变输入分布——PSI 不会因为重启降下来；而且重启也属线上变更，同样要审批留痕。先做证据比对。');
+  simLog('提示：重启不是漂移的处置动作；变更须审批。', '#e0a437');
+}
+/* —— 第二段：定处置（核心决策点） —— */
+function goDecide(){
+  S.sim.phase = 3; save(); renderSim();
+  fb('fb-decide','info','');
+}
+function decideGray(){
+  fb('fb-decide','good','✅ 纪律确认：先恢复后溯因。灰度 10% 起切，判断错了也只影响 10% 流量——代价控住了。');
+  simLog('00:16 决策：先灰度切回 v2.3.1 恢复业务，同时启动根因排查（先恢复后溯因）。', '#7fd6c0');
+  goApproval();
+}
+function decideFull(){
+  fb('fb-decide','info','⏩ 方向是"先恢复"，但跳过了灰度控险——预案顺序是灰度切回（10%→50%→100%），"必要时"才全量回滚。审批人会追问代价。仍可继续提交审批。');
+  simLog('00:16 决策：直接全量回滚。系统提示：灰度优先，全量是"必要时"选项；代价控制弱化。', '#e0a437');
+  goApproval();
+}
+function decideFirst(){
+  S.sim.phase = 4; save(); renderSim();
+  simLog('00:16 决策：先排查根因，业务先将就……', '#ff9b94');
+  simLog('00:52 根因未定位，业务方第 3 次催问。恢复用时 47 分钟 > 预案参考值 15min（须企业确认）→ 事故升级。', '#ff6b60');
+}
+/* —— 第三段：二级审批 —— */
+function goApproval(){
+  S.sim.phase = 5; S.sim.apStage = 0; save(); renderSim();
+  apLog('系统：进入二级审批流。一级＝值班主管，二级＝部门负责人（审批人）。', '#9fb8c9');
+}
+function submitApproval(){
+  var ver = val('apVer'), bak = val('apBak'), sla = val('apSla'), evd = val('apEvd');
+  if(!ver || !bak){
+    apLog('一级审批（值班主管）<b>驳回</b>：未填回滚前版本号与备份确认。课标 D 类红线④：未留回滚前版本号与备份 → 重做。', '#ff9b94');
+    show('apForce', true);
+    fb('fb-judge','','');
+    return;
+  }
+  if(!sla || !evd){
+    apLog('一级审批（值班主管）<b>驳回</b>：审批要素不齐——B-07 回滚记录须含授权签字与恢复用时，请补全"恢复时限"与"证据摘要"。', '#ff9b94');
+    return;
+  }
+  apLog('一级审批（值班主管）<b>通过 ✅</b>——版本、备份、时限、证据四要素齐全。', '#7fd6c0');
+  S.sim.apStage = 1; save();
+  show('l2Box', true);
+  document.getElementById('s5').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function submitL2(){
+  var a = val('apL2');
+  if(/代价|灰度|10%|控制|止损|重新|再中断|可控/.test(a)){
+    apLog('二级审批（部门负责人·审批人）<b>通过 ✅</b>——"代价说清楚了：灰度 10% 起切，判断错也只影响 10% 流量。"', '#7fd6c0');
+    apLog('系统：授权记录已生成（审批人＋值班人双签字）。按预案执行灰度切回。', '#7fd6c0');
+    S.sim.phase = 6; save(); renderSim();
+    simLog('00:20 二级授权下达。开始灰度切回 v2.3.1。', '#7fd6c0');
+  }else{
+    S.sim.apFails++;
+    apLog('二级审批（部门负责人）<b>驳回</b>：课标③决策要求答"如果判断错了代价多大"——把代价和控险手段说清楚再签。', '#ff9b94');
+    if(S.sim.apFails >= 2){
+      apLog('参考口径：误判代价＝业务再中断一次＋新版本收益延迟；控险手段＝灰度 10%→50%→100%、双人操作。', '#e0a437');
+    }
+  }
+}
+function skipApproval(){
+  boom('你绕过了二级审批，直接执行回滚/切流。值班长口头说"来得及"，你就当了真。',
+       'D 类红线①：无审批即执行回滚或切流 → 本情境 0 分 + 重做。\n后果链：无授权记录 → 操作不可追溯 → 事故升级（业务方与合规同时介入，本情境 0 分 + 重做）。\n课标⑩.3：审批签字是切流与回滚的唯一放行凭证。');
+  simLog('💥 触发红线①：跳过二级审批直接回滚', '#ff6b60');
+}
+function forceExec(){
+  boom('你绕过了一级审批的驳回，还没留下回滚前版本号与备份，就要强行执行回滚。',
+       'D 类红线④：未留回滚前版本号与备份 → 重做。\n没有版本号与备份，回滚本身就是不可逆冒险——备份文件时间戳是检查依据。');
+  simLog('💥 触发红线④：无版本号无备份强行回滚', '#ff6b60');
+}
+/* —— 第四段：执行 —— */
+function setTraffic(p){
+  if(!document.getElementById('dualCheck').checked){
+    fb('fb-exec','info','切流须双人操作（课标⑦.4：1 人操作 1 人复核并轮换）。先和搭档确认，再勾上确认框。');
+    return;
+  }
+  if(p <= S.sim.traffic){
+    fb('fb-exec','info','按 10%→50%→100% 顺序切，不能跳档。');
+    return;
+  }
+  S.sim.traffic = p; save(); renderSim();
+  if(p === 100){
+    S.sim.timeTxt = '12 分钟';
+    simLog('00:24 切回 100%，指标回升至基线 96%。恢复用时 12 分钟 ≤ 预案参考值 15min（须企业确认）。', '#7fd6c0');
+    simLog('系统：B-07 回滚记录要素齐备（授权签字＋恢复用时）。', '#7fd6c0');
+  }else{
+    simLog('00:2'+p/10+' 切回 '+p+'%，观察指标……', '#7fd6c0');
+  }
+  fb('fb-exec','good','已切回 '+p+'%。看板右侧曲线已更新——边切边看，这是灰度存在的意义。');
+}
+function tamperTime(){
+  boom('你把回滚记录里的恢复用时从 12 分钟改成了 8 分钟，还裁掉了看板导出的时间。',
+       'D 类红线②：为"看起来恢复"而篡改看板数据或隐瞒恢复用时 → 课程 0 分 + 重修。\n监控原始数据可比对，改了也白改；隐瞒的代价比超时本身大得多。');
+  simLog('💥 触发红线②：篡改恢复用时', '#ff6b60');
+}
+function exportData(){
+  boom('你把线上样本与日志导出到了个人设备，准备"回去慢慢分析"。',
+       'D 类红线③：把线上真实业务数据导出到个人设备 → 本情境 0 分 + 上报。\n课标⑩.2 数据不出域：线上数据、日志、模型权重不得上传外部平台或公共 API。分析在校内集群做。');
+  simLog('💥 触发红线③：导出线上数据到个人设备', '#ff6b60');
+}
+/* —— 第五段：复盘 —— */
+function goReview(){
+  S.sim.phase = 7; save(); renderSim();
+  simLog('系统：进入复盘会。时间线 + 决策点 + 代价，三件套缺一不可。', '#9fb8c9');
+}
+function submitReview(){
+  var root = val('rvRoot'), label = val('rvLabel'), fa = document.getElementById('rvFalse').value;
+  if(!/漂移|亮度|光照|来料|输入|分布|PSI|偏移/.test(root)){
+    fb('fb-rv','bad','❌ 根因结论没说清——是什么漂、凭什么。参考：上游来料光照变化 → 亮度分布偏移 → PSI 0.31 → 输入数据漂移，非模型退化。');
+    return;
+  }
+  if(!/补标|场景|缺失|写明|暗光|夜|分布|样本/.test(label)){
+    fb('fb-rv','bad','❌ 补标单要点漏了公平性提示——课标⑩.2：漂移根因若指向某类场景样本系统性缺失，须在补标单写明，不得只报总体指标回升。');
+    return;
+  }
+  if(fa !== 'yes'){
+    fb('fb-rv','bad','❌ 误告警也复盘——告警阈值与验证流程要复盘改进，案例入库（课标⑥评价）。');
+    return;
+  }
+  S.sim.finished = true; S.sim.phase = 8; save(); renderSim();
+  simLog('00:40 复盘会结束：根因＝来料光照变化（输入数据漂移）；补标单＝按新分布补标并写明暗光场景样本缺失。', '#7fd6c0');
+  simLog('系统：B-08 事件复盘报告、B-09 补标需求单已生成。四件套齐备。', '#7fd6c0');
+  flash('演练通关！红线零接触才配得上"红线守住了"这枚徽章。', 'good');
+}
+/* —— 炸号 —— */
+function boom(msg, rule){
+  document.getElementById('boomMsg').textContent = msg;
+  document.getElementById('boomRule').innerHTML = esc(rule).replace(/\n/g,'<br>');
+  document.getElementById('boom').classList.add('on');
+  S.boomCount++; save();
+  document.getElementById('simBoom').textContent = S.boomCount;
+}
+function closeBoom(){
+  document.getElementById('boom').classList.remove('on');
+  if(S.sim.phase === 5){ val('apVer'); ['apVer','apBak','apSla','apEvd'].forEach(function(id){ document.getElementById(id).value=''; }); }
+  renderSim();
+}
+
+/* ══════════════════ 检测 ══════════════════ */
+var QUIZ = [
+  {t:'看板告警"准确率下降、输入分布偏移、时延上升"，按课标①这些属于？', o:['现象——结论要验证之后才能下','结论——已经可以下判断了','根因——直接按根因处置','误报——不用管'], a:0,
+   r:'课标①资讯学生活动：读看板与预案，区分"现象"与"结论"。'},
+  {t:'无真值标签时，要判定"是不是模型退化"，首先必须？', o:['用代理指标验证（置信度分布＋人工抽检 100 条）','直接宣称模型退化并安排重训','看业务方语气有多急','先重启服务看看'], a:0,
+   r:'课标 D 类红线⑤：在无真值时直接宣称"模型退化"而不做代理指标验证 → 研判结论不计分。'},
+  {t:'【判断】"先查清根因再恢复业务，才是对生产负责。"', o:['对','错'], a:1,
+   r:'错。课标⑤工作方法与⑩.2 业务可用优先：先恢复后溯因，不得为查根因而延长业务中断。'},
+  {t:'回滚与切流的唯一放行凭证是？', o:['二级审批签字','业务方电话确认','值班长口头答应','看板曲线转绿'], a:0,
+   r:'课标⑩.3：审批签字是切流与回滚的唯一放行凭证；红线①：无审批即执行回滚或切流 → 本情境 0 分 + 重做。'},
+  {t:'漂移分析表（B-06）的比对方案，不包括以下哪项？', o:['PSI/KL','缺失率','长度与亮度分布','值班人员排班表'], a:3,
+   r:'课标②计划学生活动：比对方案（PSI/KL、缺失率、长度与亮度分布）。'},
+  {t:'【判断】"误告警解除后可以不复盘。"', o:['对','错'], a:1,
+   r:'错。误告警也复盘——课标⑥评价：复盘会＋改进条＋案例卡；告警阈值修订属预案改进（发展维）。'},
+  {t:'灰度切流的正确路径是？', o:['直接 100%，一个人操作快点','10%→50%→100%，双人操作','先 50% 再 10%，倒着来','随机比例切，看心情'], a:1,
+   r:'课标⑤工作方法：灰度切流（10%→50%→100%）；⑦.4：1 人操作 1 人复核并轮换。'},
+  {t:'"恢复用时"的正确做法是？', o:['按预案口径如实记录，写入 B-07 回滚记录','估个差不多就行','往好看了记，汇报漂亮','不用记，看板上有曲线'], a:0,
+   r:'课标⑤检查：核"恢复用时"是否按预案口径计；红线②：隐瞒恢复用时 → 课程 0 分 + 重修。'},
+  {t:'【排序】正确的处置链是？', o:['判类型→定处置→二级审批→执行切回→记录用时→根因→复盘补标','重启→回滚→复盘','审批→回滚→判类型','排查→重训→上线'], a:0,
+   r:'课标④实施学生活动全链：比对出漂移分析表→代理指标→灰度切回→必要时全量回滚→记录恢复用时→根因定位→出复盘与补标单。'},
+  {t:'【判断】"为方便分析，可把线上样本与日志导出到个人设备。"', o:['对','错'], a:1,
+   r:'错。课标 D 类红线③：把线上真实业务数据导出到个人设备 → 本情境 0 分 + 上报；⑩.2：数据不出域。'}
+];
+(function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  QUIZ.forEach(function(q, i){
+    var div = document.createElement('div');
+    div.className = 'quiz-q'; div.dataset.q = 'fq'+i;
+    var html = '<div class="q">'+(i+1)+'. '+esc(q.t)+'</div><div class="opts">';
+    q.o.forEach(function(o, j){
+      html += '<button class="opt" onclick="quizPick(this,\'fq'+i+'\','+j+','+q.a+')">'+'ABCD'[j]+'. '+esc(o)+'</button>';
+    });
+    html += '</div><div class="feedback" id="fb-fq'+i+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+function quizPick(btn, key, val2, ans){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.quiz[key] = val2; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val2 === ans){
+    btn.classList.add('right');
+    fb.className='feedback good show'; fb.innerHTML='✅ '+QUIZ[parseInt(key.slice(2))].r;
+  }else{
+    btn.classList.add('wrong');
+    fb.className='feedback bad show'; fb.innerHTML='❌ '+QUIZ[parseInt(key.slice(2))].r;
+  }
+}
+function gradeQuiz(){
+  var answered = 0, right = 0;
+  QUIZ.forEach(function(q, i){
+    var v = S.quiz['fq'+i];
+    if(v !== undefined){ answered++; if(v === q.a) right++; }
+  });
+  if(answered < QUIZ.length){ flash('还有 '+(QUIZ.length-answered)+' 题未作答', 'info'); return; }
+  S.quizDone = true; S.quizPass = right >= 8;
+  var pct = Math.round(right/QUIZ.length*100);
+  document.getElementById('ringTxt').textContent = pct+'%';
+  document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+  var v = document.getElementById('quizVerdict');
+  if(S.quizPass){
+    v.textContent = '✅ 过关（'+right+'/10）'; v.style.color = 'var(--ok)';
+    document.getElementById('lockBox').classList.remove('on');
+    document.getElementById('bg4').classList.add('got');
+  }else{
+    v.textContent = '❌ 未达标（'+right+'/10，需 8 题）'; v.style.color = 'var(--bad)';
+    document.getElementById('lockBox').classList.add('on');
+    document.getElementById('bg4').classList.remove('got');
+  }
+  document.getElementById('quizDetail').textContent = '答对 '+right+' 题；错题解析已展开，回去重学再测。';
+  save(); progress();
+}
+
+/* ══════════════════ 交付物清单 ══════════════════ */
+(function initList(){
+  var ul = document.getElementById('deliverList');
+  ul.querySelectorAll('li').forEach(function(li, i){
+    if(S.checklist[i]) li.classList.add('done');
+    li.onclick = function(){ li.classList.toggle('done'); S.checklist[i] = li.classList.contains('done'); save(); };
+  });
+})();
+
+/* ══════════════════ 提示 ══════════════════ */
+function flash(msg, type){
+  var d = document.createElement('div');
+  d.className = 'feedback '+(type==='good'?'good':type==='info'?'info':'bad')+' show';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:200;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:260px;text-align:center';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+/* ══════════════════ 徽章初始 ══════════════════ */
+(function initBadges(){
+  if(S.levels.lv1>0 && S.levels.lv2>0) document.getElementById('bg1').classList.add('got');
+  if(S.levels.lv3>0 && S.levels.lv4>0) document.getElementById('bg2').classList.add('got');
+  if(S.sim.finished && S.boomCount===0) document.getElementById('bg3').classList.add('got');
+  if(S.quizDone && S.quizPass) document.getElementById('bg4').classList.add('got');
+  if(S.sim.finished) document.getElementById('bg5').classList.add('got');
+})();
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeBoom(); });
+
+unlock(); renderSim(); progress();
+</script>
+</body>
+</html>

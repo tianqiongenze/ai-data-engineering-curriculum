@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF1-Q1 多源数据采集任务执行与数据集交付 · 学生互动学习模块</title>
+<style>
+/* ========== 主题变量（与金标准一致） ========== */
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1a2b3c; --ink2:#5a6b7c;
+  --brand:#0e7c66; --brand2:#0b5f4e; --brand-soft:#e3f2ee;
+  --warn:#b3541e; --warn-soft:#fdeee2; --ok:#1e7d3c; --ok-soft:#e6f4ea;
+  --bad:#b3261e; --bad-soft:#fdecea; --line:#d8e2ea; --gold:#b8860b;
+  --shadow:0 2px 10px rgba(14,60,80,.08); --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.75;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* ========== ① 顶部条 ========== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#0e7c66,#0b5f4e);
+  color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+  font-size:14px;box-shadow:var(--shadow)}
+.topbar b{font-size:15px}
+.topbar .chip{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 12px;white-space:nowrap}
+.topbar .spacer{flex:1}
+.progress-mini{background:rgba(255,255,255,.2);border-radius:20px;height:8px;width:130px;overflow:hidden}
+.progress-mini i{display:block;height:100%;background:#ffd54d;width:0;transition:width .4s}
+
+/* ========== 通用卡片/区块 ========== */
+section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 28px;margin:22px 0}
+h2.sec{font-size:21px;border-left:6px solid var(--brand);padding-left:12px;margin-bottom:14px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0}
+.small{font-size:13.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font-size:15px;padding:9px 22px;border-radius:10px;
+  transition:.2s;font-family:inherit}
+.btn:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn:disabled{background:#b8c4ce;cursor:not-allowed;transform:none}
+.btn.warn{background:var(--warn)}
+.btn.warn:hover{background:#8f4115}
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand2);
+  border-radius:6px;padding:1px 10px;font-size:13px;margin:2px 4px 2px 0}
+.feedback{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px;display:none}
+.feedback.show{display:block;animation:pop .3s}
+.feedback.good{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.feedback.bad{background:var(--bad-soft);border-left:5px solid var(--bad)}
+.feedback.info{background:var(--warn-soft);border-left:5px solid var(--warn)}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ========== ② 情境引入 ========== */
+.story{background:linear-gradient(135deg,#f0f7f5,#e8f0f6);border-radius:12px;
+  padding:18px 20px;border:1px dashed var(--brand);margin:12px 0}
+.mission{border:2px solid var(--brand);border-radius:12px;padding:16px 20px;margin:14px 0;background:#fff}
+.mission h3{color:var(--brand2);margin-top:0}
+.constraints li{margin:6px 0 6px 22px}
+.rule-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+.rule-table th,.rule-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.rule-table th{background:var(--bad-soft);color:var(--bad)}
+.rule-table td:first-child{white-space:nowrap;font-weight:600}
+
+/* ========== ③ 知识预习：翻卡 ========== */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.flip{perspective:900px;height:150px;cursor:pointer}
+.flip:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:12px}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px;text-align:center}
+.flip-f{background:var(--brand);color:#fff;font-weight:600;font-size:16px}
+.flip-f small{font-weight:400;font-size:12px;opacity:.85;margin-top:4px}
+.flip-b{background:#fff;border:2px solid var(--brand);color:var(--ink);transform:rotateY(180deg);font-size:13.5px}
+.spec-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+.spec-table th,.spec-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.spec-table th{background:var(--brand-soft)}
+.spec-table tr:hover td{background:#fafdfc}
+
+/* ========== ④ 六步闯关 ========== */
+.level{border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.level-head{display:flex;align-items:center;gap:12px;background:#eef3f7;padding:12px 16px;cursor:pointer;user-select:none}
+.level-head:focus-visible{outline:3px solid var(--brand);outline-offset:-3px}
+.level-head .no{background:var(--brand);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.level-head .tt{font-weight:700;flex:1}
+.level-head .stars{color:#c9d4dd;font-size:18px;letter-spacing:2px}
+.level-head .stars b{color:var(--gold)}
+.level.locked .level-head{opacity:.55;cursor:not-allowed}
+.level-body{display:none;padding:16px 20px;border-top:1px solid var(--line)}
+.level.open .level-body{display:block}
+.quiz-q{margin:14px 0}
+.quiz-q .q{font-weight:600;margin-bottom:8px}
+.opts{display:grid;gap:8px}
+.opt{border:2px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:#fff;
+  font-size:15px;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.opt:hover{border-color:var(--brand)}
+.opt.picked{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt:disabled{cursor:not-allowed;opacity:.75}
+.drag-list{list-style:none;display:grid;gap:8px}
+.drag-list li{border:2px solid var(--line);border-radius:10px;padding:9px 14px;background:#fff;cursor:grab}
+.drag-list li:focus-visible{outline:3px solid var(--brand);outline-offset:1px}
+.drag-list li.dragging{opacity:.4}
+.drag-list li.over{border-color:var(--brand);border-style:dashed}
+.fillin{border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;width:100%;
+  font-family:inherit;margin:6px 0}
+.fillin:focus{border-color:var(--brand);outline:none}
+
+/* ========== ⑤ 仿真实训 ========== */
+.sim{background:#0f1e2a;color:#e8f0f6;border-radius:14px;padding:20px;margin:14px 0}
+.sim h3{color:#7fd6c0;margin-top:0}
+.sample-card{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.sample-card .sid{color:#7fd6c0;font-size:13px;font-weight:700}
+.sample-card .scene{font-size:15px;margin:6px 0}
+.sample-card .ai{background:#1d3450;border-left:4px solid #e0a437;padding:8px 12px;border-radius:6px;
+  font-size:14px;margin-top:8px;color:#f0d9a8}
+.sim-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sim-controls label{font-size:13.5px;color:#9fb8c9;display:block;margin-bottom:4px}
+.sim-controls select{border:none;border-radius:8px;padding:9px 12px;font-size:14.5px;font-family:inherit;
+  background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63;width:100%}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.chip{border:2px solid #2c4a63;background:#16293a;color:#9fb8c9;border-radius:20px;
+  padding:6px 14px;font-size:14px;cursor:pointer;font-family:inherit;transition:.15s}
+.chip:hover{border-color:#7fd6c0}
+.chip.on{background:#0e7c66;border-color:#7fd6c0;color:#fff}
+.chip:focus-visible{outline:3px solid #ffd54d;outline-offset:2px}
+.chip-hint{font-size:13px;color:#e0a437;margin:4px 0;display:none}
+.chip-hint.on{display:block}
+.sim-opt{display:block;width:100%;text-align:left;background:#16293a;color:#e8f0f6;
+  border:2px solid #2c4a63;border-radius:10px;padding:10px 14px;font-size:14.5px;margin:8px 0;
+  cursor:pointer;font-family:inherit;transition:.15s}
+.sim-opt:hover{border-color:#7fd6c0}
+.sim-opt:disabled{opacity:.55;cursor:not-allowed}
+.sim-opt.picked-ok{border-color:#1e7d3c;background:#14322a}
+.sim-opt.picked-soft{border-color:#b3541e;background:#332216}
+.meter{background:#0a141d;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14.5px}
+.meter b{color:#ffd54d;font-size:18px}
+.sim-log{background:#0a141d;border-radius:10px;padding:12px 16px;font-size:13.5px;max-height:200px;overflow-y:auto;margin-top:10px}
+.sim-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.debrief{background:#0a141d;border-left:4px solid #7fd6c0;border-radius:8px;padding:10px 14px;
+  margin:10px 0;font-size:14px;color:#c9e8de;display:none}
+.debrief.on{display:block}
+.boom{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);z-index:999;
+  align-items:center;justify-content:center;padding:20px}
+.boom.on{display:flex}
+.boom-card{background:#1c1214;border:3px solid var(--bad);border-radius:16px;max-width:560px;
+  padding:30px;text-align:center;color:#ffd9d6}
+.boom-card h2{color:#ff6b60;font-size:26px;margin-bottom:10px}
+.boom-card .rule{background:#2a1618;border-radius:10px;padding:12px;margin:14px 0;text-align:left;font-size:14.5px}
+
+/* ========== ⑥ 检测 ========== */
+.quiz-score{display:flex;gap:18px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.score-ring{width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--brand) 0%,#e3eaf0 0);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--ink)}
+.score-ring i{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal}
+.locked-box{background:var(--warn-soft);border-left:5px solid var(--warn);border-radius:10px;
+  padding:14px 18px;margin:12px 0;display:none}
+.locked-box.on{display:block}
+
+/* ========== ⑦ 成就 ========== */
+.badges{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.badge{width:104px;text-align:center;opacity:.28;filter:grayscale(1);transition:.3s}
+.badge.got{opacity:1;filter:none}
+.badge .ico{width:76px;height:76px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:34px;background:linear-gradient(135deg,#ffd54d,#ffb300);
+  box-shadow:0 3px 10px rgba(255,179,0,.35)}
+.badge .nm{font-size:13.5px;font-weight:600}
+.checklist{list-style:none;margin:12px 0}
+.checklist li{padding:8px 12px;border:1px dashed var(--line);border-radius:8px;margin:6px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+.checklist li:focus-visible{outline:3px solid var(--brand);outline-offset:1px}
+.checklist li.done{background:var(--ok-soft);border-color:var(--ok);text-decoration:line-through}
+.checklist li::before{content:"☐";font-size:18px}
+.checklist li.done::before{content:"☑";color:var(--ok)}
+
+/* ========== 响应式/打印 ========== */
+@media(max-width:720px){
+  .sim-controls{grid-template-columns:1fr}
+  section{padding:18px 16px}
+  .topbar{font-size:12.5px}
+}
+@media print{
+  .topbar,.btn,.sim-controls,.boom,.chips,.sim-toolbar{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .level-body{display:block!important}
+  .feedback{display:block!important}
+  .debrief{display:block!important}
+  .opt.right,.opt.wrong{outline:1px solid #999}
+  .badge{opacity:1;filter:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ ① 顶部条 ═══════════ -->
+<div class="topbar">
+  <b>LF1-Q1 多源数据采集任务执行与数据集交付</b>
+  <span class="chip">学习情境 · 36h</span>
+  <span class="chip">任务等级 L2</span>
+  <span class="chip">达标线 80%</span>
+  <span class="chip">人工智能数据工程技术 510217</span>
+  <span class="chip">数据均为教学样例</span>
+  <span class="spacer"></span>
+  <span id="progressTxt">进度 0%</span>
+  <div class="progress-mini"><i id="progressBar"></i></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ ② 情境引入 ═══════════ -->
+<section id="s2">
+  <h2 class="sec">② 情境引入：你接了一个采集任务</h2>
+  <div class="story">
+    <p>校内智能制造实训区"轴承外观检测"工位需为下游模型采集 <b>500 张缺陷图像＋200 条工位语音指令</b>。
+    组长把需求单、采集 SOP v2、授权书样本一起交给你，只说了一句：<b>"这批要进下游模型训练，授权链不能断。"</b></p>
+  </div>
+  <div class="mission">
+    <h3>你的任务</h3>
+    <p>按 SOP 完成本批次采集：配参数 → 试采 20 条 → 全量采集 → 按预案补采 → 命名入库 → 去重与完整性初检，周五前交付合格数据集。</p>
+    <h3>硬约束（违反任何一条，后果见下方红线）</h3>
+    <ul class="constraints">
+      <li>只用<b>已签授权书</b>的产线数据</li>
+      <li><b>不得摄入人脸与工牌</b></li>
+      <li><b>不停线</b>（采集不能影响工位生产）</li>
+      <li><b>周五前交付</b></li>
+    </ul>
+    <p class="small">已知条件：需求单、采集 SOP v2、相机与麦克风阵列、Python 半成品脚本、命名规范；授权书样本 SQ-2026-031（教学样例）。<b>本模块所有数据均为教学样例，不含任何真实个人信息。</b></p>
+  </div>
+  <h3>D 类红线（触发即"炸号"，本关清零重来）</h3>
+  <table class="rule-table">
+    <tr><th>来源</th><th>红线原文</th><th>后果</th></tr>
+    <tr><td>⑥.3 Q1 ①</td><td>未核授权书编号即开机采集</td><td>本情境 0 分＋重做</td></tr>
+    <tr><td>⑥.3 Q1 ②</td><td>采集画面含人脸／车牌／工牌</td><td>立即删除＋一票否决</td></tr>
+    <tr><td>⑥.3 Q1 ③</td><td>擅改他人已配参数且不记录</td><td>专业维 −20% 并恢复默认</td></tr>
+    <tr><td>⑩.1 Q1</td><td>数据上传公有云或外发（含"发同学帮跑脚本"）</td><td>一票否决</td></tr>
+    <tr><td>⑩.2.4</td><td>采集范围超需求单场景与量级（"多采一点备用"视为越界）</td><td>按⑧.4：本情境 0 分＋重做＋合规再培训</td></tr>
+    <tr><td>⑦.3 🔴／⑩.2.2</td><td>把含人脸／车牌的原始样本上传任何外部服务</td><td>一票否决</td></tr>
+    <tr><td>⑧.4 全课</td><td>伪造数据（改成功率／合格率、补签双签）</td><td>课程 0 分＋重修＋记入诚信档案</td></tr>
+  </table>
+  <button class="btn" onclick="go('s3')">开始预习 →</button>
+</section>
+
+<!-- ═══════════ ③ 知识预习 ═══════════ -->
+<section id="s3">
+  <h2 class="sec">③ 知识预习：先把约束搞清楚</h2>
+  <p>点击卡片（或聚焦后按 Enter／空格）翻转查看定义。看不懂的条文先标记，带着问题进关。</p>
+  <div class="flipgrid">
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">授权书编号<small>authorization</small></div>
+      <div class="flip-b">开机前核对授权书编号与授权范围，<br>签采集确认单（T2 授权核对单）。<br><b>签字时序必须早于开机日志</b></div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">最小必要与目的限定<small>⑩.2.4</small></div>
+      <div class="flip-b">采集范围不得超需求单写明的<br>场景与量级。<br><b>"多采一点备用"视为越界</b></div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">多模态采集终端<small>1080P／48kHz</small></div>
+      <div class="flip-b">相机＋麦克风阵列＋支架。<br><b>须 1080P 与 48kHz 同步</b>（⑨.1）——<br>画面与语音指令对得上</div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">试采 20 条<small>pilot run</small></div>
+      <div class="flip-b">先小样本后全量。<br>试采验证参数与失败率，<br><b>直接全量＝拿整批试错</b></div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">补采预案 20%<small>fallback plan</small></div>
+      <div class="flip-b">计划表强制栏：按失败率 20%<br>预留补采量（500×20%＝100 条）。<br><b>预案要真被执行</b>（方法维）</div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">命名与目录规范<small>naming</small></div>
+      <div class="flip-b">命名合规 <b>100%</b>。<br>两人对同一命名理解不一致<br>＝命名冲突，清单对不上</div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">去重与完整性初检<small>dedup &amp; check</small></div>
+      <div class="flip-b">重复率 <b>≤0.5%</b>；<br>批次成功率 <b>≥95%</b>。<br>初检不过不入库（G1／G2）</div></div></div>
+    <div class="flip" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('on')}" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">AI 三层梯度（Q1）<small>⑦.3</small></div>
+      <div class="flip-b">采集脚本草案：🟡 LLM 出、<br>人逐行复核＋小样本实测＋T7。<br>🔴 原始样本上传外部服务＝禁</div></div></div>
+  </div>
+  <h3>判定标准速查表（SOP v2 摘要·本批口径）</h3>
+  <table class="spec-table">
+    <tr><th>硬约束</th><th>本批要求</th><th>条文</th></tr>
+    <tr><td>模态</td><td>图像（缺陷）＋语音（工位指令）</td><td>六步① 划 4 项硬约束（模态／量级／授权／命名）</td></tr>
+    <tr><td>量级</td><td>500 张＋200 条，不多采、不砍量</td><td>⑥.3 Q1 情境描述；⑩.2.4</td></tr>
+    <tr><td>授权</td><td>只用已签授权书（SQ-2026-031）的产线数据；不得摄入人脸与工牌</td><td>⑥.3 Q1；⑩.1；⑩.2</td></tr>
+    <tr><td>命名</td><td>按命名规范入库，命名合规 100%、重复率 ≤0.5%</td><td>六步④；G2</td></tr>
+    <tr><td>时限</td><td>周五前交付，且不停线</td><td>⑥.3 Q1 约束</td></tr>
+    <tr><td>参数</td><td>1080P 与 48kHz 同步；试采 20 条</td><td>⑨.1；六步④</td></tr>
+  </table>
+  <p class="small">记不清时随时回到本表。正式关卡里不提供此表——但"授权边界"这类坑，现在就要记住。</p>
+  <button class="btn" onclick="go('s4')">进入六步闯关 →</button>
+</section>
+
+<!-- ═══════════ ④ 六步闯关 ═══════════ -->
+<section id="s4">
+  <h2 class="sec">④ 六步闯关：按真实工作流程练</h2>
+  <p class="small">关卡按顺序解锁，每关标注对应课标六步学时（5／5／4／14／4／4）。答错会告诉你是哪条 SOP／课标没说清——回去翻速查表，比背答案有用。触红线会"炸号"，本关星星清零。</p>
+
+  <!-- 第①关 资讯 -->
+  <div class="level" id="lv1">
+    <div class="level-head" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLevel('lv1')}" onclick="toggleLevel('lv1')">
+      <span class="no">1</span><span class="tt">① 资讯 · 读懂需求再动手</span><span class="tag">5 学时</span><span class="stars" id="st1">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：组长发来工单＋需求单＋SOP＋授权书样本，讲授 ≤10min，其余只答疑、只指"往哪找"。你要读 SOP 划出 4 项硬约束，填信息栏。</p>
+      <div class="quiz-q" data-q="l1q1">
+        <div class="q">1. 读 SOP 要划出的 4 项硬约束是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q1','A')">A. 人员／工时／分工／纪律</button>
+          <button class="opt" onclick="pick(this,'l1q1','B')">B. 模态／量级／授权／命名</button>
+          <button class="opt" onclick="pick(this,'l1q1','C')">C. 相机／灯光／支架／线缆</button>
+          <button class="opt" onclick="pick(this,'l1q1','D')">D. 采样／编码／压缩／传输</button>
+        </div>
+        <div class="feedback" id="fb-l1q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q2">
+        <div class="q">2. 【复述】用一句话复述本批的授权边界（提示：授权书、编号、范围、两个"不得"）。</div>
+        <input class="fillin" id="l1q2" placeholder="例：只用已签授权书 SQ-2026-031 范围内的产线数据……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l1q2','授权','fb-l1q2','复述通过。完整的说法是：只用已签授权书（SQ-2026-031）范围内的产线数据，不得摄入人脸与工牌——核编号、核范围、核两个不得，一条都不能少。')">提交复述</button>
+        <div class="feedback" id="fb-l1q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q3">
+        <div class="q">3. 需求单写明的采集量级是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q3','A')">A. 500 张缺陷图像＋200 条工位语音指令</button>
+          <button class="opt" onclick="pick(this,'l1q3','B')">B. 1000 条道路场景图像</button>
+          <button class="opt" onclick="pick(this,'l1q3','C')">C. 2000 张零件缺陷图</button>
+          <button class="opt" onclick="pick(this,'l1q3','D')">D. 越多越好，采了备用</button>
+        </div>
+        <div class="feedback" id="fb-l1q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv1','st1',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第②关 计划 -->
+  <div class="level locked" id="lv2">
+    <div class="level-head" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLevel('lv2')}" onclick="toggleLevel('lv2')">
+      <span class="no">2</span><span class="tt">② 计划 · 排步骤、定预案</span><span class="tag">5 学时</span><span class="stars" id="st2">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：教师给计划表模板，强制填"补采预案""命名冲突"两栏。你要列 6 步、工器具、工时、2 人分工、失败率 20% 补采预案。</p>
+      <div class="quiz-q" data-q="l2q1">
+        <div class="q">1. 按 20% 失败率，500 张的补采预案要预留多少？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1','A')">A. 0 张，采成功就行</button>
+          <button class="opt" onclick="pick(this,'l2q1','B')">B. 100 张（500×20%＝100，预案要写进计划表）</button>
+          <button class="opt" onclick="pick(this,'l2q1','C')">C. 250 张，保险一点</button>
+          <button class="opt" onclick="pick(this,'l2q1','D')">D. 500 张，全部重采一遍</button>
+        </div>
+        <div class="feedback" id="fb-l2q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q2">
+        <div class="q">2. 计划表里教师强制要求填的两栏是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q2','A')">A. 午餐时间、加班时长</button>
+          <button class="opt" onclick="pick(this,'l2q2','B')">B. 补采预案、命名冲突</button>
+          <button class="opt" onclick="pick(this,'l2q2','C')">C. 分工、成绩目标</button>
+          <button class="opt" onclick="pick(this,'l2q2','D')">D. 不用填，模板是参考</button>
+        </div>
+        <div class="feedback" id="fb-l2q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q3">
+        <div class="q">3. 【排序】把采集前的工作流按正确顺序排好（点选后拖拽，或用 Tab 聚焦后按 ↑↓）：</div>
+        <ul class="drag-list" id="sortL2">
+          <li draggable="true" data-k="1">读需求单与 SOP，划 4 项硬约束</li>
+          <li draggable="true" data-k="3">定补采预案（20% 失败率）与命名冲突预案</li>
+          <li draggable="true" data-k="5">讲方案、答质疑、签决策记录后开机</li>
+          <li draggable="true" data-k="2">列 6 步、工器具、工时、2 人分工</li>
+          <li draggable="true" data-k="4">核对授权书编号，签采集确认单（T2）</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL2','fb-l2q3')">检查顺序</button>
+        <div class="feedback" id="fb-l2q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv2','st2',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第③关 决策 -->
+  <div class="level locked" id="lv3">
+    <div class="level-head" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLevel('lv3')}" onclick="toggleLevel('lv3')">
+      <span class="no">3</span><span class="tt">③ 决策 · 讲清方案再签字</span><span class="tag">4 学时</span><span class="stars" id="st3">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：教师逐组质疑"失败 20% 怎么补""授权书编号在哪核"，签字放行。你要讲方案、答质疑、修订、签决策记录。<b>注意：本关有一个选项是红线，选错直接炸号。</b></p>
+      <div class="quiz-q" data-q="l3q1">
+        <div class="q">1. 教师质疑"失败 20% 怎么补"，正确的回答是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q1','A')">A. "到时候再想办法"</button>
+          <button class="opt" onclick="pick(this,'l3q1','B')">B. "试采 20 条先测实际失败率；按预案补采 100 条，补采数据与原批同参数、同命名，成功/失败量记进批次记录表（T3）"</button>
+          <button class="opt" onclick="pick(this,'l3q1','C')">C. "失败了就失败了"</button>
+          <button class="opt" onclick="pick(this,'l3q1','D')">D. "请老师帮我补采"</button>
+        </div>
+        <div class="feedback" id="fb-l3q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q2">
+        <div class="q">2. "授权书编号在哪核？"</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q2','A')">A. 不用核，授权书只是形式</button>
+          <button class="opt" onclick="pick(this,'l3q2','B')">B. 开机前在授权书与采集确认单（T2）上核对编号并签字；对越界要求当场拒绝并留痕</button>
+          <button class="opt" onclick="pick(this,'l3q2','C')">C. 周五交付的时候一起核</button>
+          <button class="opt" onclick="pick(this,'l3q2','D')">D. 问同学知不知道</button>
+        </div>
+        <div class="feedback" id="fb-l3q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q3">
+        <div class="q">3. 周五就要交付，时间不够了。你的决定？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q3','A',{m:'你选择了先开机、后补授权单。',r:'D 类红线（⑥.3 Q1 ①）：未核授权书编号即开机采集 → 本情境 0 分＋重做。⑩.2.1："先用后补授权"按一票否决处理。授权链是整批数据的合法性起点，没有"后补"这个选项。'})">A. 先开机试采，授权核对单周五前一起补</button>
+          <button class="opt" onclick="pick(this,'l3q3','B')">B. 按流程核对授权书编号、签采集确认单，再按方案执行；时间不够就砍量级并写入决策记录</button>
+          <button class="opt" onclick="pick(this,'l3q3','C')">C. 让搭档替我开机，我后面补签</button>
+          <button class="opt" onclick="pick(this,'l3q3','D')">D. 不采了，直接交空白</button>
+        </div>
+        <div class="feedback" id="fb-l3q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv3','st3',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第④关 实施 -->
+  <div class="level locked" id="lv4">
+    <div class="level-head" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLevel('lv4')}" onclick="toggleLevel('lv4')">
+      <span class="no">4</span><span class="tt">④ 实施 · 真刀真枪采集（14 学时）</span><span class="tag">14 学时</span><span class="stars" id="st4">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：账号与设备就位。本关练实施步全流程，下方<b>仿真实训区</b>是参数配置模拟器——真实工位上你怎么配，这里就怎么配。</p>
+      <div class="quiz-q" data-q="l4q1">
+        <div class="q">1. 【排序】实施步的正确顺序是？（Tab 聚焦后按 ↑↓ 调整）</div>
+        <ul class="drag-list" id="sortL4">
+          <li draggable="true" data-k="1">配参数（1080P／48kHz）</li>
+          <li draggable="true" data-k="5">按预案补采</li>
+          <li draggable="true" data-k="3">全量采集</li>
+          <li draggable="true" data-k="2">试采 20 条</li>
+          <li draggable="true" data-k="4">记成功/失败量</li>
+          <li draggable="true" data-k="6">命名入库</li>
+          <li draggable="true" data-k="7">去重与完整性初检</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL4','fb-l4q1')">检查顺序</button>
+        <div class="feedback" id="fb-l4q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q2">
+        <div class="q">2. 试采发现曝光不足，轴承凹坑细节丢失。你的做法？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q2','A')">A. 就这样采，后期让标注的人猜</button>
+          <button class="opt" onclick="pick(this,'l4q2','B')">B. 记录参数变更原因，调整曝光并小样本验证，告知同工位搭档后继续</button>
+          <button class="opt" onclick="pick(this,'l4q2','C',{m:'你擅改了他人的已配参数且没有记录。',r:'D 类红线（⑥.3 Q1 ③）：擅改他人已配参数且不记录 → 专业维 −20% 并恢复默认。需要调整时：先记录变更原因，改后小样本验证，并告知参数原主人。'})">C. 搭档刚配好的参数，你直接改大曝光，不用告诉任何人</button>
+          <button class="opt" onclick="pick(this,'l4q2','D')">D. 跳过试采，直接上全量</button>
+        </div>
+        <div class="feedback" id="fb-l4q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q3">
+        <div class="q">3. LLM 给出的采集脚本草案，正确用法是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q3','A')">A. 直接跑全量，效率优先</button>
+          <button class="opt" onclick="pick(this,'l4q3','B')">B. 逐行复核参数＋小样本实测，附 T7 人机分工说明（哪段 AI 生成、改了哪、谁复核签字）</button>
+          <button class="opt" onclick="pick(this,'l4q3','C')">C. AI 是禁用的，一点都不能碰</button>
+          <button class="opt" onclick="pick(this,'l4q3','D')">D. 让 AI 自己判参数，人只负责点运行</button>
+        </div>
+        <div class="feedback" id="fb-l4q3"></div>
+      </div>
+      <p class="small">↳ 通过本关后，下方<b>仿真实训区</b>的采集参数配置模拟器等你来跑（6 轮决策）。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv4','st4',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑤关 检查 -->
+  <div class="level locked" id="lv5">
+    <div class="level-head" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLevel('lv5')}" onclick="toggleLevel('lv5')">
+      <span class="no">5</span><span class="tt">⑤ 检查 · 初检三条线</span><span class="tag">4 学时</span><span class="stars" id="st5">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：教师抽查 20%，按交付清单逐项核，当众公布缺项。你要自检打勾 → 同伴互检签字 → 补缺。</p>
+      <div class="quiz-q" data-q="l5q1">
+        <div class="q">1. 入库前"去重与完整性初检"的三条线是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q1','A')">A. 命名合规 100%、重复率 ≤0.5%、批次成功率 ≥95%</button>
+          <button class="opt" onclick="pick(this,'l5q1','B')">B. 速度、数量、体积</button>
+          <button class="opt" onclick="pick(this,'l5q1','C')">C. 没有明确指标，看着办</button>
+          <button class="opt" onclick="pick(this,'l5q1','D')">D. 只看文件大小差不多就行</button>
+        </div>
+        <div class="feedback" id="fb-l5q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q2">
+        <div class="q">2. 同伴互检发现 3 个文件命名冲突，正确做法是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q2','A')">A. 把冲突文件删掉，眼不见为净</button>
+          <button class="opt" onclick="pick(this,'l5q2','B')">B. 按命名规范重命名并登记变更，复检通过再入库</button>
+          <button class="opt" onclick="pick(this,'l5q2','C')">C. 不管，命名是小问题</button>
+          <button class="opt" onclick="pick(this,'l5q2','D')">D. 顺手把命名规范改掉，迁就文件</button>
+        </div>
+        <div class="feedback" id="fb-l5q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q3">
+        <div class="q">3. 初检发现几帧重复、成功率数字不好看。你的处理？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q3','A')">A. 直接删掉重复帧，当没发生过</button>
+          <button class="opt" onclick="pick(this,'l5q3','B')">B. 登记批次记录表（成功/失败/补采），按预案补采替换，修正命名并复检</button>
+          <button class="opt" onclick="pick(this,'l5q3','C')">C. 重复帧留着，不影响使用</button>
+          <button class="opt" onclick="pick(this,'l5q3','D',{m:'你打算修改登记数字来掩盖问题。',r:'一票否决项（⑧.4）：代做、抄袭、伪造数据（改 Kappa／合格率、补签双签）→ 课程 0 分＋重修＋记入诚信档案。数字不好看可以补采、可以返工，但不能改数。'})">D. 把成功率登记数字改好看一点</button>
+        </div>
+        <div class="feedback" id="fb-l5q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv5','st5',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑥关 评价 -->
+  <div class="level locked" id="lv6">
+    <div class="level-head" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLevel('lv6')}" onclick="toggleLevel('lv6')">
+      <span class="no">6</span><span class="tt">⑥ 评价 · 知道自己差在哪</span><span class="tag">4 学时</span><span class="stars" id="st6">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：教师按 Rubric 打分，讲评 2 个典型失败（命名冲突、静默丢帧）。轮到你自评、互评、写 1 条改进项。</p>
+      <div class="quiz-q" data-q="l6q1">
+        <div class="q">1. Q1 评价要点里，专业维看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q1','A')">A. 打字快不快、脚本长不长</button>
+          <button class="opt" onclick="pick(this,'l6q1','B')">B. 成功率／命名合规率／重复率</button>
+          <button class="opt" onclick="pick(this,'l6q1','C')">C. 和搭档关系好不好</button>
+          <button class="opt" onclick="pick(this,'l6q1','D')">D. 工时登记填了多少</button>
+        </div>
+        <div class="feedback" id="fb-l6q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q2">
+        <div class="q">2. 方法维看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q2','A')">A. 补采预案是否真被执行</button>
+          <button class="opt" onclick="pick(this,'l6q2','B')">B. 谁的声音大谁做主</button>
+          <button class="opt" onclick="pick(this,'l6q2','C')">C. 方法维没有具体内容</button>
+          <button class="opt" onclick="pick(this,'l6q2','D')">D. 设备新不新</button>
+        </div>
+        <div class="feedback" id="fb-l6q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q3">
+        <div class="q">3. 发展维看"脚本修改是否有实测依据"。你的改进项应该长什么样？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q3','A')">A. "下次会更快"</button>
+          <button class="opt" onclick="pick(this,'l6q3','B')">B. "试采预估失败率 10%、实际 22%，下次试采加到 30 条再估全量，并先测 3 个暗光工位"</button>
+          <button class="opt" onclick="pick(this,'l6q3','C')">C. "没有改进"</button>
+          <button class="opt" onclick="pick(this,'l6q3','D')">D. "希望需求单写清楚一点"</button>
+        </div>
+        <div class="feedback" id="fb-l6q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv6','st6',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑤ 仿真实训 ═══════════ -->
+<section id="s5">
+  <h2 class="sec">⑤ 仿真实训：采集参数配置模拟器</h2>
+  <p>这里是工位操作台的模拟。系统依次下发 <b>6 轮决策</b>（业务需求单均为教学样例）：
+  核对授权 → 配参数 → 处置越界要求 → 处置敏感画面 → 规范用 AI 与改参 → 完整性初检。
+  <b>你做决策，系统给后果——包括"炸号"。</b>每轮结束有复盘，引的都是课标原文。</p>
+  <div class="sim">
+    <h3>🖥 采集参数配置模拟器 ｜ 批次 CQ-2026-1101（教学样例）｜ 工位：轴承外观检测 A-03</h3>
+    <div class="sample-card" id="simReq">
+      <div class="sid">系统待命</div>
+      <div class="scene">点击"开始采集配置"领取第 1 轮决策。所有需求单、画面、参数均为教学样例。</div>
+    </div>
+    <div id="simPanel"></div>
+    <div class="debrief" id="simDebrief"></div>
+    <div class="feedback" id="simFb"></div>
+    <div class="sim-toolbar" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn" id="btnStart" onclick="startSim()">▶ 开始采集配置（6 轮决策）</button>
+      <button class="btn warn" id="btnSend" style="display:none" onclick="sendTrap()">📤 把试采包发同学帮跑脚本</button>
+      <button class="btn warn" id="btnCloud" style="display:none" onclick="cloudTrap()">🤖 把试采原图传给外部 AI 服务调参数</button>
+    </div>
+    <div class="meter">轮次：<b id="mRound">0</b>/6　｜　违规（炸号）：<b id="mBoom">0</b> 次　｜　状态：<b id="simState">待开始</b></div>
+    <div class="sim-log" id="simLog"><div>系统：点击"开始采集配置"领取第 1 轮决策。红线触发即炸号——本关清零重来，并记录违规次数。</div></div>
+  </div>
+  <p class="small">全部数据为教学样例（合成场景描述，不含真实图像、语音与个人信息）。6 轮全部处置正确且零炸号，本仿真实训通过，徽章"红线守住了"点亮。</p>
+</section>
+
+<!-- ═══════════ ⑥ 检测 ═══════════ -->
+<section id="s6">
+  <h2 class="sec">⑥ 检测：10 题定过关</h2>
+  <p class="small">单选／判断／排序混合，全部出自课标原文。≥80%（8 题）过关；不过关会锁定"重学"入口——可以跳过，但记录会留着。</p>
+  <div id="quizBox"></div>
+  <div class="quiz-score">
+    <div class="score-ring" id="ring"><i id="ringTxt">0%</i></div>
+    <div>
+      <div id="quizVerdict" style="font-size:17px;font-weight:700">尚未提交</div>
+      <div class="small" id="quizDetail">达标线：80%（8/10）</div>
+    </div>
+    <button class="btn" onclick="gradeQuiz()">提交检测</button>
+  </div>
+  <div class="locked-box" id="lockBox">
+    <b>未达标。</b>系统已为你标出错题范围——回到③速查表和对应关卡重学，再回来测。真实的采集任务里，不达标的后果是<b>整批退回重做</b>。
+    <div style="margin-top:8px"><button class="btn ghost" onclick="go('s3')">回去重学</button></div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑦ 成就与去向 ═══════════ -->
+<section id="s7">
+  <h2 class="sec">⑦ 成就与去向</h2>
+  <div class="badges">
+    <div class="badge" id="bg1"><div class="ico">📋</div><div class="nm">约束划得清</div></div>
+    <div class="badge" id="bg2"><div class="ico">🎯</div><div class="nm">方案讲得明</div></div>
+    <div class="badge" id="bg3"><div class="ico">🛡</div><div class="nm">红线守住了</div></div>
+    <div class="badge" id="bg4"><div class="ico">🏅</div><div class="nm">检测过关</div></div>
+  </div>
+  <h3>本情境交付物自检（课前对一遍，课中交一遍）</h3>
+  <ul class="checklist" id="deliverList">
+    <li tabindex="0">T1 签收单（工单八栏，学生＋教师签）</li>
+    <li tabindex="0">T2 授权核对单（编号＋范围＋签字时序早于开机）</li>
+    <li tabindex="0">T3 批次记录表（成功／失败／补采逐条留痕）</li>
+    <li tabindex="0">T4 数据集清单（命名合规 100%、重复率 ≤0.5%）</li>
+    <li tabindex="0">T7 人机分工说明（用 AI 出脚本草案时必附：哪段 AI 生成、改了哪、谁复核签字）</li>
+  </ul>
+  <h3>接下来</h3>
+  <p>下一个情境 <b>LF1-Q2 标注规范执行与批次质检</b>（32h·L1）：道路场景图像 1000 条，按规范 v1.3 标"车辆／行人／骑行者"三类目标——Q1 练的是"采得合规"，Q2 练的是"标得一致"。你交出去的数据集，就是 Q2 的输入。</p>
+  <p class="small">教师授课包（六步四层网格表、工单、Rubric、错误案例卡）见同目录《LF1-Q1_多源数据采集任务执行与数据集交付_教师授课包_正式版.html》。</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════ 红线炸号弹窗 ═══════════ -->
+<div class="boom" id="boom">
+  <div class="boom-card">
+    <h2>💥 触发 D 类红线</h2>
+    <p id="boomMsg"></p>
+    <div class="rule" id="boomRule"></div>
+    <p class="small" style="color:#c9a9a6">在真实课程中，这意味着一票否决／本情境 0 分。在这里，意味着本关（本轮）清零重来——记住这个手感。</p>
+    <button class="btn warn" onclick="closeBoom()">我记住了，重来</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 状态 ══════════════════ */
+var S = {
+  levels:{lv1:0,lv2:0,lv3:0,lv4:0,lv5:0,lv6:0},
+  answers:{}, fills:{}, sorts:{},
+  sim:{started:false, round:0, roundOk:false, booms:0, finished:false, softTried:{}},
+  quiz:{}, quizDone:false, quizPass:false,
+  checklist:{}
+};
+try{ var saved = localStorage.getItem('lf1q1_module'); if(saved) S = Object.assign(S, JSON.parse(saved)); }catch(e){}
+function save(){ try{ localStorage.setItem('lf1q1_module', JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ══════════════════ 进度 ══════════════════ */
+function progress(){
+  var lv = Object.values(S.levels).filter(function(v){return v>0}).length;
+  var p = Math.round(lv/6*60) + (S.sim.finished?20:0) + (S.quizDone && S.quizPass?20:0);
+  p = Math.min(100, p);
+  document.getElementById('progressBar').style.width = p+'%';
+  document.getElementById('progressTxt').textContent = '进度 '+p+'%';
+}
+
+/* ══════════════════ 关卡 ══════════════════ */
+function go(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function toggleLevel(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('locked')){ flash('先完成上一关', 'info'); return; }
+  el.classList.toggle('open');
+}
+function unlock(){
+  var ids = ['lv1','lv2','lv3','lv4','lv5','lv6'];
+  for(var i=0;i<ids.length;i++){
+    var el = document.getElementById(ids[i]);
+    if(i===0 || S.levels[ids[i-1]]>0) el.classList.remove('locked');
+  }
+}
+function renderStars(id, stId){
+  var stars = S.levels[id] || 0;
+  var st = document.getElementById(stId);
+  st.innerHTML = '';
+  for(var i=0;i<3;i++) st.innerHTML += (i<stars?'<b>★</b>':'☆');
+}
+function clearLevel(id, stId, stars){
+  var el = document.getElementById(id);
+  var qs = el.querySelectorAll('.quiz-q');
+  var answered = 0;
+  qs.forEach(function(q){
+    var k = q.dataset.q;
+    if(S.answers[k] || S.fills[k] || S.sorts[k]) answered++;
+  });
+  if(answered < qs.length){ flash('本关还有 '+(qs.length-answered)+' 题未作答', 'info'); return; }
+  S.levels[id] = stars;
+  renderStars(id, stId);
+  unlock(); save(); progress();
+  flash('本关完成！'+(stars<3?'（有题答错，星拿满的办法是回去改对）':'满星 ⭐⭐⭐'), 'good');
+}
+function resetLevel(id, stId){
+  S.levels[id] = 0;
+  renderStars(id, stId);
+  unlock(); save(); progress();
+  flash('触发红线：本关星星清零，重来。', 'bad');
+}
+
+/* ══════════════════ 答题判定 ══════════════════ */
+var ANSWER = {
+  l1q1:'B', l1q3:'A', l2q1:'B', l2q2:'B',
+  l3q1:'B', l3q2:'B', l3q3:'B',
+  l4q2:'B', l4q3:'B',
+  l5q1:'A', l5q2:'B', l5q3:'B',
+  l6q1:'B', l6q2:'A', l6q3:'B'
+};
+var REASON = {
+  l1q1:'六步① 学生活动：读 SOP 划 4 项硬约束——模态／量级／授权／命名。这四项划不出来，后面全乱。',
+  l1q3:'⑥.3 Q1 情境描述：500 张缺陷图像＋200 条工位语音指令。量级是硬约束，"多采备用"即越界（⑩.2.4）。',
+  l2q1:'六步②：计划表强制填"失败率 20% 补采预案"。500×20%＝100 条——预案不写，失败时只能停工。',
+  l2q2:'六步② 教师活动：给计划表模板，强制填"补采预案""命名冲突"两栏。这两栏是专治"先采后想"的。',
+  l3q1:'六步③④：答质疑要给出可执行路径——试测失败率、按预案补采、同参数同命名、量记进批次记录表（T3）。',
+  l3q2:'G3（绑 A27）：开机前核对授权书编号并签采集确认单；⑩.1 检查方式＝核对单签字时序 vs 设备开机日志，时序倒挂即红线。',
+  l3q3:'时间不够可以砍量级并写入决策记录，但不能砍授权核对——红线⑥.3 Q1 ①。',
+  l4q2:'改参数三件套：记录变更原因＋小样本验证＋告知搭档。缺任何一件，参数链就断了。',
+  l4q3:'⑦.3 🟡 陪同层（Q1④）：采集脚本草案由 LLM 出、人逐行复核＋小样本实测；⑧.2.1：每份产出附 T7。',
+  l5q1:'G2／G1／④.1：命名合规 100%、重复率 ≤0.5%、批次成功率 ≥95%。三条线不过，交付包不打钩。',
+  l5q2:'命名冲突预案（六步② 强制栏）就是为这一刻写的：重命名＋登记变更＋复检，100% 命名合规才入库。',
+  l5q3:'失败与补采必须留痕："出错偷偷重来 → 失败记录缺失即判方法维 1 分"（⑦.1）。删帧不登记＝没发生过？不，是方法维 1 分。',
+  l6q1:'⑥.3 Q1 评价要点：专业维看成功率／命名合规率／重复率。',
+  l6q2:'⑥.3 Q1 评价要点：方法维看补采预案是否真被执行——写了的预案没跑，等于没写。',
+  l6q3:'⑥.3 Q1 评价要点：发展维看脚本修改是否有实测依据；⑧.2 发展能力档位要求改进项具体可执行。'
+};
+function pick(btn, key, val, boomArg){
+  var box = btn.closest('.quiz-q');
+  var level = btn.closest('.level');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); b.disabled = false; });
+  btn.classList.add('picked');
+  S.answers[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ANSWER[key]){
+    btn.classList.add('right');
+    fb.className = 'feedback good show';
+    fb.innerHTML = '✅ 正确。'+REASON[key];
+  }else if(boomArg){
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '💥 红线选项。'+REASON[key];
+    if(level){ resetLevel(level.id, 'st'+level.id.slice(2)); }
+    boom(boomArg.m, boomArg.r);
+  }else{
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '❌ 不对。'+REASON[key]+'（正确选项已标出，可再想一想）';
+  }
+}
+function checkFill(key, pattern, fbId, okMsg){
+  var v = document.getElementById(key).value.trim();
+  var fb = document.getElementById(fbId);
+  var re = new RegExp(pattern);
+  if(v.length < 6){ fb.className='feedback info show'; fb.innerHTML='再写具体点——复述是要说给组长听的。'; return; }
+  S.fills[key] = v; save();
+  if(re.test(v)){ fb.className='feedback good show'; fb.innerHTML='✅ '+okMsg; }
+  else{ fb.className='feedback bad show'; fb.innerHTML='❌ 漏了关键要素：授权（书／编号／范围）。授权边界说不清，组长不敢放你开机。'; }
+}
+
+/* ══════════════════ 排序题 ══════════════════ */
+(function initDrag(){
+  var lists = document.querySelectorAll('.drag-list');
+  lists.forEach(function(ul){
+    var dragEl = null;
+    ul.addEventListener('dragstart', function(e){ dragEl = e.target; e.target.classList.add('dragging'); });
+    ul.addEventListener('dragend', function(e){ e.target.classList.remove('dragging'); });
+    ul.addEventListener('dragover', function(e){ e.preventDefault();
+      var after = getAfter(ul, e.clientY);
+      if(after == null) ul.appendChild(dragEl); else ul.insertBefore(dragEl, after);
+    });
+    ul.querySelectorAll('li').forEach(function(li){
+      li.tabIndex = 0;
+      li.addEventListener('keydown', function(e){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li);
+      });
+    });
+  });
+  function getAfter(ul, y){
+    var items = [].filter.call(ul.querySelectorAll('li:not(.dragging)'), function(el){
+      var r = el.getBoundingClientRect(); return y < r.top + r.height/2;
+    });
+    return items[0] || null;
+  }
+})();
+function checkSort(ulId, fbId){
+  var ul = document.getElementById(ulId);
+  var order = [].map.call(ul.querySelectorAll('li'), function(li){ return li.dataset.k; }).join('');
+  var fb = document.getElementById(fbId);
+  S.sorts[ulId] = order; save();
+  var target = (ulId==='sortL2') ? '12345' : '1234567';
+  if(order === target){
+    fb.className='feedback good show';
+    fb.innerHTML='✅ 顺序正确。'+(ulId==='sortL2'
+      ? '真实工作流：先懂约束，再排计划，先核授权，后动设备。'
+      : '实施步原序（六步④）：配参数→试采 20 条→全量采集→记成功/失败量→按预案补采→命名入库→去重与完整性初检。');
+  }else{
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 顺序还不对。提示：授权核对在开机之前；试采在全量之前；入库前的初检是最后一道关。';
+  }
+}
+
+/* ══════════════════ 仿真实训：采集参数配置模拟器 ══════════════════ */
+var ROUNDS = [
+  {key:'r0', name:'第 1 轮 · 开机前授权核对',
+   req:'<b>业务需求单（教学样例）</b>：工位设备已就位，批次 CQ-2026-1101 待采集。开机前最后一道手续是什么？',
+   opts:[
+     {t:'A. 核对授权书编号 SQ-2026-031 与授权范围，签采集确认单（T2 授权核对单）', fx:'ok'},
+     {t:'B. 周五就要交付，先开机试采 20 条，授权单后面一起补', fx:'boom',
+      m:'你未核授权书编号即开机采集。',
+      r:'D 类红线（⑥.3 Q1 ①）：未核授权书编号即开机采集 → 本情境 0 分＋重做。⑩.2.1："先用后补授权"按一票否决处理。授权链是整批数据的合法性起点，没有"后补"这个选项。'}
+   ],
+   debrief:'复盘：授权核对单（T2）的签字时序必须早于设备开机日志（⑩.1 检查方式）。时序倒挂＝红线；核编号、核范围、核"两个不得"（不人脸、不工牌），一项都不能少。'},
+
+  {key:'r1', name:'第 2 轮 · 基准采集单参数配置', type:'config',
+   req:'<b>业务需求单 RD-2026-1101（教学样例）</b>：场景＝校内智能制造实训区"轴承外观检测"工位（A—D，授权书 SQ-2026-031 范围内）；模态＝缺陷图像＋工位语音指令；量级＝500 张图像＋200 条语音；时限＝周五前交付，不停线。<br>请配置：模态、图像分辨率、音频采样率、试采量、目标量级。'},
+
+  {key:'r2', name:'第 3 轮 · 越界场景要求',
+   req:'<b>口头附加单（教学样例）</b>：设备科王师傅说"顺路把厂区门口的车辆与行人图像也采了，给以后的安防模型备用，反正相机都架上了"。该场景<b>不在</b>授权书 SQ-2026-031 范围内。',
+   opts:[
+     {t:'A. 拒绝采集，当场把这条要求记入批次记录表（T3），按流程上报', fx:'ok'},
+     {t:'B. 先采 20 张备着，以后立项了再用', fx:'boom',
+      m:'你采集了授权范围外的场景数据。',
+      r:'D 类红线（⑩.2.4）：采集范围不得超需求单写明的场景与量级，"多采一点备用"视为越界 → 按⑧.4：本情境 0 分＋重做＋合规再培训。'},
+     {t:'C. 改成拍工位内"类似场景"应付一下', fx:'soft',
+      c:'数据与需求单不符：交付的不是需求要的场景，数据集被打回——白采还浪费时间。需求外的场景一个像素都不该进包。'}
+   ],
+   debrief:'复盘：授权书写的是场景与量级，不是"我觉得相关"。对越界要求当场拒绝并留痕（G3，绑 A27）——拒绝也是交付物的一部分，写进 T3 才算留痕。'},
+
+  {key:'r3', name:'第 4 轮 · 敏感画面处置',
+   req:'<b>试采第 137 帧（教学样例）</b>：操作工转身入镜，画面含人脸与工牌，轴承主体清晰可见。按 SOP 这一帧怎么处置？',
+   opts:[
+     {t:'A. 保留该帧——人脸只占画面小角，主体是轴承', fx:'boom',
+      m:'你保留了含人脸与工牌的采集帧。',
+      r:'D 类红线（⑥.3 Q1 ②）：采集画面含人脸／车牌／工牌 → 立即删除＋一票否决。⑩.2.2：人脸与语音数据不得外传、不得留存。'},
+     {t:'B. 给人脸打码后留存，以后可能用得上', fx:'boom',
+      m:'打码后留存同样属于"留存"。',
+      r:'D 类红线（⑥.3 Q1 ②／⑩.2.2）：采集画面含人脸／车牌／工牌 → 立即删除＋一票否决；不得留存。"先存着"本身就是违规动作。'},
+     {t:'C. 立即删除该帧，登记批次记录表，调整取景范围（避让人流通道）后重采', fx:'ok'}
+   ],
+   debrief:'复盘：人脸／工牌／车牌一旦入镜，唯一动作是立即删除＋一票否决（⑥.3 Q1 ②），打码、裁剪后留存同样算"留存"（⑩.2.2）。正解是删除＋登记＋调整取景后重采——取景范围本身就是采集参数的一部分。'},
+
+  {key:'r4', name:'第 5 轮 · 脚本、参数与 AI 边界',
+   req:'<b>实施中（教学样例）</b>：你让 LLM 出了采集脚本草案；同时发现曝光偏暗，凹坑细节丢失。以下四个做法，选正确的。',
+   opts:[
+     {t:'A. 脚本草案逐行复核参数＋小样本实测，附 T7 人机分工说明', fx:'ok'},
+     {t:'B. LLM 脚本直接跑全量，效率优先，出了问题再说', fx:'soft',
+      c:'AI 使用规范性 0 分（⑧.2.1：未交 T7 或说不清判定依据 → 扣满 7 分并转⑧.4 复核），方法维重挫；参数未复核直接全量，签字的人是你，风险你背。'},
+     {t:'C. 搭档刚配好的参数，你直接改大曝光，不用告诉任何人', fx:'boom',
+      m:'你擅改了他人的已配参数且没有记录。',
+      r:'D 类红线（⑥.3 Q1 ③）：擅改他人已配参数且不记录 → 专业维 −20% 并恢复默认。改参三件套：记录原因＋小样本验证＋告知原主人。'},
+     {t:'D. 记录参数变更原因，调曝光后小样本验证，告知搭档并在 T7 登记', fx:'ok'}
+   ],
+   debrief:'复盘：采集脚本草案是 🟡 陪同层——LLM 出、人逐行复核＋小样本实测＋T7（⑦.3 Q1④；⑧.2.1）；改他人参数先记录后变更（⑥.3 Q1 ③）。AI 提效可以，签字负责的不变。'},
+
+  {key:'r5', name:'第 6 轮 · 去重与完整性初检',
+   req:'<b>初检结果（教学样例）</b>：入库前初检——成功率 96.8%（≥95% ✅）、重复率 0.4%（≤0.5% ✅）、命名合规 94%（有 3 个文件命名冲突 ❌）。现在怎么办？',
+   opts:[
+     {t:'A. 把重复帧和冲突文件直接删掉，当没发生过', fx:'soft',
+      c:'删除不留痕＝变更无记录："出错偷偷重来 → 失败记录缺失即判方法维 1 分"（⑦.1）。而且成功率数字从此对不上账。'},
+     {t:'B. 把成功率登记数字改好看一点', fx:'boom',
+      m:'你打算修改登记数字掩盖问题。',
+      r:'一票否决项（⑧.4）：代做、抄袭、伪造数据（改 Kappa／合格率、补签双签）→ 课程 0 分＋重修＋记入诚信档案。数字不好看可以补采、可以返工，但不能改数。'},
+     {t:'C. 登记批次记录表（成功/失败/补采），按命名规范修正 3 个冲突并登记变更，复检通过再交付', fx:'ok'}
+   ],
+   debrief:'复盘：初检三条线——命名合规 100%、重复率 ≤0.5%、成功率 ≥95%（G2／④.1）。失败与补采要留痕（T3），修正要登记——"可追溯"才是数据集的交付标准，不是"看起来干净"。'}
+];
+var cfg = {mods:{}, res:'', rate:'', trial:'', amt:''};
+
+function startSim(){
+  S.sim = {started:true, round:0, roundOk:false, booms:S.sim.booms||0, finished:false, softTried:{}};
+  cfg = {mods:{}, res:'', rate:'', trial:'', amt:''};
+  save(); renderSim();
+  document.getElementById('btnStart').style.display='none';
+  document.getElementById('btnSend').style.display='inline-flex';
+  document.getElementById('btnCloud').style.display='inline-flex';
+  document.getElementById('simState').textContent='配置中';
+  document.getElementById('simState').style.color='#7fd6c0';
+  simLog('系统：批次 CQ-2026-1101 已下发，共 6 轮决策。授权边界校验与完整性校验全程开启。', '#7fd6c0');
+}
+function simMeter(){
+  document.getElementById('mRound').textContent = S.sim.round + (S.sim.finished?'/6（已完成）':'/6');
+  document.getElementById('mBoom').textContent = S.sim.booms;
+}
+function simLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('simLog').prepend(d);
+}
+function renderSim(){
+  simMeter();
+  var panel = document.getElementById('simPanel');
+  var deb = document.getElementById('simDebrief');
+  var fb = document.getElementById('simFb');
+  fb.className='feedback'; fb.innerHTML='';
+  deb.className='debrief'; deb.innerHTML='';
+  if(S.sim.finished){ renderSimDone(panel); return; }
+  var r = ROUNDS[S.sim.round];
+  var html = '<div class="sample-card"><div class="sid">'+r.name+'（教学样例）</div><div class="scene">'+r.req+'</div></div>';
+  if(r.type==='config'){ html += renderCfg(r); }
+  else{
+    r.opts.forEach(function(o, j){
+      var dis = S.sim.softTried[S.sim.round+'#'+j] ? ' disabled' : '';
+      html += '<button class="sim-opt"'+dis+' onclick="simChoose('+S.sim.round+','+j+')">'+esc(o.t)+'</button>';
+    });
+  }
+  panel.innerHTML = html;
+}
+function renderCfg(r){
+  var m = cfg.mods;
+  function chip(k, label){ return '<button class="chip'+(m[k]?' on':'')+'" onclick="toggleMod(\''+k+'\')">'+label+'</button>'; }
+  return '<div class="sim-controls">'
+    + '<div><label>采集模态（按需求单选多选，点选切换）</label><div class="chips">'
+    + chip('img','图像（缺陷）') + chip('aud','语音（工位指令）') + chip('txt','文本（设备日志）') + chip('sen','结构化（传感器读数）') + chip('road','＋厂区门口道路图像（口头附加）')
+    + '</div><div class="chip-hint'+(m.road?' on':'')+'" id="roadHint">⚠ 系统校验：该场景不在授权书 SQ-2026-031 范围内（⑩.2.4 "多采一点备用"视为越界）。</div></div>'
+    + '<div><label>图像分辨率</label><select id="cfgRes" onchange="cfg.res=this.value">'
+    + '<option value="">— 请选择 —</option><option value="1080">1080P（SOP 参数）</option><option value="4k">4K（更清晰）</option><option value="720">720P（省存储）</option></select></div>'
+    + '<div><label>音频采样率</label><select id="cfgRate" onchange="cfg.rate=this.value">'
+    + '<option value="">— 请选择 —</option><option value="48">48kHz（与视频同步）</option><option value="16">16kHz（省带宽）</option><option value="8">8kHz（语音识别常用）</option></select></div>'
+    + '<div><label>试采量</label><select id="cfgTrial" onchange="cfg.trial=this.value">'
+    + '<option value="">— 请选择 —</option><option value="20">20 条（SOP 试采量）</option><option value="0">0 条（直接全量）</option><option value="200">200 条（稳一点）</option></select></div>'
+    + '<div><label>目标量级</label><select id="cfgAmt" onchange="cfg.amt=this.value">'
+    + '<option value="">— 请选择 —</option><option value="500">500 张图像＋200 条语音（按需求单）</option><option value="600">600 张图像＋200 条语音（多采 100 张备用）</option><option value="300">300 张图像＋100 条语音（时间紧，砍一半）</option></select></div>'
+    + '</div>'
+    + '<button class="btn" onclick="submitCfg()">提交采集配置，系统校验授权边界与完整性</button>';
+}
+function toggleMod(k){
+  cfg.mods[k] = !cfg.mods[k];
+  renderSim();
+  if(cfg.mods.road) simLog('⚠ 系统提示：所选场景不在授权范围内', '#e0a437');
+}
+function submitCfg(){
+  var m = cfg.mods;
+  if(m.road){
+    boom('你配置的模态包含授权范围外的场景数据。',
+         'D 类红线（⑩.2.4）：采集范围不得超需求单写明的场景与量级，"多采一点备用"视为越界 → 按⑧.4：本情境 0 分＋重做＋合规再培训。');
+    simBoom('第 2 轮：勾选授权范围外场景（厂区门口道路图像）');
+    return;
+  }
+  if(!m.img || !m.aud || m.txt || m.sen){
+    simSoft('模态与需求单不符：需求是"缺陷图像＋工位语音指令"。缺项＝交付缺件；多项＝超需求采集——交付包被打回，周五前交不出。');
+    return;
+  }
+  if(!cfg.res){ simSoft('请先选择图像分辨率。'); return; }
+  if(!cfg.rate){ simSoft('请先选择音频采样率。'); return; }
+  if(!cfg.trial){ simSoft('请先选择试采量。'); return; }
+  if(!cfg.amt){ simSoft('请先选择目标量级。'); return; }
+  if(cfg.amt === '600'){
+    boom('你把目标量级配成了 600 张——比需求单多了 100 张"备用"。',
+         'D 类红线（⑩.2.4）：采集范围不得超需求单写明的场景与量级，"多采一点备用"视为越界 → 按⑧.4：本情境 0 分＋重做＋合规再培训。');
+    simBoom('第 2 轮：量级超需求单（多采 100 张备用）');
+    return;
+  }
+  if(cfg.amt === '300'){
+    simSoft('量级不足：300 张＋100 条不到需求单的一半，交付包缺件，一次性通过率归零。时间紧可以写进决策记录申请调整，不能擅自砍半。');
+    return;
+  }
+  if(cfg.res === '4k'){
+    simSoft('4K 超出 SOP 参数配置：存储翻倍、下游模型按 1080P 训练，分辨率不匹配反致精度下降，还得转码重来。');
+    return;
+  }
+  if(cfg.res === '720'){
+    simSoft('720P 细节不足：凹坑与划伤边界模糊，下游漏检率上升——缺陷检测批次的命就是细节，这批会被退回重采。');
+    return;
+  }
+  if(cfg.rate !== '48'){
+    simSoft('采样率与视频不同步：⑨.1 要求 1080P 与 48kHz 同步，否则语音指令与画面错位，200 条语音全部作废。');
+    return;
+  }
+  if(cfg.trial === '0'){
+    simSoft('跳过试采＝拿全批试错：参数错了 500 张全废，成本是试采的 25 倍。SOP 的顺序是配参数→试采 20 条→全量。');
+    return;
+  }
+  if(cfg.trial === '200'){
+    simSoft('试采过量：200 条试采挤占全量与补采时间，周五前交付有风险；试采的目的是验证参数，不是提前采完。');
+    return;
+  }
+  simOk('第 2 轮');
+}
+function simChoose(ri, oi){
+  var r = ROUNDS[ri], o = r.opts[oi];
+  if(o.fx === 'boom'){
+    boom(o.m, o.r);
+    simBoom(r.name+'：'+o.t.slice(0,14)+'…');
+    return;
+  }
+  if(o.fx === 'soft'){
+    S.sim.softTried[ri+'#'+oi] = true; save();
+    var panel = document.getElementById('simPanel');
+    var btns = panel.querySelectorAll('.sim-opt');
+    if(btns[oi]){ btns[oi].disabled = true; btns[oi].classList.add('picked-soft'); }
+    simSoft(o.c);
+    simLog('⚠ '+r.name+'：后果已记录——'+o.c.slice(0,30)+'…', '#e0a437');
+    return;
+  }
+  simOk(r.name);
+}
+function simSoft(msg){
+  var fb = document.getElementById('simFb');
+  fb.className='feedback bad show';
+  fb.innerHTML = '⚠ <b>后果</b>：'+msg+'（本轮未过，换个做法再试——真实工位上，这个后果可能就是整批返工。）';
+}
+function simOk(label){
+  var r = ROUNDS[S.sim.round];
+  S.sim.roundOk = true; save();
+  var fb = document.getElementById('simFb');
+  fb.className='feedback good show';
+  fb.innerHTML = '✅ <b>本轮处置正确</b>：'+label;
+  var deb = document.getElementById('simDebrief');
+  deb.className='debrief on';
+  deb.innerHTML = '🧭 <b>'+r.debrief+'</b>';
+  simLog('✅ '+label+' 处置正确', '#7fd6c0');
+  S.sim.round++;
+  if(S.sim.round >= ROUNDS.length){
+    S.sim.finished = true; save();
+    document.getElementById('simState').textContent='已交付 ✅';
+    document.getElementById('simState').style.color='#7fd6c0';
+    renderSim(); progress();
+    if(S.sim.booms === 0) flash('仿真实训通过且零炸号！徽章"红线守住了"点亮。', 'good');
+    else flash('仿真实训完成，但炸号 '+S.sim.booms+' 次——红线徽章拿不到，重跑一遍洗白。', 'info');
+  }else{
+    renderSim(); progress();
+  }
+}
+function simBoom(label){
+  S.sim.booms++;
+  S.sim.roundOk = false;
+  S.sim.softTried = {};
+  cfg = {mods:{}, res:'', rate:'', trial:'', amt:''};
+  save();
+  simLog('💥 触发红线：'+label+'｜本轮清零重来', '#ff6b60');
+  document.getElementById('simState').textContent='炸号 '+S.sim.booms+' 次·重来';
+  document.getElementById('simState').style.color='#ff9b94';
+  simMeter();
+}
+function renderSimDone(panel){
+  var pass = S.sim.booms === 0;
+  panel.innerHTML = '<div class="sample-card"><div class="sid">交付复盘（教学样例）</div>'
+    + '<div class="scene">6 轮决策全部完成：授权已核（T2）→ 参数 1080P／48kHz、试采 20 条通过 → 越界要求已拒绝并留痕 → 敏感帧已删除并重采 → AI 脚本按 🟡 层复核＋T7 → 初检三条线全过（命名 100%／重复率 0.4%／成功率 96.8%）。</div>'
+    + '<div class="ai">🧭 <b>复盘三句话</b>：① 授权链先于设备——T2 签字时序早于开机日志；② 边界靠"拒绝"守住——场景、量级、人脸工牌，一条都不越；③ 一切可追溯——成功/失败/补采/参数变更/修正记录，全部进 T3／T4／T7。'
+    + (pass ? '<br><br><b>结果：数据集交付通过，零炸号。</b>' : '<br><br><b>结果：数据集交付完成，但过程中炸号 '+S.sim.booms+' 次——真实课程里，一次就够本情境 0 分。</b>')
+    + '</div></div>';
+}
+function sendTrap(){
+  boom('你把试采数据包发给了同学，让他"帮忙跑脚本"。',
+       'D 类红线（⑩.1 Q1）：数据上传公有云或外发（含"发同学帮跑脚本"）→ 一票否决。数据不出隔离区，没有"帮个忙"例外。');
+  simBoom('工具栏：试采包外发同学');
+}
+function cloudTrap(){
+  boom('你把试采原图传到了外部 AI 服务，让它"帮忙看参数怎么调"。',
+       '红线（⑦.3 🔴 禁用／⑩.2.2）：人脸与语音数据不得外传、不得留存、禁上传任何外部 AI 服务 → 一票否决。原始样本不出隔离网。');
+  simBoom('工具栏：原始样本上传外部 AI 服务');
+}
+function boom(msg, rule){
+  document.getElementById('boomMsg').textContent = msg;
+  document.getElementById('boomRule').textContent = rule;
+  document.getElementById('boom').classList.add('on');
+}
+function closeBoom(){
+  document.getElementById('boom').classList.remove('on');
+  if(S.sim.started && !S.sim.finished) renderSim();
+}
+
+/* ══════════════════ 检测 ══════════════════ */
+var QUIZ = [
+  {t:'Q1 情境要采集的量级是？', o:['500 张缺陷图像＋200 条工位语音指令','1000 条道路场景图像','2,000 张零件缺陷图','越多越好，采了备用'], a:0,
+   r:'⑥.3 Q1 情境描述：需为下游模型采集 500 张缺陷图像＋200 条工位语音指令。量级是硬约束，"多采备用"即越界（⑩.2.4）。'},
+  {t:'【判断】"周五要交付，时间紧，先开机试采，授权核对单后面补。"', o:['对','错'], a:1,
+   r:'错。⑥.3 Q1 红线①：未核授权书编号即开机采集 → 本情境 0 分＋重做；⑩.2.1："先用后补授权"按一票否决处理。'},
+  {t:'开机前必须完成的关键动作是？', o:['核对授权书编号并签采集确认单（T2）','测试相机快门速度','把脚本发给同学看看','先采 20 张看看效果'], a:0,
+   r:'G3（绑 A27）：开机前核对授权书编号并签采集确认单；⑩.1 检查方式＝核对单签字时序 vs 设备开机日志。'},
+  {t:'多模态采集终端的同步参数要求是？', o:['1080P 与 48kHz 同步','4K 与 16kHz','720P 与 8kHz','无要求，随便配'], a:0,
+   r:'⑨.1 硬件表：多模态采集终端（相机＋麦克风阵列＋支架）须 1080P 与 48kHz 同步。'},
+  {t:'【判断】"同类图像多采 100 张备用，不采白不采。"', o:['对','错'], a:1,
+   r:'错。⑩.2.4 最小必要与目的限定：采集范围不得超需求单写明的场景与量级，"多采一点备用"视为越界。'},
+  {t:'实施步的试采量应为多少？', o:['20 条','0 条（直接全量）','200 条','采到成功为止'], a:0,
+   r:'⑥.3 Q1 六步④ 学生活动：配参数→试采 20 条→全量采集……先小样本后全量是 SOP 硬步骤。'},
+  {t:'计划表必须预留的补采预案，按多少失败率设计？', o:['20%','5%','50%','不需要预案'], a:0,
+   r:'⑥.3 Q1 六步②：强制填"失败率 20% 补采预案"；500×20%＝100 条补采量。'},
+  {t:'【判断】"把试采包发同学帮忙跑脚本，只要不传原图就行。"', o:['对','错'], a:1,
+   r:'错。⑩.1 Q1 红线：数据上传公有云或外发（含"发同学帮跑脚本"）→ 一票否决。脚本可以人来复核，数据不出隔离区。'},
+  {t:'入库前"去重与完整性初检"的三条线是？', o:['命名合规 100%、重复率 ≤0.5%、批次成功率 ≥95%','速度、数量、体积','无明确指标','只看文件大小'], a:0,
+   r:'G2／④.1：命名合规 100%、重复率 ≤0.5%；G1：批次成功率 ≥95%。三条线不过，交付包不打钩。'},
+  {t:'【排序】实施步的正确顺序是？', o:['配参数→试采 20 条→全量采集→记成功/失败量→按预案补采→命名入库→去重与完整性初检','试采→全量→配参数→命名入库→补采','全量采集→试采→命名入库','配参数→全量→补采→试采→入库'], a:0,
+   r:'⑥.3 Q1 六步④ 学生活动原序：配参数→试采 20 条→全量采集→记成功/失败量→按预案补采→命名入库→去重与完整性初检。'}
+];
+(function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  QUIZ.forEach(function(q, i){
+    var div = document.createElement('div');
+    div.className = 'quiz-q'; div.dataset.q = 'fq'+i;
+    var html = '<div class="q">'+(i+1)+'. '+esc(q.t)+'</div><div class="opts">';
+    q.o.forEach(function(o, j){
+      html += '<button class="opt" onclick="quizPick(this,\'fq'+i+'\','+j+','+q.a+')">'+'ABCD'[j]+'. '+esc(o)+'</button>';
+    });
+    html += '</div><div class="feedback" id="fb-fq'+i+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+function quizPick(btn, key, val, ans){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.quiz[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ans){
+    btn.classList.add('right');
+    fb.className='feedback good show'; fb.innerHTML='✅ '+QUIZ[parseInt(key.slice(2))].r;
+  }else{
+    btn.classList.add('wrong');
+    fb.className='feedback bad show'; fb.innerHTML='❌ '+QUIZ[parseInt(key.slice(2))].r;
+  }
+}
+function gradeQuiz(){
+  var answered = 0, right = 0;
+  QUIZ.forEach(function(q, i){
+    var v = S.quiz['fq'+i];
+    if(v !== undefined){ answered++; if(v === q.a) right++; }
+  });
+  if(answered < QUIZ.length){ flash('还有 '+(QUIZ.length-answered)+' 题未作答', 'info'); return; }
+  S.quizDone = true; S.quizPass = right >= 8;
+  var pct = Math.round(right/QUIZ.length*100);
+  document.getElementById('ringTxt').textContent = pct+'%';
+  document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+  var v = document.getElementById('quizVerdict');
+  if(S.quizPass){
+    v.textContent = '✅ 过关（'+right+'/10）'; v.style.color = 'var(--ok)';
+    document.getElementById('lockBox').classList.remove('on');
+    document.getElementById('bg4').classList.add('got');
+  }else{
+    v.textContent = '❌ 未达标（'+right+'/10，需 8 题）'; v.style.color = 'var(--bad)';
+    document.getElementById('lockBox').classList.add('on');
+    document.getElementById('bg4').classList.remove('got');
+  }
+  document.getElementById('quizDetail').textContent = '答对 '+right+' 题；错题解析已展开，回去重学再测。';
+  save(); progress();
+}
+
+/* ══════════════════ 交付物清单 ══════════════════ */
+(function initList(){
+  var ul = document.getElementById('deliverList');
+  ul.querySelectorAll('li').forEach(function(li, i){
+    if(S.checklist[i]) li.classList.add('done');
+    function toggle(){
+      li.classList.toggle('done');
+      S.checklist[i] = li.classList.contains('done'); save();
+    }
+    li.onclick = toggle;
+    li.onkeydown = function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } };
+  });
+})();
+
+/* ══════════════════ 提示 ══════════════════ */
+function flash(msg, type){
+  var d = document.createElement('div');
+  d.className = 'feedback '+(type==='good'?'good':type==='info'?'info':'bad')+' show';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:200;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:260px;text-align:center';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+/* ══════════════════ 徽章与关卡状态恢复 ══════════════════ */
+(function initState(){
+  ['lv1','lv2','lv3','lv4','lv5','lv6'].forEach(function(id){ renderStars(id, 'st'+id.slice(2)); });
+  if(S.levels.lv1>0) document.getElementById('bg1').classList.add('got');
+  if(S.levels.lv3>0) document.getElementById('bg2').classList.add('got');
+  if(S.sim.finished && S.sim.booms===0) document.getElementById('bg3').classList.add('got');
+  if(S.quizDone && S.quizPass) document.getElementById('bg4').classList.add('got');
+  if(S.sim.started && !S.sim.finished){
+    document.getElementById('btnStart').style.display='none';
+    document.getElementById('btnSend').style.display='inline-flex';
+    document.getElementById('btnCloud').style.display='inline-flex';
+    document.getElementById('simState').textContent='配置中（第 '+(S.sim.round+1)+' 轮）';
+  }
+  if(S.sim.finished){
+    document.getElementById('btnStart').style.display='none';
+    document.getElementById('simState').textContent='已交付 ✅';
+  }
+  if(S.sim.started || S.sim.finished) renderSim();
+})();
+
+unlock(); progress();
+</script>
+</body>
+</html>

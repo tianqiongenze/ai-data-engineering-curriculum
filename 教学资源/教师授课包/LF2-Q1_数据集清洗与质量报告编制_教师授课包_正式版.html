@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF2-Q1 数据集清洗与质量报告编制 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target{animation:none;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">LF2-Q1 数据集清洗与质量报告编制</span>
+  <span class="meta">教师授课包 · V1.0 · GitBook 风 · 承载 LF2-Q1（36h·L2） · 生成于 2026-10-25 · D类红线 3 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">情境信息条</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">36 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表（四维四档）</a></li>
+      <li><a href="#err">典型错误案例卡（3 张）</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub">
+      <li><a href="#assume">口径与假设说明</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <h1>数据集清洗与质量报告编制 · 教师授课包</h1>
+    <div class="subtitle">LF2 数据治理与质量管控 ｜ 情境 LF2-Q1（36h/2.25cr·S3·L2）｜ 对应任务 2.1 ｜ 原子 A07 / A08 / A28（均首次教学）｜ 内容与课标逐字一致</div>
+
+    <!-- 1 -->
+    <section id="info">
+      <h2><span class="num">01</span>情境信息条</h2>
+      <div class="kv">
+        <div><b>课程</b>LF2 数据治理与质量管控（112h/7cr）</div>
+        <div><b>情境</b>LF2-Q1 数据集清洗与质量报告编制（36h/2.25cr·S3·L2）</div>
+        <div><b>对应任务</b>Table1 2.1（L2）</div>
+        <div><b>绑定原子</b>LF2-Q1-A07 / A08 / A28（均首次教学）</div>
+        <div><b>授课对象</b>2026 级 32 人 · 16 工位（2 人 1 台）</div>
+        <div><b>场所</b>数据加工工位 + 数据平台测试环境（只读样本库）</div>
+        <div><b>质量基线</b>完整率 ≥99% ｜ 重复率 ≤0.5% ｜ 异常占比 ≤1.5%</div>
+        <div><b>本情境交付</b>T1 签收单、T2 处置规则表、T3 检测与指标表、T4 变更日志、T5 质量报告＋交付包、T11 人机分工说明</div>
+      </div>
+      <div class="card">
+        <span class="label">情境描述（课标原文）</span>
+        <p style="margin:4px 0;">某装备企业设备工况数据集（传感器时序 12 万行＋LF1 交付的图像标注集 3000 条）入库待用，算法组给定质量基线（完整率 ≥99%、重复率 ≤0.5%、异常占比 ≤1.5%）并要求 48h 内交付。约束：原始副本不得覆盖、变更须可回溯、异常值只可标记不可删。已知：交付单、质量规则表、清洗 SOP、指标定义、只读样本库。</p>
+      </div>
+      <h3>能力目标与原子绑定（PGSD-KSA，课标④原文）</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:132px">绑定原子</th><th style="width:150px">达标证据</th></tr></thead>
+          <tbody>
+            <tr><td class="c">G1 · P 专业</td><td>能用脚本检出缺失／重复／异常／格式四类问题并出分布图，识别率 ≥98%</td><td>LF2-Q1-A07</td><td>检测结果表＋教师复核</td></tr>
+            <tr><td class="c">G2 · P 专业</td><td>能按指标定义算出完整率／重复率／异常占比，与工具结果偏差 ≤1%</td><td>LF2-Q1-A28</td><td>指标计算表＋双算比对</td></tr>
+            <tr><td class="c">G3 · G 方法</td><td>能按处置规则清洗并保留原始副本与变更日志，变更可回溯 100%</td><td>LF2-Q1-A08</td><td>变更日志＋原始副本哈希</td></tr>
+            <tr><td class="c">G4 · S 社会</td><td>能执行"先备份后变更"，逐条登记谁改／改哪／依据，无日志变更 0 条</td><td>LF2-Q1-A08</td><td>日志抽查＋情景问答</td></tr>
+            <tr><td class="c">G5 · D 发展</td><td>能用 LLM 出检测脚本草案，逐行复核并补 2 条校本判定规则</td><td>LF2-Q1-A07</td><td>脚本注释＋组内评审</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="grid">
+      <h2><span class="num">02</span>6×4 网格教学活动表</h2>
+      <p>行＝六步，列＝四层。每格写"这一层学生在这一步做什么、教师给什么支持"，不写"讨论""练习"。四层 D 类红线要求完全相同。</p>
+      <div class="tablewrap">
+        <table class="grid-table">
+          <thead>
+            <tr>
+              <th>六步</th>
+              <th>A 领跑型（20%）</th>
+              <th>B 主力型（50%）</th>
+              <th>C 跟进型（20%）</th>
+              <th>D 兜底型（10%）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>① 资讯<br><span style="font-weight:400;color:#6b7c93">4h</span></td>
+              <td>独立通读交付单、质量规则表与指标定义，画出"3 项基线值—4 类问题—处置动作"对应表，写出"我预判会出错的 2 处"</td>
+              <td>按引导文读交付单与指标定义，填信息栏，划出 3 项基线值与 4 类问题定义，标出 2 条不确定规则</td>
+              <td>用填空式信息栏（已给 3 项基线提示），逐项找答案；不确定的圈出待问</td>
+              <td>教师用 3 行样例数据口头讲四类问题各长什么样，同伴领读指标定义，D 层复述 1 遍</td>
+            </tr>
+            <tr>
+              <td>② 计划<br><span style="font-weight:400;color:#6b7c93">4h</span></td>
+              <td>自定检测方案：检测项、判定阈值、处置规则、复检口径全自拟，做风险预判（哪类问题最耗时）</td>
+              <td>按模板列检测项、判定阈值、处置规则、复检口径、2 人分工；强制填全"异常值怎么处置""变更怎么记"两栏</td>
+              <td>从 2 套给定分工方案（按字段分／按问题类型分）中选 1 套，写出选择理由</td>
+              <td>用步骤卡（备份→检测→清洗→登记→复检→报告）排序，教师确认后贴工位挡板</td>
+            </tr>
+            <tr>
+              <td>③ 决策<br><span style="font-weight:400;color:#6b7c93">4h</span></td>
+              <td>上台讲处置依据，接受"删了更干净怎么办"质疑，当场修订并签决策记录</td>
+              <td>组内讲方案，回答"异常值为何只标记不删""原始副本哈希怎么留"两问，修订后签字</td>
+              <td>教师逐组审核处置规则表并签字；两问由教师给 2 个选项供选</td>
+              <td>教师一对一确认：先备份再动手、异常行找谁复核，确认后放行</td>
+            </tr>
+            <tr>
+              <td>④ 实施<br><span style="font-weight:400;color:#6b7c93">14h</span></td>
+              <td>独立跑全流程（备份并记哈希→四类检测→算指标→按规则清洗→逐条记变更→复检→写报告），兼指导同组 C/D 层；记录 3 个边界样本（如 -999 哨兵值）的判定依据</td>
+              <td>独立完成全流程七件事，每步留痕；异常（平台卡顿、坏行、口径不明）立即记录并上报</td>
+              <td>在 B 层帮扶下先跑样例子集（格式类优先），变更日志由 B 层复核后登记</td>
+              <td>在 B 层以上陪同下完成三个动作：备份、哈希登记、日志登记；不独立判定异常行</td>
+            </tr>
+            <tr>
+              <td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">5h</span></td>
+              <td>设计本批补充检查项（补 2 条），交叉抽查他人 20% 变更日志并签字</td>
+              <td>按 8 项检查清单逐项自检，改完再互检，双算 3 项指标</td>
+              <td>用打勾式检查卡逐项过，不会的项举手由 B 层带做</td>
+              <td>教师带着做 3 项核心检查（备份哈希、日志三要素、异常零删除），口头复述结果</td>
+            </tr>
+            <tr>
+              <td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">5h</span></td>
+              <td>自评＋互评＋上台讲 1 个边界样本处置依据，提出 1 条规则修改建议</td>
+              <td>自评＋接受互评，写 1 条改进项（下次课开头核对）</td>
+              <td>以教师点评为主，复述"我这次返工的几条是什么原因"</td>
+              <td>口头复述"今天学会了什么＋一条红线"，教师在评价栏签字确认</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="color:#6b7c93">时间列即课标⑥.2 六步学时：资讯 4 ＋ 计划 4 ＋ 决策 4 ＋ 实施 14 ＋ 检查 5 ＋ 评价 5 ＝ 36h，实施占比 38.9%。</p>
+    </section>
+
+    <!-- 3 -->
+    <section id="time">
+      <h2><span class="num">03</span>36 学时时间分配</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead>
+          <tbody>
+            <tr><td class="c">① 资讯</td><td class="c">4h</td><td>发交付单＋基线＋指标定义；讲授 ≤10min，只答疑、只指"往哪找"；学生划出 3 项基线值与 4 类问题定义</td><td>信息栏＋基线卡</td></tr>
+            <tr><td class="c">② 计划</td><td class="c">4h</td><td>给计划表模板，强制填"异常值怎么处置""变更怎么记"两栏；列检测项、判定阈值、处置规则、复检口径、2 人分工</td><td>计划表＋处置规则表</td></tr>
+            <tr><td class="c">③ 决策</td><td class="c">4h</td><td>逐组质疑"异常值为何只标记不删""原始副本哈希怎么留"，签字放行</td><td>决策记录（签字）</td></tr>
+            <tr><td class="c">④ 实施</td><td class="c">14h</td><td>巡视，只纠红线（覆盖原文件、无日志改动），不代写脚本；学生走全流程七件事</td><td>清洗集＋变更日志＋质量报告</td></tr>
+            <tr><td class="c">⑤ 检查</td><td class="c">5h</td><td>抽查 20%，双算 3 项指标，当众公布偏差；学生自检打勾→同伴互检→双算</td><td>自检表＋双算记录</td></tr>
+            <tr><td class="c">⑥ 评价</td><td class="c">5h</td><td>按 Rubric 打分，讲评 2 个典型错（删异常值、指标口径不一致）；自评、互评、写 1 条改进项</td><td>评分表＋反思条</td></tr>
+            <tr><td class="c"><b>合计</b></td><td class="c"><b>36h</b></td><td colspan="2">4＋4＋4＋14＋5＋5 ＝ 36h；实施占比 38.9%（课标⑥.2 校验表）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card ok">
+        <span class="label">时间弹性方案</span>
+        <p style="margin:4px 0;">平台故障可压 Q1⑤⑥（课标⑦.4）；<b>③决策的质疑与签字不走过场</b>。④实施不足 12h 时，样例子集由 12 行减半并在工单注明，基线与红线门槛不变。</p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="order">
+      <h2><span class="num">04</span>任务工单（学生版·八栏）</h2>
+      <div class="order">
+        <div class="row"><div class="k">1 任务名称与编号</div><div class="v">设备工况数据集清洗与质量报告编制 · 批次 DS-2026-4801（教学样例）｜编号 LF2-Q1-A07／A08／A28｜交付单号由教师课前发放</div></div>
+        <div class="row"><div class="k">2 情境描述</div><div class="v">某装备企业设备工况数据集（传感器时序 12 万行＋LF1 交付的图像标注集 3000 条）入库待用，算法组给定质量基线（完整率 ≥99%、重复率 ≤0.5%、异常占比 ≤1.5%）并要求 48h 内交付。约束：原始副本不得覆盖、变更须可回溯、异常值只可标记不可删。</div></div>
+        <div class="row"><div class="k">3 交付要求</div><div class="v">
+          <ol>
+            <li>T1 签收单</li>
+            <li>T2 处置规则表</li>
+            <li>T3 检测与指标表</li>
+            <li>T4 变更日志</li>
+            <li>T5 质量报告＋交付包</li>
+            <li>T11 人机分工说明</li>
+          </ol>
+          <p style="margin:6px 0 0">合格标准：三项基线达成；变更可回溯 100%、无日志变更 0 条；双算 3 项指标与工具偏差 ≤1%。</p>
+        </div></div>
+        <div class="row"><div class="k">4 已知条件</div><div class="v">交付单、质量规则表、清洗 SOP、指标定义、只读样本库。处置规则口径：缺失→补采；重复→删除（保留一条）；异常→保留并记录（只标记不删）；格式→泛化（统一格式）。</div></div>
+        <div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v">
+          <ol>
+            <li>未备份原始副本即清洗（覆盖原文件）→ 本情境 0 分＋重做。</li>
+            <li>删除异常记录而非标记 → 本情境 0 分＋恢复数据。</li>
+            <li>变更无日志 → 该条变更判无效并整批重洗。</li>
+          </ol>
+          <p style="margin:6px 0 0">AI 梯度：🔴 禁止 AI 直接连库执行清洗或写回；🟡 LLM 出清洗脚本草案，人逐行复核并小样本试跑，每份产出附 T11（哪段 AI 生成／改了哪／谁复核签字）。</p>
+        </div></div>
+        <div class="row"><div class="k">6 工作过程记录</div><div class="v">
+          <ol>
+            <li>资讯：我读到的 3 项基线值是……；4 类问题定义是……；我不确定的 2 条规则是……</li>
+            <li>计划：我的检测项与阈值……；四类问题各配什么动作……；复检口径……；2 人分工……</li>
+            <li>决策：我的处置依据……；被质疑"删了更干净"时我怎么答……；哈希怎么留……</li>
+            <li>实施：备份哈希是……；四类检测分布……；指标算出来与基线差多少……；哪条变更登记了……</li>
+            <li>检查：我改了哪几项；双算偏差多少……</li>
+            <li>评价：本次最费时间的是……；下次改进项是……；报告指出"下次该改哪条规则"……</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">7 自检清单</div><div class="v">见第 06 节 8 项检查表；自检全部打勾并签字后，方可交同伴互检与教师抽查。</div></div>
+        <div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 双算结论：合格 / 返工 ｜ 签字：学生 ______ 同伴 ______ 教师 ______</div></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="guide">
+      <h2><span class="num">05</span>引导文六问</h2>
+      <p>学生自己找答案，教师只回答"往哪找"，不直接给判定结论。</p>
+      <ol class="q6">
+        <li><b>资讯</b>：这批要交什么？三项基线值是多少、各由指标定义里哪一条说了算？四类问题在你这批数据里各长什么样、各配哪个处置动作？</li>
+        <li><b>计划</b>：检测项列几项？判定阈值定多少？四类问题各自的处置动作是什么？复检口径是什么？2 人怎么分工（执行／复核）？"变更怎么记"那一栏你写了几条？</li>
+        <li><b>决策</b>：异常值为什么只标记不删？原始副本哈希怎么留、留哪、谁登记？被质疑"删了指标更好看"时，你拿哪条约束顶回去？</li>
+        <li><b>实施</b>：备份做了吗、哈希是多少？四类检测跑完分布是什么样？指标算出来和基线差多少？刚才那条变更登记了"谁改／改哪／依据"没有？</li>
+        <li><b>检查</b>：你怎么证明指标算对了？双算偏差是多少、超没超 1%？日志抽查 20% 抽到你哪条、三要素全不全？</li>
+        <li><b>评价</b>：哪类问题最费时间、为什么？这次踩的坑能不能写成一条规则修改建议——"下次该改哪条规则"写进报告了没有？</li>
+      </ol>
+    </section>
+
+    <!-- 6 -->
+    <section id="check">
+      <h2><span class="num">06</span>检查表（8 项）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1</td><td>原始副本备份＋哈希登记</td><td>备份在清洗之前，只读区可查，哈希已登记日志首条</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">2</td><td>四类问题检测覆盖</td><td>缺失／重复／异常／格式均检出并出分布，识别率 ≥98%（A07）</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">3</td><td>指标计算与双算</td><td>完整率／重复率／异常占比按指标定义算出，与工具偏差 ≤1%（A28）</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">4</td><td>处置规则执行</td><td>缺失补采、重复删除、异常标记、格式泛化，无擅自更改动作</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">5</td><td>异常值只标记不删</td><td>全批零删除异常记录，标记＋隔离＋登记三动作齐全</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">6</td><td>变更日志完整</td><td>逐条登记谁改／改哪／依据，无日志变更 0 条（A08）</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">7</td><td>复检四项指标</td><td>三项基线指标达成；格式一致率按处置规则表逐条核</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">8</td><td>质量报告结论</td><td>报告与基线逐项比对，并指出"下次该改哪条规则"（发展维）</td><td class="c">□合格 □不合格</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="rubric">
+      <h2><span class="num">07</span>Rubric 评分表（四维四档）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="c">专业能力</td><td class="c">40%</td>
+              <td>一次性通过 ≥95%，指标偏差 &lt;0.5%，零返工</td>
+              <td>一次性通过 <b>80—94%（达标）</b>，偏差 ≤1%</td>
+              <td>通过 70—79%，偏差 1—3%，返工后复验</td>
+              <td>通过 &lt;70%，或偏差 &gt;3%，或整批重洗</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">方法能力</td><td class="c">25%<br>（含 AI 规范性 7%）</td>
+              <td>处置规则可复现＋2 套备选与回退，工时偏差 &lt;10%</td>
+              <td>含备选，偏差 &lt;20%</td>
+              <td>单方案无备选，偏差 &lt;35%</td>
+              <td>无计划或照抄模板</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">社会能力</td><td class="c">20%</td>
+              <td>变更日志零缺漏＋主动上报 ≥2 次（含他人违规）＋周会形成责任人时限</td>
+              <td>日志完整、配合协作、无缺项</td>
+              <td>需提醒补记，协作被动</td>
+              <td>代签／漏记，或知情不报</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">发展能力</td><td class="c">15%</td>
+              <td>提出防复发规则补丁并被采纳，能说明对下游指标的影响</td>
+              <td>改进项具体可执行（有时间、有做法）</td>
+              <td>改进项笼统（"下次注意"）</td>
+              <td>无改进项或反思抄袭</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c"><b>合计</b></td><td class="c">100%</td>
+              <td colspan="4">总分 = 四维加权；<b>达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td>
+              <td class="c"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>AI 使用规范性（7%，从方法维内切分，不额外加分）</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:80px">档</th><th>判定</th><th style="width:200px">处置</th></tr></thead>
+          <tbody>
+            <tr><td class="c">0 分</td><td>未交 T11，或存在 AI 代写／未复现即引用 AI 结论</td><td>扣满 7 分并转一票否决复核</td></tr>
+            <tr><td class="c">1 分</td><td>有 T11 但三栏不全（未写哪段 AI 生成／改了哪／缺复核签字）</td><td>扣 3.5 分，限期补全</td></tr>
+            <tr><td class="c">2 分</td><td>T11 完整＋复核签字＋能口头说明修改依据</td><td>不扣分</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="color:#6b7c93">口径说明：本课不设 Kappa 档位（Kappa 仅用于 LF1-Q3 标注一致性裁定，⑧.2.2）；本情境判据是"指标偏差、识别率、漏登率"这组可复算比率。<b>红线管"能不能交"，Rubric 管"这段过程值几分"</b>，二者不互相折算。</p>
+    </section>
+
+    <!-- 8 -->
+    <section id="err">
+      <h2><span class="num">08</span>典型错误案例卡（3 张）</h2>
+      <details open>
+        <summary>ERR-LF2-Q1-001：删除异常记录而非标记（红线②，本情境头号错）</summary>
+        <div class="body">
+          <p><b>现象</b>：一组为"让异常占比达标"，把 37 条超量程行（vib_peak＝99.99 等）直接删除，指标好看但触发红线②，被当众公布。</p>
+          <p><b>错误做法</b>：删了就当干净了，没恢复、没报告，还问"指标不是达标了吗"。</p>
+          <p><b>真实原因</b>：把"达标"理解成"把不好看的数去掉"；没读懂约束"异常值只可标记不可删"，也不知道交付走"可用集口径"。</p>
+          <p><b>排查路径</b>：① 比对原文件与清洗集行数 → ② 查变更日志有无删除记录 → ③ 对照红线②与处置规则表。</p>
+          <p><b>后果</b>：本情境 0 分＋恢复数据；且异常行被删后数据分布被篡改，模型学到错误关联——这正是 LF2-Q2"模型 mAP 下降 8pp"的源头之一。</p>
+          <p><b>预防措施</b>：异常行一律"标记＋隔离＋登记"三动作；指标看可用集口径，不看删完的口径；计划表强制栏"异常值怎么处置"由教师课前核。</p>
+          <p><b>关联原子</b>：LF2-Q1-A08（按处置规则清洗并保留原始副本与变更日志）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF2-Q1-002：指标口径不一致，双算偏差 3.6%</summary>
+        <div class="body">
+          <p><b>现象</b>：自算完整率 99.1%，工具算 95.5%，双算偏差 3.6%，远超 ≤1% 要求，整批判回。</p>
+          <p><b>错误做法</b>：以自己算的为准，说"工具肯定有问题"，不复查口径。</p>
+          <p><b>真实原因</b>：自算把空字符串当有值、把哨兵值 -999 当正常读数；工具按指标定义把两者都计为缺失。口径不一致，不是算术问题。</p>
+          <p><b>排查路径</b>：① 对照指标定义逐条核边界 → ② 抽 20 行手工复算 → ③ 定位口径分歧字段（空串／哨兵值／单位混用）。</p>
+          <p><b>预防措施</b>：算指标前先读指标定义；边界值单列清单写进计划表；双算由同伴独立完成，不当场对答案。</p>
+          <p><b>关联原子</b>：LF2-Q1-A28（按指标定义算完整率／重复率／异常占比，与工具结果偏差 ≤1%）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF2-Q1-003：未备份原始副本即清洗，覆盖原文件（红线①）</summary>
+        <div class="body">
+          <p><b>现象</b>：为省 10 分钟跳过备份直接清洗，脚本回写覆盖原文件，全批无法回溯。</p>
+          <p><b>错误做法</b>：悄悄重跑一遍当没发生；或把覆盖后的文件当清洗结果继续交。</p>
+          <p><b>真实原因</b>：把备份当"可选步骤"；赶 48h 交付期；不知道哈希是"未被覆盖"的可检查凭证。</p>
+          <p><b>后果</b>：触发红线①"本情境 0 分＋重做"；原文件无法恢复，整批须重新入库。</p>
+          <p><b>预防措施</b>：备份＋哈希是清洗第一个动作，写进工位看板；没见哈希不动手；脚本回写一律先dry-run 到沙箱。</p>
+          <p><b>关联原子</b>：LF2-Q1-A08（先备份后变更）</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 9 -->
+    <section id="safe">
+      <h2><span class="num">09</span>安全提示卡（D 类红线·3 条）</h2>
+      <div class="card warn">
+        <span class="label">红线即一票否决，四层要求完全相同（课标原文）</span>
+        <div class="tablewrap" style="margin:10px 0 0;background:#fff">
+          <table>
+            <thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:150px">检查人/方式</th></tr></thead>
+            <tbody>
+              <tr><td class="c">1</td><td>未备份原始副本即清洗（覆盖原文件）</td><td>本情境 0 分＋重做</td><td>教师查只读区备份与哈希登记</td></tr>
+              <tr><td class="c">2</td><td>删除异常记录而非标记</td><td>本情境 0 分＋恢复数据</td><td>行数比对＋变更日志＋双算</td></tr>
+              <tr><td class="c">3</td><td>变更无日志</td><td>该条变更判无效并整批重洗</td><td>日志抽查 20%，查三要素</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="color:#6b7c93;font-size:13px;margin-top:8px">课前 3 分钟由当班安全员复述红线 1 条；违规按"停线—记录—复盘—复训"四步处理。AI 三层梯度（⑦.3）：🔴 禁用 AI 直接连接数据库执行清洗或写回；🟡 LLM 出清洗脚本草案、人逐行复核并小样本试跑，每份产出附 T11；🟢 SQL 语法查询、术语与报错解释全员可用，但不得用于交付物的事实性内容与结论。</p>
+    </section>
+
+    <!-- 10 -->
+    <section id="notes">
+      <h2><span class="num">10</span>教师备课备注</h2>
+      <details open>
+        <summary>高频错判 Top3（按发生概率排序）</summary>
+        <div class="body">
+          <ol>
+            <li><b>把异常行删了"让指标好看"</b>：红线②，一票否决。纠法——计划表强制栏"异常值怎么处置"课前逐组核；开洗前用 3 行样例现场问"这行删不删"。</li>
+            <li><b>缺失行不补采直接删</b>：完整率必崩。纠法——强调"补采不回须登记原因"，删是兜底不是首选；检测出缺失先问"采集端还能回补吗"。</li>
+            <li><b>格式问题当异常处理</b>：该泛化不泛化，双算偏差超标。纠法——速查表"长相"列带学生过一遍：时间戳／单位／编号不统一＝格式，不是异常。</li>
+          </ol>
+        </div>
+      </details>
+      <details>
+        <summary>答疑口径：只指条文，不代判</summary>
+        <div class="body">
+          <p>学生追问"标准答案"时，只答"去查哪一条第几款"：指标定义第几条、处置规则表 R 几、约束与红线第几条。不代判、不代写脚本；教师巡视只纠红线（覆盖原文件、无日志改动）。</p>
+        </div>
+      </details>
+      <details>
+        <summary>分层调整建议（本情境）</summary>
+        <div class="body">
+          <ul>
+            <li><b>A 层加做</b>：补 2 条校本判定规则（如"单位混用算格式不算异常"的依据）；担任组内"边界样本第一裁决人"。</li>
+            <li><b>B 层标准</b>：全流程七件事独立完成，日志三要素齐全。</li>
+            <li><b>C 层减量</b>：先跑样例子集（格式类优先），变更日志由 B 层复核后登记。</li>
+            <li><b>D 层减动作不减要求</b>：只做备份、哈希登记、日志登记三个动作，不独立判定异常行；三条红线对其完全相同。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>设备与耗材准备清单</summary>
+        <div class="body">
+          <ul>
+            <li>测试环境账号按组分配（16 组），只读样本库全班共用；备份只读区提前建好并验证可写备份、不可覆盖。</li>
+            <li>数据加工工位 16 个，2 人 1 台；实施步双师配置：1 人指导、1 人守测试环境与权限边界（课标⑦.2）。</li>
+            <li>打印件：工单 32 份、处置规则表摘要 32 份、检查表 32 份、Rubric 32 份、基线卡 32 份。</li>
+            <li>工位看板：备份＋哈希提示卡（"没见哈希不动手"）、实施七件事流程条。</li>
+            <li>备用：平台故障时改纸质样例演练（3 行样例打印各 1 套）。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>下次课衔接（LF2-Q2 根因定位）</summary>
+        <div class="body">
+          <p>本次课结束时收齐改进项，下次课开头 5 分钟逐条核对"上次写的改进项做到了没有"；本情境的变更日志就是 LF2-Q2 的"现场"——Q2 设定"清洗日志只保留 3 天已过期"，可借此提醒学生"留痕要想到下游"；本次双算偏差集中的字段，作为下次课资讯步的 3 分钟专题。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属 LF2 课程标准 112h/7cr，情境 LF2-Q1 共 36h（六步 4／4／4／14／5／5，合计 36h，实施占比 38.9%，见课标⑥.2）；本包为<b>情境级</b>授课包，单次课切分由教师按周课时 7h 安排，六步学时账以课标为准。</p>
+      <p>② 能力原子编号 LF2-Q1-A07／A08／A28 名称与绑定以课标④能力目标清单定稿为准；若清单口径调整，只需替换编号与名称，不改变本包的活动设计。</p>
+      <p>③ 批次号 DS-2026-4801、设备编号、样例值均为教学虚构载体，不对应任何真实企业；数据一律标注"教学样例"。</p>
+      <p>④ 本页无脚本、无外部依赖（零 JS、零网络请求），可离线打开与打印；配套学生互动模块见《LF2-Q1_数据集清洗与质量报告编制_学生互动学习模块_正式版.html》。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  LF2-Q1 数据集清洗与质量报告编制 · 教师授课包 V1.0 ｜ 承载 LF2 数据治理与质量管控 情境 Q1（36h·L2） ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+
+</body>
+</html>

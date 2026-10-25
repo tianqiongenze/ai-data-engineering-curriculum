@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF4-Q3 承接新业务线排产并配置质量门 · 学生互动学习模块</title>
+<style>
+/* ========== 主题变量（与金标准一致） ========== */
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1a2b3c; --ink2:#5a6b7c;
+  --brand:#0e7c66; --brand2:#0b5f4e; --brand-soft:#e3f2ee;
+  --warn:#b3541e; --warn-soft:#fdeee2; --ok:#1e7d3c; --ok-soft:#e6f4ea;
+  --bad:#b3261e; --bad-soft:#fdecea; --line:#d8e2ea; --gold:#b8860b;
+  --shadow:0 2px 10px rgba(14,60,80,.08); --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.75;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* ========== ① 顶部条 ========== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#0e7c66,#0b5f4e);
+  color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+  font-size:14px;box-shadow:var(--shadow)}
+.topbar b{font-size:15px}
+.topbar .chip{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 12px;white-space:nowrap}
+.topbar .spacer{flex:1}
+.progress-mini{background:rgba(255,255,255,.2);border-radius:20px;height:8px;width:130px;overflow:hidden}
+.progress-mini i{display:block;height:100%;background:#ffd54d;width:0;transition:width .4s}
+
+/* ========== 通用卡片/区块 ========== */
+section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 28px;margin:22px 0}
+h2.sec{font-size:21px;border-left:6px solid var(--brand);padding-left:12px;margin-bottom:14px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0}
+.small{font-size:13.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font-size:15px;padding:9px 22px;border-radius:10px;
+  transition:.2s;font-family:inherit;text-align:left}
+.btn:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn:disabled{background:#b8c4ce;cursor:not-allowed;transform:none}
+.btn.warn{background:var(--warn)}
+.btn.warn:hover{background:#8f4115}
+.btn.dark{background:#1d3450}
+.btn.dark:hover{background:#16293a}
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand2);
+  border-radius:6px;padding:1px 10px;font-size:13px;margin:2px 4px 2px 0}
+.feedback{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px;display:none}
+.feedback.show{display:block;animation:pop .3s}
+.feedback.good{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.feedback.bad{background:var(--bad-soft);border-left:5px solid var(--bad)}
+.feedback.info{background:var(--warn-soft);border-left:5px solid var(--warn)}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ========== ② 情境引入 ========== */
+.story{background:linear-gradient(135deg,#f0f7f5,#e8f0f6);border-radius:12px;
+  padding:18px 20px;border:1px dashed var(--brand);margin:12px 0}
+.mission{border:2px solid var(--brand);border-radius:12px;padding:16px 20px;margin:14px 0;background:#fff}
+.mission h3{color:var(--brand2);margin-top:0}
+.constraints li{margin:6px 0 6px 22px}
+
+/* ========== ③ 知识预习：翻卡 ========== */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.flip{perspective:900px;height:130px;cursor:pointer;border:none;background:none;padding:0;
+  font-family:inherit;width:100%}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px;text-align:center}
+.flip-f{background:var(--brand);color:#fff;font-weight:600;font-size:16px}
+.flip-f small{font-weight:400;font-size:12px;opacity:.85;margin-top:4px}
+.flip-b{background:#fff;border:2px solid var(--brand);color:var(--ink);transform:rotateY(180deg);font-size:14px}
+.spec-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+.spec-table th,.spec-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.spec-table th{background:var(--brand-soft)}
+.spec-table tr:hover td{background:#fafdfc}
+
+/* ========== ④ 六步闯关 ========== */
+.level{border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.level-head{display:flex;align-items:center;gap:12px;background:#eef3f7;padding:12px 16px;cursor:pointer;user-select:none}
+.level-head .no{background:var(--brand);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.level-head .tt{font-weight:700;flex:1}
+.level-head .stars{color:#c9d4dd;font-size:18px;letter-spacing:2px}
+.level-head .stars b{color:var(--gold)}
+.level.locked .level-head{opacity:.55;cursor:not-allowed}
+.level-body{display:none;padding:16px 20px;border-top:1px solid var(--line)}
+.level.open .level-body{display:block}
+.quiz-q{margin:14px 0}
+.quiz-q .q{font-weight:600;margin-bottom:8px}
+.opts{display:grid;gap:8px}
+.opt{border:2px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:#fff;
+  font-size:15px;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.opt:hover{border-color:var(--brand)}
+.opt.picked{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.drag-list{list-style:none;display:grid;gap:8px}
+.drag-list li{border:2px solid var(--line);border-radius:10px;padding:9px 14px;background:#fff;cursor:grab}
+.drag-list li.dragging{opacity:.4}
+.drag-list li.over{border-color:var(--brand);border-style:dashed}
+.fillin{border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;width:100%;
+  font-family:inherit;margin:6px 0}
+.fillin:focus{border-color:var(--brand);outline:none}
+textarea.fillin{resize:vertical}
+
+/* ========== ⑤ 仿真实训 ========== */
+.sim{background:#0f1e2a;color:#e8f0f6;border-radius:14px;padding:20px;margin:14px 0}
+.sim h3{color:#7fd6c0;margin-top:0}
+.sample-card{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.sample-card .sid{color:#7fd6c0;font-size:13px;font-weight:700}
+.sample-card .scene{font-size:15.5px;margin:6px 0}
+.sample-card .ai{background:#1d3450;border-left:4px solid #e0a437;padding:8px 12px;border-radius:6px;
+  font-size:14px;margin-top:8px;color:#f0d9a8}
+.sim-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sim-controls label{font-size:13.5px;color:#9fb8c9;display:block;margin-bottom:4px}
+.sim-controls select,.sim-controls button{border:none;border-radius:8px;padding:9px 12px;font-size:14.5px;font-family:inherit}
+.sim-controls select{background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63}
+.meter{background:#0a141d;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14.5px}
+.meter b{color:#ffd54d;font-size:18px}
+.sim-log{background:#0a141d;border-radius:10px;padding:12px 16px;font-size:13.5px;max-height:180px;overflow-y:auto;margin-top:10px}
+.sim-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.sim-panel{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:16px 18px;margin:10px 0}
+.sim-panel h4{color:#7fd6c0;font-size:15.5px;margin:0 0 8px}
+.sim-panel .row{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.sim-panel .row .btn{flex:1 1 220px;justify-content:center}
+.sim-num{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:10px 0}
+.sim-num label{font-size:13px;color:#9fb8c9;display:block;margin-bottom:3px}
+.sim-num input{width:100%;border:1px solid #2c4a63;background:#1d3450;color:#e8f0f6;
+  border-radius:8px;padding:8px 10px;font-size:14.5px;font-family:inherit}
+.sim-chk{display:grid;gap:8px;margin:10px 0}
+.sim-chk label{display:flex;gap:10px;align-items:flex-start;background:#1d3450;border:1px solid #2c4a63;
+  border-radius:8px;padding:9px 12px;font-size:14.5px;cursor:pointer}
+.sim-chk input{margin-top:5px;transform:scale(1.2)}
+.sim-chk label.trap{border-color:#8a3b34}
+.event-card{background:#2a1f16;border:2px solid #e0a437;border-radius:10px;padding:14px 16px;margin:10px 0}
+.event-card .ev-t{color:#ffd54d;font-weight:700;font-size:15.5px;margin-bottom:6px}
+.boom{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);z-index:999;
+  align-items:center;justify-content:center;padding:20px}
+.boom.on{display:flex}
+.boom-card{background:#1c1214;border:3px solid var(--bad);border-radius:16px;max-width:560px;
+  padding:30px;text-align:center;color:#ffd9d6}
+.boom-card h2{color:#ff6b60;font-size:26px;margin-bottom:10px}
+.boom-card .rule{background:#2a1618;border-radius:10px;padding:12px;margin:14px 0;text-align:left;font-size:14.5px}
+
+/* ========== ⑥ 检测 ========== */
+.quiz-score{display:flex;gap:18px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.score-ring{width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--brand) 0%,#e3eaf0 0);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--ink)}
+.score-ring i{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal}
+.locked-box{background:var(--warn-soft);border-left:5px solid var(--warn);border-radius:10px;
+  padding:14px 18px;margin:12px 0;display:none}
+.locked-box.on{display:block}
+
+/* ========== ⑦ 成就 ========== */
+.badges{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.badge{width:104px;text-align:center;opacity:.28;filter:grayscale(1);transition:.3s}
+.badge.got{opacity:1;filter:none}
+.badge .ico{width:76px;height:76px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:34px;background:linear-gradient(135deg,#ffd54d,#ffb300);
+  box-shadow:0 3px 10px rgba(255,179,0,.35)}
+.badge .nm{font-size:13.5px;font-weight:600}
+.checklist{list-style:none;margin:12px 0}
+.checklist li{padding:8px 12px;border:1px dashed var(--line);border-radius:8px;margin:6px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+.checklist li.done{background:var(--ok-soft);border-color:var(--ok);text-decoration:line-through}
+.checklist li::before{content:"☐";font-size:18px}
+.checklist li.done::before{content:"☑";color:var(--ok)}
+
+/* ========== 响应式/打印 ========== */
+@media(max-width:720px){
+  .sim-controls{grid-template-columns:1fr}
+  section{padding:18px 16px}
+  .topbar{font-size:12.5px}
+}
+@media print{
+  .topbar,.btn,.sim-controls,.boom{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .level-body{display:block!important}
+  .feedback{display:block!important}
+  .opt.right,.opt.wrong{outline:1px solid #999}
+  .badge{opacity:1;filter:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ ① 顶部条 ═══════════ -->
+<div class="topbar">
+  <b>LF4-Q3 承接新业务线排产并配置质量门</b>
+  <span class="chip">学习情境 · 36h</span>
+  <span class="chip">任务等级 L3</span>
+  <span class="chip">对应任务 4.3</span>
+  <span class="chip">达标线 80%</span>
+  <span class="chip">教学样例数据</span>
+  <span class="chip">人工智能数据工程技术（510217）</span>
+  <span class="spacer"></span>
+  <span id="progressTxt">进度 0%</span>
+  <div class="progress-mini"><i id="progressBar"></i></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ ② 情境引入 ═══════════ -->
+<section id="s2">
+  <h2 class="sec">② 情境引入：你接了一条新业务线</h2>
+  <div class="story">
+    <p>公司接了一条<b>新业务线</b>：<b>新模态＋量级翻倍＋交期 6 周</b>。架构已经部门定稿：
+    <b>自建 60% ＋ 预标注人审 40%</b>，不改。</p>
+    <p>你负责的是：<b>盘点能力缺口、测算人天与节奏、把既定质量门配置到平台、试运行 2 周后报偏差</b>。
+    你是执行层——<b>不定标准、不带教考核</b>，架构与门限定稿权在部门负责人。</p>
+    <p>需求方天天来催："<b>能不能提前？提前有奖金。</b>"——这条单子真正的考验，是交期紧的时候，
+    <b>质检比例压不压</b>。</p>
+  </div>
+  <div class="mission">
+    <h3>你的任务</h3>
+    <p>按分解目标 G8：完成<b>能力缺口盘点、人天测算与排产</b>，并按既定架构<b>配置质量门、报试运行偏差</b>，
+    最终交出会签版试运行报告。</p>
+    <h3>硬约束（违反任何一条，后果见"红线炸号"）</h3>
+    <ul class="constraints">
+      <li><b>架构与门限定稿权在部门负责人</b>，本课只做执行与修正建议</li>
+      <li><b>试运行期间不得改动已定阈值</b></li>
+      <li><b>排产须可加总到人天</b></li>
+      <li>新业务线：新模态＋量级翻倍＋<b>交期 6 周</b>（教学样例订单 80,000 条）</li>
+    </ul>
+    <p class="small">已知条件：需求单、既有架构说明、成本-质量模型、平台门限配置手册。
+    <b>本模块所有数据均为教学样例，不含任何真实个人信息与真实企业合同。</b></p>
+  </div>
+  <button class="btn" onclick="go('s3')">开始预习 →</button>
+</section>
+
+<!-- ═══════════ ③ 知识预习 ═══════════ -->
+<section id="s3">
+  <h2 class="sec">③ 知识预习：先把"门"搞清楚</h2>
+  <p>点击卡片翻转查看定义。看不懂的条文先标记，带着问题进关。</p>
+  <div class="flipgrid">
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">质量门<small>quality gate</small></div>
+      <div class="flip-b">流水线里的关卡：按既定规则<br>（抽检比例／一致率阈值／返工规则）<br>决定批次能否流入下一环节</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">抽检比例<small>既定 10%（教学样例）</small></div>
+      <div class="flip-b">抽检条数 ÷ 总条数。<br><b>交期紧也不压</b>——压了它，<br>漏检就敢往后溜</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">一致率阈值<small>既定 ≥90%（教学样例）</small></div>
+      <div class="flip-back flip-b">抽检判定一致的比例下限。<br>低于它＝质量门没守住，<br>按返工规则处置</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">返工规则<small>既定：整段返工＋二次抽检</small></div>
+      <div class="flip-b">触发阈值后的处置动作。<br>不是"改错的两条"——<br>是批次级结论</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">人天测算<small>man-day</small></div>
+      <div class="flip-b">订单量 × 单条工时<br>折算成"人 × 天"。<br><b>四段必须可加总</b></div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">排产<small>scheduling</small></div>
+      <div class="flip-back flip-b">把人天分配到 6 周节奏，<br>每周产能有上限，<br>要留缓冲与异常预案</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">试运行<small>2 周 · 历史批次模拟</small></div>
+      <div class="flip-b">用<b>脱敏历史批次</b>模拟跑 2 周，<br>实测与人天测算的偏差，<br>就是修正建议的依据</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">会签<small>countersign</small></div>
+      <div class="flip-back flip-b">修正建议要学生与<br>部门负责人（模拟）共同签字。<br>你只能建议，不能定稿</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">降配版<small>plan B</small></div>
+      <div class="flip-b">缩范围、不降质量的备选排产。<br>必须说明<b>降配代价</b>——<br>代价写不清，不签批</div></div></button>
+    <button type="button" class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">脱敏<small>de-identification</small></div>
+      <div class="flip-back flip-b">去掉个人标识后再使用。<br>试运行数据必须脱敏，<br>真实业务数据不进试运行</div></div></button>
+  </div>
+  <h3>既定规则速查表（部门定稿·教学样例）</h3>
+  <table class="spec-table">
+    <tr><th>项目</th><th>既定规则（部门定稿·教学样例）</th><th>你的权限</th></tr>
+    <tr><td>生产架构</td><td>自建 60% ＋ 预标注人审 40%</td><td><b>只能执行</b></td></tr>
+    <tr><td>抽检比例</td><td>10%</td><td><b>不得改动</b>（红线①）</td></tr>
+    <tr><td>一致率阈值</td><td>≥90%</td><td><b>不得改动</b>（红线①）</td></tr>
+    <tr><td>返工规则</td><td>触发即整段返工＋二次抽检</td><td><b>不得改动</b>（红线①）</td></tr>
+    <tr><td>交期／价格承诺</td><td>部门负责人</td><td><b>学生不得承诺</b>（红线④）</td></tr>
+    <tr><td>修正建议</td><td>可提，走会签</td><td>提建议 ≠ 改门限</td></tr>
+  </table>
+  <p class="small">记不清时随时回到本表。正式关卡里不提供此表——但你可以先把"门限三条不能动"记住。</p>
+  <button class="btn" onclick="go('s4')">进入六步闯关 →</button>
+</section>
+
+<!-- ═══════════ ④ 六步闯关 ═══════════ -->
+<section id="s4">
+  <h2 class="sec">④ 六步闯关：按真实工作流程练</h2>
+  <p class="small">关卡按顺序解锁（学时与课标六步一致：5/4/4/14/4/5）。答错会告诉你是哪条约束没说清——回去翻速查表，比背答案有用。<b>有些选项是红线陷阱，点了直接"炸号"。</b></p>
+
+  <!-- 第①关 资讯 -->
+  <div class="level" id="lv1">
+    <div class="level-head" onclick="toggleLevel('lv1')">
+      <span class="no">1</span><span class="tt">① 资讯 · 盘点四段缺口（5h）</span><span class="stars" id="st1">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：组长发来需求单、既有架构说明、成本-质量模型、平台门限配置手册。你要盘点<b>采集—标注—质检—训练</b>四段能力缺口，列出 <b>3 项最紧约束（人／机／期）</b>。</p>
+      <div class="quiz-q" data-q="l1q1">
+        <div class="q">1. 能力盘点覆盖哪四段？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q1','A')">A. 需求—报价—合同—回款</button>
+          <button class="opt" onclick="pick(this,'l1q1','B')">B. 采集—标注—质检—训练</button>
+          <button class="opt" onclick="pick(this,'l1q1','C')">C. 只有标注一段，其他不用管</button>
+          <button class="opt" onclick="pick(this,'l1q1','D')">D. 采集—训练两段就够了</button>
+        </div>
+        <div class="feedback" id="fb-l1q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q2">
+        <div class="q">2. "3 项最紧约束"指的是哪三个维度？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q2','A')">A. 人／机／期</button>
+          <button class="opt" onclick="pick(this,'l1q2','B')">B. 人／机／料</button>
+          <button class="opt" onclick="pick(this,'l1q2','C')">C. 料／机／期</button>
+          <button class="opt" onclick="pick(this,'l1q2','D')">D. 人／料／期</button>
+        </div>
+        <div class="feedback" id="fb-l1q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q3">
+        <div class="q">3. 【填空】用一句话写出你判定的最紧约束（提示：人／机／期至少写一个，并写出缺口）。</div>
+        <input class="fillin" id="l1q3" placeholder="例：期最紧——交期 6 周而现有人力缺口 61 人天……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l1q3','人|机|期','fb-l1q3','对。最紧约束要落到人／机／期三个维度上，后面排产就围着它转。')">提交</button>
+        <div class="feedback" id="fb-l1q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv1','st1',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第②关 计划 -->
+  <div class="level locked" id="lv2">
+    <div class="level-head" onclick="toggleLevel('lv2')">
+      <span class="no">2</span><span class="tt">② 计划 · 人天测算与排产（4h）</span><span class="stars" id="st2">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：按架构测算各段人天与节奏。排产表的硬性要求是<b>人天可加总</b>——这是红线②，漏一段就是漏一项。</p>
+      <div class="quiz-q" data-q="l2q1">
+        <div class="q">1. 排产表必须满足的硬性要求是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1','A')">A. 版面好看、页数够</button>
+          <button class="opt" onclick="pick(this,'l2q1','B')">B. 人天可加总——各段小计能加出总计</button>
+          <button class="opt" onclick="pick(this,'l2q1','C')">C. 和上一批一模一样</button>
+          <button class="opt" onclick="pick(this,'l2q1','D')">D. 越粗越好，省事</button>
+        </div>
+        <div class="feedback" id="fb-l2q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q2">
+        <div class="q">2. 教学样例订单 80,000 条，四段人天 28／164／32／17，总人天与可用产能（180 人天）相比？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q2','A')">A. 总 229 人天，产能有富余，随便排</button>
+          <button class="opt" onclick="pick(this,'l2q2','B')">B. 总 241 人天，缺口 61 人天——带着缺口进决策，逼出两套方案</button>
+          <button class="opt" onclick="pick(this,'l2q2','C')">C. 总 180 人天，刚好压线</button>
+          <button class="opt" onclick="pick(this,'l2q2','D')">D. 算不出来，走一步看一步</button>
+        </div>
+        <div class="feedback" id="fb-l2q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q3">
+        <div class="q">3. 【排序】把人天测算到排产的正确顺序排好（点选后拖拽，或用键盘上下箭头移动）：</div>
+        <ul class="drag-list" id="sortL2">
+          <li draggable="true" data-k="1">按架构分段算人天（采集／标注／质检／训练对接）</li>
+          <li draggable="true" data-k="2">四段加总，与可用产能对缺口</li>
+          <li draggable="true" data-k="3">定每周节奏与周产能上限，留缓冲</li>
+          <li draggable="true" data-k="4">写两套排产与降配代价，进决策会签</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL2','fb-l2q3')">检查顺序</button>
+        <div class="feedback" id="fb-l2q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv2','st2',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第③关 决策 -->
+  <div class="level locked" id="lv3">
+    <div class="level-head" onclick="toggleLevel('lv3')">
+      <span class="no">3</span><span class="tt">③ 决策 · 两套排产顶住压价（4h）</span><span class="stars" id="st3">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：教师扮演需求方压交期，要求你给出<b>"降配版"与"标准版"两套</b>排产。决策步硬规则：<b>两套排产并说明降配代价，缺项不签批</b>。</p>
+      <div class="quiz-q" data-q="l3q1">
+        <div class="q">1. 决策步硬规则要求你交什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q1','A')">A. 一套排产，省得纠结</button>
+          <button class="opt" onclick="pick(this,'l3q1','B')">B. 两套排产（标准版＋降配版）并说明降配代价</button>
+          <button class="opt" onclick="pick(this,'l3q1','C')">C. 三套起，越多越好</button>
+          <button class="opt" onclick="pick(this,'l3q1','D')">D. 不用交，老师会定</button>
+        </div>
+        <div class="feedback" id="fb-l3q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q2">
+        <div class="q">2. 需求方说："提前一周就签约。"你的回应是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pickBoom(this,'l3q2','A','红线④','你答应了需求方的提前交付要求。','D 类红线④：越权对需求方承诺交期或价格 → 停止该环节 + 记录。交期承诺权在部门负责人，执行层一句话说出去，合同风险就落在部门头上。')">A. "行，那我们提前一周！"（先答应再说）</button>
+          <button class="opt" onclick="pick(this,'l3q2','B')">B. "交期承诺权在部门负责人，我把两套排产和风险报部门，由部门答复您"</button>
+          <button class="opt" onclick="pick(this,'l3q2','C')">C. "我让组替您答应"</button>
+          <button class="opt" onclick="pick(this,'l3q2','D')">D. "先斩后奏，做出来再说"</button>
+        </div>
+        <div class="feedback" id="fb-l3q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q3">
+        <div class="q">3. 【填空】用一句话写你的降配代价说明（提示：写清缩了多少、延到什么时候、对客户意味着什么）。</div>
+        <input class="fillin" id="l3q3" placeholder="例：首期只交 60,000 条，剩余 20,000 延至第 7—8 周，客户需分两批验收……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l3q3','延后|延至|分批|验收|违约|风险|20,000|20000|门限|返工','fb-l3q3','对。降配的代价必须写具体——写不清代价，部门无法签批。记住：降配也不动门限。')">提交</button>
+        <div class="feedback" id="fb-l3q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv3','st3',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第④关 实施 -->
+  <div class="level locked" id="lv4">
+    <div class="level-head" onclick="toggleLevel('lv4')">
+      <span class="no">4</span><span class="tt">④ 实施 · 配质量门、跑试运行（14h）</span><span class="stars" id="st4">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：把既定质量门配置到平台（抽检比例／一致率阈值／返工规则），再用<b>脱敏历史批次</b>试运行 2 周。教师巡视，只守一条线：<b>不改既定阈值</b>。</p>
+      <div class="quiz-q" data-q="l4q1">
+        <div class="q">1. 质量门的三项配置是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q1','A')">A. 价格／工期／人力</button>
+          <button class="opt" onclick="pick(this,'l4q1','B')">B. 抽检比例／一致率阈值／返工规则</button>
+          <button class="opt" onclick="pick(this,'l4q1','C')">C. 版本／镜像／副本</button>
+          <button class="opt" onclick="pick(this,'l4q1','D')">D. 只有抽检比例一项</button>
+        </div>
+        <div class="feedback" id="fb-l4q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q2">
+        <div class="q">2. 配置时客户说："阈值降到 85% 差不多得了。"你该？</div>
+        <div class="opts">
+          <button class="opt" onclick="pickBoom(this,'l4q2','A','红线①','你按客户口头意见把一致率阈值改到了 85%。','D 类红线①：擅自修改已定质量门阈值 → 本情境 0 分 + 重做。架构与门限定稿权在部门负责人，试运行期间不得改动已定阈值。客户意见可以写成修正建议报会签，但不能当场改。')">A. 听客户的，当场把阈值改到 85%</button>
+          <button class="opt" onclick="pick(this,'l4q2','B')">B. 按既定规则配置；客户意见写进修正建议，走会签</button>
+          <button class="opt" onclick="pick(this,'l4q2','C')">C. 偷偷改，不被发现就行</button>
+          <button class="opt" onclick="pick(this,'l4q2','D')">D. 不配置了，等客户想清楚</button>
+        </div>
+        <div class="feedback" id="fb-l4q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q3">
+        <div class="q">3. 试运行的数据源用哪个？</div>
+        <div class="opts">
+          <button class="opt" onclick="pickBoom(this,'l4q3','A','红线⑤','你直接拿了客户的真实原始业务数据做试运行。','D 类红线⑤：使用未脱敏真实业务数据做试运行 → 本情境 0 分。联调与试运行使用脱敏样本；含个人信息的日志须先脱敏。历史批次模拟（脱敏）就是干这个的。')">A. 客户真实原始影像（省事，跑起来快）</button>
+          <button class="opt" onclick="pick(this,'l4q3','B')">B. 历史批次模拟（已脱敏）</button>
+          <button class="opt" onclick="pick(this,'l4q3','C')">C. 网上随便找的开源数据集</button>
+          <button class="opt" onclick="pick(this,'l4q3','D')">D. 自己编一份"像真的"的数据</button>
+        </div>
+        <div class="feedback" id="fb-l4q3"></div>
+      </div>
+      <p class="small">↳ 通过本关三问后，下方<b>仿真实训区</b>解锁"排产＋质量门配置模拟器"（也可直接下去玩）。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv4','st4',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑤关 检查 -->
+  <div class="level locked" id="lv5">
+    <div class="level-head" onclick="toggleLevel('lv5')">
+      <span class="no">5</span><span class="tt">⑤ 检查 · 一致率核对（4h）</span><span class="stars" id="st5">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：教师抽查 20%，核<b>门限配置与既定规则逐条一致</b>。你先自检配置一致率，再互检排产人天加总与试运行偏差计算。</p>
+      <div class="quiz-q" data-q="l5q1">
+        <div class="q">1. 质量门配置与既定规则的一致率要求是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q1','A')">A. 100%——逐条一致，差一条都不行</button>
+          <button class="opt" onclick="pick(this,'l5q1','B')">B. ≥90% 就行，留点弹性</button>
+          <button class="opt" onclick="pick(this,'l5q1','C')">C. ≥80%，达标线同款</button>
+          <button class="opt" onclick="pick(this,'l5q1','D')">D. 看情况，忙的时候可以松一点</button>
+        </div>
+        <div class="feedback" id="fb-l5q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q2">
+        <div class="q">2. 互检的重点是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q2','A')">A. 排产人天加总＋试运行偏差计算</button>
+          <button class="opt" onclick="pick(this,'l5q2','B')">B. 谁的字写得整齐</button>
+          <button class="opt" onclick="pick(this,'l5q2','C')">C. 只数条数对不对</button>
+          <button class="opt" onclick="pick(this,'l5q2','D')">D. 不用互检，等老师来查</button>
+        </div>
+        <div class="feedback" id="fb-l5q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q3">
+        <div class="q">3. 试运行实测与人天测算偏差 >30% 且无说明，按约束怎么处理？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q3','A')">A. 照样交付，客户看不出来</button>
+          <button class="opt" onclick="pick(this,'l5q3','B')">B. 退回重做——偏差 >30% 且无说明，红线②</button>
+          <button class="opt" onclick="pick(this,'l5q3','C')">C. 把实测数据改好看点</button>
+          <button class="opt" onclick="pick(this,'l5q3','D')">D. 隐瞒不报，下周再说</button>
+        </div>
+        <div class="feedback" id="fb-l5q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv5','st5',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑥关 评价 -->
+  <div class="level locked" id="lv6">
+    <div class="level-head" onclick="toggleLevel('lv6')">
+      <span class="no">6</span><span class="tt">⑥ 评价 · 会签与改进（5h）</span><span class="stars" id="st6">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：按 Rubric 打分，讲评"用建议代替执行"的边界。你自评互评、写改进条、提交<b>会签版试运行报告</b>。</p>
+      <div class="quiz-q" data-q="l6q1">
+        <div class="q">1. Rubric 社会维看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q1','A')">A. 会签与越权边界——有没有越权承诺、建议走没走会签</button>
+          <button class="opt" onclick="pick(this,'l6q1','B')">B. 打字快不快</button>
+          <button class="opt" onclick="pick(this,'l6q1','C')">C. 方案做了多少页</button>
+          <button class="opt" onclick="pick(this,'l6q1','D')">D. 人天数字大不大</button>
+        </div>
+        <div class="feedback" id="fb-l6q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q2">
+        <div class="q">2. 修正建议的正确姿势是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q2','A')">A. 直接把阈值改成自己认为合理的数</button>
+          <button class="opt" onclick="pick(this,'l6q2','B')">B. 提"修订工时定额／设学习期／申请增援"这类建议，不动门限，走会签</button>
+          <button class="opt" onclick="pick(this,'l6q2','C')">C. 不提建议，闷头做完</button>
+          <button class="opt" onclick="pick(this,'l6q2','D')">D. 让客户直接改门限</button>
+        </div>
+        <div class="feedback" id="fb-l6q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q3">
+        <div class="q">3. 【填空】写一条你自己的改进（提示：落到定额／缓冲／学习期／会签／模板上）。</div>
+        <input class="fillin" id="l6q3" placeholder="例：下次测算先把质检与返工预留单列一段，避免漏项……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l6q3','定额|增援|缓冲|学习期|会签|提前|模板|预留|加总','fb-l6q3','对。改进要指向具体动作，不写"下次会更快"这种空话。')">提交</button>
+        <div class="feedback" id="fb-l6q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv6','st6',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑤ 仿真实训 ═══════════ -->
+<section id="s5">
+  <h2 class="sec">⑤ 仿真实训：排产＋质量门配置模拟器</h2>
+  <p>这是本情境的核心决策点：<b>交期紧，压不压质检比例</b>。你要走完
+  <b>人天测算 → 排产（两套方案）→ 配质量门 → 试运行 2 周 → 报偏差 → 修正建议会签</b> 全链。
+  系统会安排客户催单压力（弹"提前交付奖金"诱惑）——<b>守不住，就炸号</b>。
+  <b>界面所有数据均为教学样例，不对应任何真实企业与合同。</b></p>
+  <div class="sim">
+    <h3>🏭 订单 P-2026-0417（教学样例）｜你的角色：排产执行</h3>
+    <div class="sample-card">
+      <div class="sid">订单信息（教学样例）</div>
+      <div class="scene">工业部件 X 光影像标注 <b>80,000 条</b>（上批 40,000，量级翻倍）｜新模态｜交期 <b>6 周</b>（30 个工作日）</div>
+      <div class="ai">架构（部门定稿，不可改）：自建 60% ＋ 预标注人审 40% ｜ 团队：标注员 6 人＋质检员 2 人＝8 人，日均有效工时 6h ｜
+      参考工时（上批实测）：采集预处理 10 秒/条、自建段 75 秒/条、预标注人审段 35 秒/条、训练对接 6 秒/条 ｜
+      既定质量门（部门定稿）：抽检比例 <b>10%</b>、一致率阈值 <b>≥90%</b>、返工规则＝<b>触发即整段返工＋二次抽检</b> ｜
+      可用产能：8 人 × 6h × 30 天 ＝ <b>180 人天</b></div>
+    </div>
+    <div class="meter">阶段：<b id="simStage">未开始</b>　｜　红线触发：<b id="boomCnt">0</b> 次　｜　门限一致率：<b id="gateRate">—</b></div>
+    <div class="sim-panel" id="simPanel">
+      <h4>试运行排产，共 9 步</h4>
+      <p style="font-size:14.5px;color:#c9dce8">① 人天测算 → ② 排产与两套方案 → ③ 质量门配置 → ④ 试运行数据源 → ⑤ 试运行第 1 周 → ⑥ 客户催单事件 → ⑦ 试运行第 2 周 → ⑧ 周报与修正建议 → ⑨ 会签</p>
+      <div class="row"><button class="btn" id="btnStart" onclick="startSim()">▶ 开始排产</button></div>
+    </div>
+    <div class="sim-log" id="simLog"><div>系统：点击"开始排产"。每一步都作数——错了能看到后果，但红线触发会记入考核。</div></div>
+  </div>
+  <p class="small">仿真全链数据均为教学样例（含奖金与索赔金额），不含任何真实个人信息。走完全链且零红线触发，本仿真实训通过。</p>
+</section>
+
+<!-- ═══════════ ⑥ 检测 ═══════════ -->
+<section id="s6">
+  <h2 class="sec">⑥ 检测：10 题定过关</h2>
+  <p class="small">单选／判断／排序混合。≥80%（8 题）过关；不过关会锁定"重学"入口——可以跳过，但记录会留着。</p>
+  <div id="quizBox"></div>
+  <div class="quiz-score">
+    <div class="score-ring" id="ring"><i id="ringTxt">0%</i></div>
+    <div>
+      <div id="quizVerdict" style="font-size:17px;font-weight:700">尚未提交</div>
+      <div class="small" id="quizDetail">达标线：80%（8/10）</div>
+    </div>
+    <button class="btn" onclick="gradeQuiz()">提交检测</button>
+  </div>
+  <div class="locked-box" id="lockBox">
+    <b>未达标。</b>系统已为你标出错题范围——回到③速查表和对应关卡重学，再回来测。真实的试运行里，压比例的后果是<b>批次返工＋客户索赔</b>。
+    <div style="margin-top:8px"><button class="btn ghost" onclick="go('s3')">回去重学</button></div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑦ 成就与去向 ═══════════ -->
+<section id="s7">
+  <h2 class="sec">⑦ 成就与去向</h2>
+  <div class="badges">
+    <div class="badge" id="bg1"><div class="ico">🧭</div><div class="nm">缺口盘点人</div></div>
+    <div class="badge" id="bg2"><div class="ico">🧮</div><div class="nm">人天测算师</div></div>
+    <div class="badge" id="bg3"><div class="ico">🛡</div><div class="nm">红线守门员</div></div>
+    <div class="badge" id="bg4"><div class="ico">✍️</div><div class="nm">会签执行者</div></div>
+    <div class="badge" id="bg5"><div class="ico">🏅</div><div class="nm">检测过关</div></div>
+  </div>
+  <h3>本情境交付物自检（课前对一遍，课中交一遍）</h3>
+  <ul class="checklist" id="deliverList">
+    <li>B-10 能力盘点与差距表（学生 + 教师）</li>
+    <li>B-11 排产表（人天可加总）（学生 + 教师）</li>
+    <li>B-12 质量门配置记录（学生 + 部门负责人（模拟））</li>
+    <li>B-13 试运行报告与修正建议（学生会签）</li>
+    <li>B-14 质量周报（学生 + 教师）</li>
+  </ul>
+  <h3>接下来</h3>
+  <p>LF4 是数据侧能力链的收口课程，Q3 是最后一个学习情境。下一站：<b>AI 数据工程综合项目 → 顶岗实习</b>。
+  对标岗位：<b>数据生产项目主管</b>（目标岗，毕业 3—5 年）——本课只到"<b>执行与参与试运行</b>"层级：不定标准、不带教考核。
+  定阈值、带新人，是拿到主管岗之后的事。</p>
+  <p class="small">教师授课包（六步×四层网格表、工单、Rubric、错误案例卡）见同目录《LF4-Q3_承接新业务线排产并配置质量门_教师授课包_正式版.html》。</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════ 红线炸号弹窗 ═══════════ -->
+<div class="boom" id="boom">
+  <div class="boom-card">
+    <h2>💥 触发 D 类红线</h2>
+    <p id="boomMsg"></p>
+    <div class="rule" id="boomRule"></div>
+    <p class="small" style="color:#c9a9a6">在真实课程中，这意味着一票否决／本情境 0 分。在这里，意味着本关／本步重来——记住这个手感。</p>
+    <button class="btn warn" onclick="closeBoom()">我记住了，重来</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 状态 ══════════════════ */
+var S = {
+  levels:{lv1:0,lv2:0,lv3:0,lv4:0,lv5:0,lv6:0},
+  answers:{}, fills:{}, sorts:{},
+  sim:{started:false, step:0, pdOk:false, planOk:false, gateOk:false,
+       srcOk:false, w1:false, urgeOk:false, w2:false, repOk:false,
+       booms:0, finished:false, tries:{}},
+  quiz:{}, quizDone:false, quizPass:false, checklist:{}
+};
+try{ var saved = localStorage.getItem('lf4q3_module'); if(saved) S = Object.assign(S, JSON.parse(saved)); }catch(e){}
+function save(){ try{ localStorage.setItem('lf4q3_module', JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ══════════════════ 进度 ══════════════════ */
+function progress(){
+  var lv = Object.values(S.levels).filter(function(v){return v>0}).length;
+  var p = Math.round(lv/6*60) + (S.sim.finished?20:0) + (S.quizDone && S.quizPass?20:0);
+  p = Math.min(100, p);
+  document.getElementById('progressBar').style.width = p+'%';
+  document.getElementById('progressTxt').textContent = '进度 '+p+'%';
+}
+
+/* ══════════════════ 关卡 ══════════════════ */
+function go(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function toggleLevel(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('locked')){ flash('先完成上一关', 'info'); return; }
+  el.classList.toggle('open');
+}
+function unlock(){
+  var ids = ['lv1','lv2','lv3','lv4','lv5','lv6'];
+  for(var i=0;i<ids.length;i++){
+    var el = document.getElementById(ids[i]);
+    if(i===0 || S.levels[ids[i-1]]>0) el.classList.remove('locked');
+  }
+}
+function clearLevel(id, stId, stars){
+  var el = document.getElementById(id);
+  var qs = el.querySelectorAll('.quiz-q');
+  var answered = 0;
+  qs.forEach(function(q){
+    var k = q.dataset.q;
+    if(S.answers[k] || S.fills[k] || S.sorts[k]) answered++;
+  });
+  if(answered < qs.length){ flash('本关还有 '+(qs.length-answered)+' 题未作答', 'info'); return; }
+  S.levels[id] = stars;
+  var st = document.getElementById(stId);
+  st.innerHTML = '';
+  for(var i=0;i<3;i++) st.innerHTML += (i<stars?'<b>★</b>':'☆');
+  unlock(); save(); progress();
+  flash('本关完成！'+(stars<3?'（有题答错或被红线拦截，星拿满的办法是回去改对）':'满星 ⭐⭐⭐'), 'good');
+}
+
+/* ══════════════════ 答题判定 ══════════════════ */
+var ANSWER = {
+  l1q1:'B', l1q2:'A', l2q1:'B', l2q2:'B', l3q1:'B',
+  l4q1:'B', l4q2:'B', l4q3:'B', l5q1:'A', l5q2:'A', l5q3:'B', l6q1:'A', l6q2:'B'
+};
+var REASON = {
+  l1q1:'课标 Q3 ① 资讯：盘点采集—标注—质检—训练四段能力缺口。',
+  l1q2:'课标 Q3 ① 资讯：列出 3 项最紧约束（人／机／期）。',
+  l2q1:'情境描述约束：排产须可加总到人天；红线②：人天无法加总 → 退回重做。',
+  l2q2:'28＋164＋32＋17＝241 人天；产能 180 人天，缺口 61 人天。缺口不丢人——带着缺口进决策，才逼得出两套方案。',
+  l3q1:'课标 ⑦.1 决策步硬规则：Q3 必须交两套排产并说明降配代价，缺项不签批。',
+  l4q1:'课标 Q3 ④ 实施：配质量门（抽检比例／一致率阈值／返工规则）。',
+  l4q2:'红线①：试运行期间不得改动已定阈值；客户意见走修正建议＋会签。',
+  l4q3:'红线⑤＋⑩.2：试运行用脱敏历史批次；未脱敏真实业务数据不进试运行。',
+  l5q1:'课标 ⑤ 五要素：质量门配置与既定规则一致率 100%。',
+  l5q2:'课标 Q3 ⑤ 检查：自检配置一致率；互检排产人天加总与试运行偏差计算。',
+  l5q3:'红线②：排产人天无法加总或与实际工时偏差 >30% 且无说明 → 退回重做。',
+  l6q1:'课标 Q3 评价要点：社会维看会签与越权边界。',
+  l6q2:'评价要点：发展维看建议是否可被采纳——建议不动门限，走会签。'
+};
+function pick(btn, key, val){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.answers[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ANSWER[key]){
+    btn.classList.add('right');
+    fb.className = 'feedback good show';
+    fb.innerHTML = '✅ 正确。'+REASON[key];
+  }else{
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '❌ 不对。'+REASON[key]+'（正确选项已标出，可再想一想）';
+  }
+}
+/* 红线陷阱选项：点了直接炸号 */
+function pickBoom(btn, key, val, tag, msg, rule){
+  pick(btn, key, val);
+  boom(msg, rule);
+  var box = btn.closest('.quiz-q');
+  var fb = document.getElementById('fb-'+key);
+  fb.className = 'feedback bad show';
+  fb.innerHTML = '💥 触发 '+tag+'。'+rule;
+}
+function checkFill(key, pattern, fbId, okMsg){
+  var v = document.getElementById(key).value.trim();
+  var fb = document.getElementById(fbId);
+  var re = new RegExp(pattern);
+  if(v.length < 6){ fb.className='feedback info show'; fb.innerHTML='再写具体点——这是要写进工单的。'; return; }
+  S.fills[key] = v; save();
+  if(re.test(v)){ fb.className='feedback good show'; fb.innerHTML='✅ '+okMsg; }
+  else{ fb.className='feedback bad show'; fb.innerHTML='❌ 漏了关键要素：'+pattern.split('|').join('／')+'。'; }
+}
+
+/* ══════════════════ 排序题 ══════════════════ */
+(function initDrag(){
+  var lists = document.querySelectorAll('.drag-list');
+  lists.forEach(function(ul){
+    var dragEl = null;
+    ul.addEventListener('dragstart', function(e){ dragEl = e.target; e.target.classList.add('dragging'); });
+    ul.addEventListener('dragend', function(e){ e.target.classList.remove('dragging'); });
+    ul.addEventListener('dragover', function(e){ e.preventDefault();
+      var after = getAfter(ul, e.clientY);
+      if(after == null) ul.appendChild(dragEl); else ul.insertBefore(dragEl, after);
+    });
+    ul.querySelectorAll('li').forEach(function(li){
+      li.tabIndex = 0;
+      li.addEventListener('keydown', function(e){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li);
+      });
+    });
+  });
+  function getAfter(ul, y){
+    var items = [].filter.call(ul.querySelectorAll('li:not(.dragging)'), function(el){
+      var r = el.getBoundingClientRect(); return y < r.top + r.height/2;
+    });
+    return items[0] || null;
+  }
+})();
+function checkSort(ulId, fbId){
+  var ul = document.getElementById(ulId);
+  var order = [].map.call(ul.querySelectorAll('li'), function(li){ return li.dataset.k; }).join('');
+  var fb = document.getElementById(fbId);
+  S.sorts[ulId] = order; save();
+  if(order === '1234'){
+    fb.className='feedback good show';
+    fb.innerHTML='✅ 顺序正确。真实工作流：先分段测算，再加总对产能，再定节奏留缓冲，最后才谈方案。';
+  }else{
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 顺序还不对。提示：没加总对产能之前，谈不上一周排多少条。';
+  }
+}
+
+/* ══════════════════ 仿真实训：排产＋质量门配置模拟器 ══════════════════ */
+var STAGE = {1:'① 人天测算',2:'② 排产与两套方案',3:'③ 质量门配置',4:'④ 试运行数据源',
+  5:'⑤ 试运行第 1 周',6:'⑥ 客户催单事件',7:'⑦ 试运行第 2 周',8:'⑧ 周报与修正建议',
+  9:'⑨ 会签',10:'复盘'};
+function simLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('simLog').prepend(d);
+}
+function meter(){
+  document.getElementById('simStage').textContent = STAGE[S.sim.step] || '未开始';
+  document.getElementById('boomCnt').textContent = S.sim.booms;
+  document.getElementById('gateRate').textContent = S.sim.gateOk ? '100% ✅' : '—';
+}
+function startSim(){
+  S.sim = {started:true, step:1, pdOk:false, planOk:false, gateOk:false,
+           srcOk:false, w1:false, urgeOk:false, w2:false, repOk:false,
+           booms:S.sim.booms||0, finished:false, tries:{}};
+  save(); renderSim();
+  simLog('系统：进入①人天测算。四段：采集预处理／标注／质检（含返工预留）／训练对接。', '#7fd6c0');
+  document.getElementById('simStage').textContent = STAGE[1];
+}
+function renderSim(){
+  var p = document.getElementById('simPanel');
+  var h = '';
+  if(S.sim.step === 1){
+    h = '<h4>① 人天测算（红线②：排产人天无法加总 → 退回重做）</h4>'
+      + '<p style="font-size:14px;color:#c9dce8">按参考工时折算四段人天（四舍五入到整数，允许 ±1）：采集预处理＝80,000×10s；标注＝自建 48,000×75s＋人审 32,000×35s；质检＝抽检执行 20 人天＋返工预留 12 人天；训练对接＝80,000×6s。总计必须等于四段之和。</p>'
+      + '<div class="sim-num">'
+      + '<div><label>① 采集与预处理（人天）</label><input id="pd1" type="number" min="0" value="'+(S.sim.pd1||'')+'"></div>'
+      + '<div><label>② 标注（人天）</label><input id="pd2" type="number" min="0" value="'+(S.sim.pd2||'')+'"></div>'
+      + '<div><label>③ 质检含返工预留（人天）</label><input id="pd3" type="number" min="0" value="'+(S.sim.pd3||'')+'"></div>'
+      + '<div><label>④ 训练对接（人天）</label><input id="pd4" type="number" min="0" value="'+(S.sim.pd4||'')+'"></div>'
+      + '<div><label>总计（人天）</label><input id="pdT" type="number" min="0" value="'+(S.sim.pdT||'')+'"></div>'
+      + '</div>'
+      + '<div class="row"><button class="btn" onclick="pdCheck()">校验测算</button>'
+      + '<button class="btn warn" onclick="pdTrap()">✂ 时间不够，质检段不排了</button></div>'
+      + '<div class="feedback" id="fb-sim"></div>';
+  }else if(S.sim.step === 2){
+    h = '<h4>② 排产与两套方案（决策步硬规则：两套排产＋降配代价，缺项不签批）</h4>'
+      + '<p style="font-size:14px;color:#c9dce8">总需求 241 人天 vs 可用产能 180 人天，缺口 61 人天。选一套作为推荐方案，并把 6 周条数排出来（每周不得超过周上限）。标准版＝申请借调 4 人（周上限 14,900 条，全量 80,000）；降配版＝不求增援（周上限 10,200 条，首期 60,000，余 20,000 延至第 7—8 周）。</p>'
+      + '<div class="row">'
+      + '<button class="btn '+(S.sim.plan==='std'?'':'ghost')+'" onclick="setPlan(\'std\')">标准版：全量 80,000＋借调 4 人</button>'
+      + '<button class="btn '+(S.sim.plan==='cut'?'':'ghost')+'" onclick="setPlan(\'cut\')">降配版：首期 60,000＋不求增援</button>'
+      + '</div>'
+      + '<div class="sim-num">'
+      + ['第 1 周','第 2 周','第 3 周','第 4 周','第 5 周','第 6 周'].map(function(t,i){
+          return '<div><label>'+t+'（条）</label><input id="w'+(i+1)+'" type="number" min="0" value="'+(S.sim['w'+(i+1)]||'')+'"></div>';
+        }).join('')
+      + '</div>'
+      + '<div style="margin:8px 0"><label style="font-size:13px;color:#9fb8c9;display:block;margin-bottom:3px">降配代价说明（必填：缩了多少、延到何时、对客户意味着什么；两套都动门限＝零容忍）</label>'
+      + '<textarea class="fillin" id="planCost" rows="2" style="background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63">'+(S.sim.planCost||'')+'</textarea></div>'
+      + '<div class="row"><button class="btn" onclick="planCheck()">提交排产</button>'
+      + '<button class="btn warn" onclick="planTrap()">✂ 质检段并进标注段，人天就够了</button></div>'
+      + '<div class="feedback" id="fb-sim"></div>';
+  }else if(S.sim.step === 3){
+    h = '<h4>③ 质量门配置（红线①：擅自修改已定质量门阈值 → 本情境 0 分＋重做）</h4>'
+      + '<p style="font-size:14px;color:#c9dce8">把既定门限配置到平台。既定规则：抽检比例 10%｜一致率阈值 ≥90%｜返工规则＝触发即整段返工＋二次抽检。<b>试运行期间不得改动已定阈值。</b></p>'
+      + '<div class="sim-controls">'
+      + '<div><label>抽检比例</label><select id="g1"><option value="">— 请选择 —</option><option>10%</option><option>5%</option><option>20%</option><option>不抽检</option></select></div>'
+      + '<div><label>一致率阈值</label><select id="g2"><option value="">— 请选择 —</option><option>≥90%</option><option>≥85%</option><option>≥80%</option><option>不设阈值</option></select></div>'
+      + '<div><label>返工规则</label><select id="g3"><option value="">— 请选择 —</option><option>触发即整段返工＋二次抽检</option><option>只改错的几条</option><option>不返工</option></select></div>'
+      + '</div>'
+      + '<div class="row"><button class="btn" onclick="gateCheck()">提交配置</button></div>'
+      + '<div class="feedback" id="fb-sim"></div>';
+  }else if(S.sim.step === 4){
+    h = '<h4>④ 试运行数据源（红线⑤：使用未脱敏真实业务数据 → 本情境 0 分）</h4>'
+      + '<p style="font-size:14px;color:#c9dce8">试运行 2 周用哪个数据源跑？</p>'
+      + '<div class="row">'
+      + '<button class="btn" onclick="srcPick(true)">历史批次模拟（已脱敏）</button>'
+      + '<button class="btn warn" onclick="srcPick(false)">客户真实原始影像（省事）</button>'
+      + '</div>';
+  }else if(S.sim.step === 5){
+    h = '<h4>⑤ 试运行第 1 周（历史批次模拟·脱敏·教学样例）</h4>'
+      + '<div class="sample-card"><div class="sid">Week 1 实测</div><div class="scene">计划 13,300 条 → 实际 12,400 条（<b>93.0%</b>）；自建段单条工时 <b>82s</b>（超预估 9.3%）；抽检执行比例 10%（符合既定）；抽检一致率 <b>91.2%</b>（≥90% 达标）。</div></div>'
+      + '<p style="font-size:14px;color:#c9dce8">第 1 周结论先行记下来：量差 7% 出在自建段工时超预估。进第 2 周——客户要来了。</p>'
+      + '<div class="row"><button class="btn" onclick="w1Next()">记录周报，进入第 2 周 →</button></div>';
+  }else if(S.sim.step === 6){
+    h = '<div class="event-card"><div class="ev-t">📞 客户催单事件（教学样例）</div>'
+      + '<p style="font-size:14.5px;color:#f0d9a8">"我看你们干得不错。要是能<b>提前 3 天交付</b>，<b>提前交付奖金 ¥50,000</b> 当场到账。对了，我听说质检那 10% 抽检挺费时间——先降到 5% 赶出来，后面再补嘛。"</p>'
+      + '<p style="font-size:13px;color:#c9a9a6">（核心决策点：交期紧，压不压质检比例。）</p></div>'
+      + '<div class="row">'
+      + '<button class="btn" onclick="urgePick(0)">拒绝诱惑：维持既定门限，把量差写进修正建议</button>'
+      + '<button class="btn warn" onclick="urgePick(1)">临时把抽检降到 5%，赶出提前量</button>'
+      + '<button class="btn warn" onclick="urgePick(2)">口头答应提前 3 天交付</button>'
+      + '</div>'
+      + '<div class="feedback" id="fb-sim"></div>';
+  }else if(S.sim.step === 7){
+    h = '<h4>⑦ 试运行第 2 周（历史批次模拟·脱敏·教学样例）</h4>'
+      + '<div class="sample-card"><div class="sid">Week 2 实测</div><div class="scene">计划 13,300 条 → 实际 12,900 条（<b>96.8%</b>）；自建段单条工时 80s；抽检一致率 <b>88.7%</b>（<b>＜90%，触发返工规则</b>：该段整段返工＋二次抽检）。归因初判：新模态学习曲线，前 3,000 条判定不稳。</div></div>'
+      + '<div class="row"><button class="btn" onclick="w2Next()">记录周报，进入偏差汇总 →</button></div>';
+  }else if(S.sim.step === 8){
+    h = '<h4>⑧ 周报与修正建议（红线③：编造或挑选试运行数据 → 课程 0 分）</h4>'
+      + '<p style="font-size:14px;color:#c9dce8">质量周报（B-14）按"计划／实际／偏差／归因／修正建议"五栏写。Week 2 一致率不达标＋1 次段内返工——报不报？</p>'
+      + '<div class="row">'
+      + '<button class="btn" onclick="repPick(true)">全量如实报：含 Week 2 不达标与返工</button>'
+      + '<button class="btn warn" onclick="repPick(false)">只报 Week 1 好数据，Week 2 下周再说</button>'
+      + '</div>'
+      + '<div id="fixBox"></div>';
+  }else if(S.sim.step === 9){
+    h = '<h4>⑨ 修正建议会签（B-13：试运行报告与修正建议·学生会签）</h4>'
+      + '<p style="font-size:14px;color:#c9dce8">会签单：修正建议由学生与部门负责人（模拟）共同签字。你只能建议，不能定稿。</p>'
+      + '<div class="sim-num">'
+      + '<div><label>学生签字</label><input id="signA" value="'+(S.sim.signA||'')+'"></div>'
+      + '<div><label>部门负责人（模拟）签字</label><input id="signB" value="'+(S.sim.signB||'')+'"></div>'
+      + '</div>'
+      + '<div class="row"><button class="btn" onclick="signSubmit()">确认会签，结束试运行</button></div>'
+      + '<div class="feedback" id="fb-sim"></div>';
+  }else if(S.sim.step === 10){
+    h = '<h4>复盘：决策 → 后果</h4>'
+      + '<table class="spec-table" style="color:#e8f0f6">'
+      + '<tr><th style="background:#1d3450;color:#9fd8c8">你的决策</th><th style="background:#1d3450;color:#9fd8c8">后果</th></tr>'
+      + '<tr><td style="border-color:#2c4a63">四段人天加总＝241，缺口 61 人天如实上报</td><td style="border-color:#2c4a63">部门据此协调借调／接受降配——账摆在哪，决定就落在哪</td></tr>'
+      + '<tr><td style="border-color:#2c4a63">门限按既定 10%／≥90%／整段返工配置</td><td style="border-color:#2c4a63">配置一致率 100%，Week 2 的 88.7% 被门限抓住 → 段内返工 1 次</td></tr>'
+      + '<tr><td style="border-color:#2c4a63">拒绝"提前交付奖金"，维持抽检比例</td><td style="border-color:#2c4a63">6 周交付达成（含 1 次返工），二期合作保留</td></tr>'
+      + '</table>'
+      + '<div class="row"><button class="btn ghost" style="color:#7fd6c0;border-color:#2c4a63;background:#1d3450" onclick="showChain()">⚡ 看看"压了比例"会怎样（后果链推演·不计成绩）</button></div>'
+      + '<div class="feedback" id="fb-chain" style="display:none"></div>';
+  }
+  p.innerHTML = h;
+  meter(); save();
+}
+function setPlan(v){ S.sim.plan = v; save(); renderSim(); }
+function pdTrap(){
+  boom('你把质检段从排产里砍掉了。',
+       'D 类红线②：排产人天无法加总或与实际工时偏差 >30% 且无说明 → 退回重做。四段漏一段，账面数字再好看也是漏项——漏掉的质检，就是漏掉的门。');
+  simLog('💥 触发红线②：排产砍掉质检段', '#ff6b60');
+}
+function pdCheck(){
+  var v = [1,2,3,4].map(function(i){ return parseInt(document.getElementById('pd'+i).value, 10); });
+  var t = parseInt(document.getElementById('pdT').value, 10);
+  var fb = document.getElementById('fb-sim');
+  if(v.some(isNaN) || isNaN(t)){
+    fb.className='feedback info show';
+    fb.innerHTML='四段和总计都要填。漏一段＝人天无法加总（红线②）。';
+    return;
+  }
+  S.sim.pd1=v[0]; S.sim.pd2=v[1]; S.sim.pd3=v[2]; S.sim.pd4=v[3]; S.sim.pdT=t;
+  var exp=[28,164,32,17,241], ok=true, msg='';
+  for(var i=0;i<5;i++){ if(Math.abs((i<4?v[i]:t)-exp[i])>1){ ok=false; msg='第'+(i+1)+'项与参考值差超过 1 人天。'; } }
+  var sum = v[0]+v[1]+v[2]+v[3];
+  if(ok && Math.abs(t-sum)>1){ ok=false; msg='总计 ≠ 四段之和——人天不可加总（红线②）。'; }
+  if(ok){
+    S.sim.pdOk = true; save(); renderSim();
+    S.sim.step = 2; save(); renderSim();
+    simLog('① 测算通过：四段加总 241 人天，产能 180 人天，缺口 61 人天——带着缺口进排产。', '#7fd6c0');
+    flash('人天测算通过！缺口 61 人天已记录。', 'good');
+  }else{
+    S.sim.tries.pd = (S.sim.tries.pd||0)+1; save();
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ '+msg+(S.sim.tries.pd>=2 ? ' 提示（引条文）：排产须可加总到人天（情境描述约束）；质检段含返工预留，不是可选项。':'（再核对一遍参考工时与四段构成）');
+  }
+}
+function planTrap(){
+  boom('你把质检段并进了标注段，账面人天"够了"。',
+       'D 类红线②：排产人天无法加总或与实际工时偏差 >30% 且无说明 → 退回重做。把质检并进标注，门就没有执行人——质量门失守，往往从"没人排质检"开始。');
+  simLog('💥 触发红线②：质检段并进标注段', '#ff6b60');
+}
+function planCheck(){
+  var fb = document.getElementById('fb-sim');
+  if(!S.sim.plan){ fb.className='feedback info show'; fb.innerHTML='先选一套推荐方案（标准版／降配版）。'; return; }
+  var cap = S.sim.plan==='std' ? 14900 : 10200;
+  var target = S.sim.plan==='std' ? 80000 : 60000;
+  var ws = [1,2,3,4,5,6].map(function(i){ return parseInt(document.getElementById('w'+i).value, 10); });
+  var cost = document.getElementById('planCost').value.trim();
+  S.sim.planCost = cost; save();
+  if(ws.some(isNaN)){ fb.className='feedback info show'; fb.innerHTML='6 周条数都要排满。'; return; }
+  var sum = ws.reduce(function(a,b){return a+b;},0);
+  if(sum !== target){
+    S.sim.tries.plan=(S.sim.tries.plan||0)+1; save();
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 6 周合计 '+sum+' 条 ≠ 目标 '+target+' 条。'+(S.sim.tries.plan>=2?' 提示（引条文）：排产须可加总到人天（情境描述约束），周计划要对得起总量。':'');
+    return;
+  }
+  var over = ws.filter(function(x){return x>cap;});
+  if(over.length){
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 有周超过周上限 '+cap+' 条——周产能是硬顶，超了就是第二处隐性缺口。';
+    return;
+  }
+  if(cost.length < 15){
+    fb.className='feedback info show';
+    fb.innerHTML='降配代价说明再写具体点（缩了多少、延到何时、对客户意味着什么）。决策步硬规则：缺项不签批。';
+    return;
+  }
+  S.sim.planOk = true; save();
+  S.sim.step = 3; save(); renderSim();
+  simLog('② 排产通过：'+ (S.sim.plan==='std'?'标准版·借调 4 人·周上限 14,900':'降配版·首期 60,000·余 20,000 延至第 7—8 周') +'；降配代价已说明。', '#7fd6c0');
+  flash('排产提交通过。下一步：把既定质量门配到平台。', 'good');
+}
+function gateCheck(){
+  var g1 = document.getElementById('g1').value;
+  var g2 = document.getElementById('g2').value;
+  var g3 = document.getElementById('g3').value;
+  if(!g1 || !g2 || !g3){ flash('三项都要配', 'info'); return; }
+  if(g1==='10%' && g2==='≥90%' && g3==='触发即整段返工＋二次抽检'){
+    S.sim.gateOk = true; save();
+    S.sim.step = 4; save(); renderSim();
+    simLog('③ 门限配置与既定规则逐条一致（一致率 100%）。试运行启动前先定数据源。', '#7fd6c0');
+    flash('质量门配置一致率 100%！', 'good');
+  }else{
+    boom('你改了既定质量门里的配置值。',
+         'D 类红线①：擅自修改已定质量门阈值 → 本情境 0 分 + 重做。架构与门限定稿权在部门负责人；试运行期间不得改动已定阈值。改它的一瞬，平台配置变更日志已经记下。');
+    simLog('💥 触发红线①：门限配置与既定规则不一致', '#ff6b60');
+  }
+}
+function srcPick(ok){
+  if(ok){
+    S.sim.srcOk = true; save();
+    S.sim.step = 5; save(); renderSim();
+    simLog('④ 数据源：历史批次模拟（脱敏）✅ 试运行第 1 周开始。', '#7fd6c0');
+  }else{
+    boom('你拿了客户的真实原始业务数据做试运行。',
+         'D 类红线⑤：使用未脱敏真实业务数据做试运行 → 本情境 0 分。联调与试运行使用脱敏样本；含个人信息的日志须先脱敏，不得以真实个人信息构造测试集。');
+    simLog('💥 触发红线⑤：未脱敏真实数据进试运行', '#ff6b60');
+  }
+}
+function w1Next(){
+  S.sim.w1 = true; save();
+  S.sim.step = 6; save(); renderSim();
+  simLog('⑤ Week 1 记录完毕：实际 93.0%，自建段工时 +9.3%，一致率 91.2% 达标。', '#7fd6c0');
+}
+function urgePick(k){
+  if(k===0){
+    S.sim.urgeOk = true; save();
+    S.sim.step = 7; save(); renderSim();
+    simLog('⑥ 拒绝提前交付奖金诱惑，维持 10% 抽检——量差写进修正建议。', '#7fd6c0');
+    flash('守住了。交期紧，不压质检比例。', 'good');
+  }else if(k===1){
+    boom('你把抽检比例临时降到了 5%，赶"提前量"。',
+         'D 类红线①：擅自修改已定质量门阈值 → 本情境 0 分 + 重做。交期紧不压质检比例——压下去的 5 个百分点，就是漏检率的缺口。后果链：质量门失守 → 批次返工 → 客户索赔（见复盘推演）。');
+    simLog('💥 触发红线①：临时压低抽检比例', '#ff6b60');
+  }else{
+    boom('你口头答应了"提前 3 天交付"。',
+         'D 类红线④：越权对需求方承诺交期或价格 → 停止该环节 + 记录。交期承诺权在部门负责人；执行层的一句"行"，就是部门的合同风险。正确说法：报部门，由部门答复。');
+    simLog('💥 触发红线④：越权承诺交期', '#ff6b60');
+  }
+}
+function w2Next(){
+  S.sim.w2 = true; save();
+  S.sim.step = 8; save(); renderSim();
+  simLog('⑦ Week 2 记录完毕：实际 96.8%，一致率 88.7%＜90% → 触发返工规则，段内返工 1 次。', '#e0a437');
+}
+function repPick(ok){
+  if(ok){
+    S.sim.repOk = true; save(); renderSim();
+    var box = document.getElementById('fixBox');
+    box.innerHTML = '<p style="font-size:14px;color:#c9dce8;margin:10px 0">如实报完之后，选修正建议（可多选）。注意：建议可以改方法，不能改门限。</p>'
+      + '<div class="sim-chk">'
+      + '<label><input type="checkbox" id="fx1"><span>修订自建段工时定额 75s→82s（报部门修订，不动门限）</span></label>'
+      + '<label><input type="checkbox" id="fx2"><span>新模态前 3,000 条设学习期观察项（不达标先辅导、不直接返工）</span></label>'
+      + '<label><input type="checkbox" id="fx3"><span>第 3 周起申请增援 2 人，补 Week 1—2 亏欠的 1,300 条</span></label>'
+      + '<label class="trap"><input type="checkbox" id="fx4"><span>一致率阈值降至 85%，让 Week 2"自然达标"</span></label>'
+      + '</div>'
+      + '<div class="row"><button class="btn" onclick="fixSubmit()">提交修正建议</button></div>'
+      + '<div class="feedback" id="fb-sim"></div>';
+    simLog('⑧ 周报全量如实：含 Week 2 一致率 88.7% 与 1 次段内返工。', '#7fd6c0');
+  }else{
+    boom('你的周报只挑 Week 1 的好数据报。',
+         'D 类红线③：试运行数据编造或挑选有利批次 → 课程 0 分 + 重修。不隐瞒降级：灰度或降级服务须在状态页与周报中明示，不得让业务方在不知情下使用降级结果。');
+    simLog('💥 触发红线③：挑选有利批次报偏差', '#ff6b60');
+  }
+}
+function fixSubmit(){
+  var c1=document.getElementById('fx1').checked, c2=document.getElementById('fx2').checked,
+      c3=document.getElementById('fx3').checked, c4=document.getElementById('fx4').checked;
+  var fb = document.getElementById('fb-sim');
+  if(c4){
+    boom('你把"一致率阈值降至 85%"选进了修正建议。',
+         'D 类红线①：擅自修改已定质量门阈值 → 本情境 0 分 + 重做。修正建议改的是方法（定额、学习期、增援），不是门限本身——门限定稿权在部门负责人。');
+    simLog('💥 触发红线①：修正建议里夹带降阈值', '#ff6b60');
+    document.getElementById('fx4').checked = false;
+    return;
+  }
+  if(!(c1 && c2 && c3)){
+    fb.className='feedback info show';
+    fb.innerHTML='三条方法层建议都要选——定额、学习期、增援分别对着 Week 1 的工时偏差、Week 2 的学习曲线和累计亏欠。';
+    return;
+  }
+  S.sim.step = 9; save(); renderSim();
+  simLog('⑧ 修正建议提交：工时定额修订＋学习期观察项＋增援 2 人（均不动门限）。', '#7fd6c0');
+}
+function signSubmit(){
+  var a = document.getElementById('signA').value.trim();
+  var b = document.getElementById('signB').value.trim();
+  var fb = document.getElementById('fb-sim');
+  if(!a || !b){ fb.className='feedback info show'; fb.innerHTML='学生与部门负责人（模拟）都要签字——会签不是一个人签两遍。'; return; }
+  S.sim.signA = a; S.sim.signB = b;
+  S.sim.finished = true; save();
+  S.sim.step = 10; save(); renderSim();
+  simLog('⑨ 会签完成：B-13 试运行报告与修正建议已会签。6 周交付达成（含 1 次段内返工），二期合作保留。', '#7fd6c0');
+  flash(S.sim.booms===0 ? '仿真实训通过，且零红线触发！' : '仿真实训通过——但触发过 '+S.sim.booms+' 次红线，真实场景里那是一次 0 分。', S.sim.booms===0?'good':'info');
+  progress();
+}
+function showChain(){
+  var fb = document.getElementById('fb-chain');
+  fb.style.display = 'block';
+  fb.className = 'feedback bad show';
+  fb.innerHTML = '<b>后果链推演（教学样例）</b>：抽检 10%→5% → 漏检率上升 → 第 2 周质量门失守（一致率跌至 82%）→ <b>12,000 条整段返工</b> → 交付反而延期 2 周 → 客户按合同<b>索赔 ¥80,000</b> → 二期合作取消。<br>对比账：维持 10% 的代价 ≈ 多 <b>3.2 人天</b>质检成本；压比例的代价 ≈ <b>150 人天返工＋¥80,000 索赔</b>。<b>交期紧，不压质检比例——这就是本情境的核心决策点。</b>';
+}
+function boom(msg, rule){
+  S.sim.booms++; save();
+  document.getElementById('boomMsg').textContent = msg;
+  document.getElementById('boomRule').textContent = rule;
+  document.getElementById('boom').classList.add('on');
+  meter();
+}
+function closeBoom(){ document.getElementById('boom').classList.remove('on'); }
+
+/* ══════════════════ 检测 ══════════════════ */
+var QUIZ = [
+  {t:'架构与质量门的定稿权在谁？', o:['执行学生','部门负责人','需求方','质检员'], a:1,
+   r:'课标 Q3 情境描述约束：架构与门限定稿权在部门负责人，本课只做执行与修正建议。'},
+  {t:'试运行期间发现既定门限不合理，正确做法是？', o:['直接改阈值跑起来再说','出修正建议，走会签','先斩后奏下周补记录','让客户直接改'], a:1,
+   r:'情境描述约束：试运行期间不得改动已定阈值；红线①：擅自修改已定质量门阈值 → 本情境 0 分＋重做。'},
+  {t:'排产表的硬性要求是？', o:['人天可加总','版面页数足够','和上一批一致','越粗越好'], a:0,
+   r:'情境描述约束：排产须可加总到人天；红线②：人天无法加总或偏差 >30% 且无说明 → 退回重做。'},
+  {t:'质量门配置与既定规则的一致率要求是？', o:['100%','≥90%','≥80%','看情况'], a:0,
+   r:'课标 ⑤ 五要素（工作要求与质量标准）：质量门配置与既定规则一致率 100%；周报按时率 100%。'},
+  {t:'决策步必须交几套排产？', o:['一套就行','两套并说明降配代价','三套起','不用交'], a:1,
+   r:'课标 ⑦.1 决策步硬规则：Q3 必须交两套排产并说明降配代价，缺项不签批。'},
+  {t:'需求方催交期，执行层学生的正确做法是？', o:['口头答应提前交付','说明权限边界，报部门答复','让组友代答应','先做出来再说'], a:1,
+   r:'红线④：越权对需求方承诺交期或价格 → 停止该环节＋记录；⑩.2 建议不越权。'},
+  {t:'【判断】"提前交付奖金是部门收益，可以临时把抽检比例降到 5% 赶出来。"', o:['对','错'], a:1,
+   r:'错。红线①：擅自修改已定质量门阈值 → 本情境 0 分＋重做。交期紧不压质检比例；压比例的后果链是质量门失守→批次返工→客户索赔。'},
+  {t:'【判断】"周报可以把 Week 2 不达标的数据放一放，先报好看的。"', o:['对','错'], a:1,
+   r:'错。红线③：试运行数据编造或挑选有利批次 → 课程 0 分；⑩.2 不隐瞒降级——周报须全量如实。'},
+  {t:'试运行的数据源应该用？', o:['客户真实原始数据','脱敏历史批次模拟','网上开源数据集','自己编一份'], a:1,
+   r:'红线⑤：使用未脱敏真实业务数据做试运行 → 本情境 0 分；⑩.2 最小必要与去标识：试运行使用脱敏样本。'},
+  {t:'【排序】本情境的正确工作顺序是？', o:['人天测算→排产→配质量门→试运行→报偏差→修正建议会签','配质量门→人天测算→排产→试运行','排产→试运行→配质量门→人天测算','人天测算→配质量门→试运行→排产'], a:0,
+   r:'课标 Q3 情境描述＋G8：盘点能力缺口、测算人天与排产，并按既定架构配置质量门、试运行 2 周后报偏差；修正建议走会签。'}
+];
+(function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  QUIZ.forEach(function(q, i){
+    var div = document.createElement('div');
+    div.className = 'quiz-q'; div.dataset.q = 'fq'+i;
+    var html = '<div class="q">'+(i+1)+'. '+esc(q.t)+'</div><div class="opts">';
+    q.o.forEach(function(o, j){
+      html += '<button class="opt" onclick="quizPick(this,\'fq'+i+'\','+j+','+q.a+')">'+'ABCD'[j]+'. '+esc(o)+'</button>';
+    });
+    html += '</div><div class="feedback" id="fb-fq'+i+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+function quizPick(btn, key, val, ans){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.quiz[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ans){
+    btn.classList.add('right');
+    fb.className='feedback good show'; fb.innerHTML='✅ '+QUIZ[parseInt(key.slice(2))].r;
+  }else{
+    btn.classList.add('wrong');
+    fb.className='feedback bad show'; fb.innerHTML='❌ '+QUIZ[parseInt(key.slice(2))].r;
+  }
+}
+function gradeQuiz(){
+  var answered = 0, right = 0;
+  QUIZ.forEach(function(q, i){
+    var v = S.quiz['fq'+i];
+    if(v !== undefined){ answered++; if(v === q.a) right++; }
+  });
+  if(answered < QUIZ.length){ flash('还有 '+(QUIZ.length-answered)+' 题未作答', 'info'); return; }
+  S.quizDone = true; S.quizPass = right >= 8;
+  var pct = Math.round(right/QUIZ.length*100);
+  document.getElementById('ringTxt').textContent = pct+'%';
+  document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+  var v = document.getElementById('quizVerdict');
+  if(S.quizPass){
+    v.textContent = '✅ 过关（'+right+'/10）'; v.style.color = 'var(--ok)';
+    document.getElementById('lockBox').classList.remove('on');
+    document.getElementById('bg5').classList.add('got');
+  }else{
+    v.textContent = '❌ 未达标（'+right+'/10，需 8 题）'; v.style.color = 'var(--bad)';
+    document.getElementById('lockBox').classList.add('on');
+    document.getElementById('bg5').classList.remove('got');
+  }
+  document.getElementById('quizDetail').textContent = '答对 '+right+' 题；错题解析已展开，回去重学再测。';
+  save(); progress();
+}
+
+/* ══════════════════ 交付物清单 ══════════════════ */
+(function initList(){
+  var ul = document.getElementById('deliverList');
+  ul.querySelectorAll('li').forEach(function(li, i){
+    if(S.checklist[i]) li.classList.add('done');
+    li.onclick = function(){ li.classList.toggle('done'); S.checklist[i] = li.classList.contains('done'); save(); };
+  });
+})();
+
+/* ══════════════════ 提示 ══════════════════ */
+function flash(msg, type){
+  var d = document.createElement('div');
+  d.className = 'feedback '+(type==='good'?'good':type==='info'?'info':'bad')+' show';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:200;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:260px;text-align:center';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+/* ══════════════════ 徽章初始 ══════════════════ */
+(function initBadges(){
+  if(S.levels.lv1>0) document.getElementById('bg1').classList.add('got');
+  if(S.levels.lv2>0 || S.sim.pdOk) document.getElementById('bg2').classList.add('got');
+  if(S.sim.finished && S.sim.booms===0) document.getElementById('bg3').classList.add('got');
+  if(S.sim.finished) document.getElementById('bg4').classList.add('got');
+  if(S.quizDone && S.quizPass) document.getElementById('bg5').classList.add('got');
+})();
+
+/* ══════════════════ 断点恢复 ══════════════════ */
+(function resume(){
+  if(S.sim.started && S.sim.step > 0 && S.sim.step < 10) renderSim();
+  else if(S.sim.step === 10) renderSim();
+  meter();
+})();
+
+unlock(); progress();
+</script>
+</body>
+</html>

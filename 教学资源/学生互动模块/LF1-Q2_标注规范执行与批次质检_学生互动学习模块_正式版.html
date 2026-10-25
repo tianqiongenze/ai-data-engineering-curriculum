@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF1-Q2 标注规范执行与批次质检 · 学生互动学习模块</title>
+<style>
+/* ========== 主题变量 ========== */
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1a2b3c; --ink2:#5a6b7c;
+  --brand:#0e7c66; --brand2:#0b5f4e; --brand-soft:#e3f2ee;
+  --warn:#b3541e; --warn-soft:#fdeee2; --ok:#1e7d3c; --ok-soft:#e6f4ea;
+  --bad:#b3261e; --bad-soft:#fdecea; --line:#d8e2ea; --gold:#b8860b;
+  --shadow:0 2px 10px rgba(14,60,80,.08); --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.75;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* ========== ① 顶部条 ========== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#0e7c66,#0b5f4e);
+  color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+  font-size:14px;box-shadow:var(--shadow)}
+.topbar b{font-size:15px}
+.topbar .chip{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 12px;white-space:nowrap}
+.topbar .spacer{flex:1}
+.progress-mini{background:rgba(255,255,255,.2);border-radius:20px;height:8px;width:130px;overflow:hidden}
+.progress-mini i{display:block;height:100%;background:#ffd54d;width:0;transition:width .4s}
+
+/* ========== 通用卡片/区块 ========== */
+section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 28px;margin:22px 0}
+h2.sec{font-size:21px;border-left:6px solid var(--brand);padding-left:12px;margin-bottom:14px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0}
+.small{font-size:13.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font-size:15px;padding:9px 22px;border-radius:10px;
+  transition:.2s;font-family:inherit}
+.btn:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn:disabled{background:#b8c4ce;cursor:not-allowed;transform:none}
+.btn.warn{background:var(--warn)}
+.btn.warn:hover:#8f4115
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand2);
+  border-radius:6px;padding:1px 10px;font-size:13px;margin:2px 4px 2px 0}
+.feedback{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px;display:none}
+.feedback.show{display:block;animation:pop .3s}
+.feedback.good{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.feedback.bad{background:var(--bad-soft);border-left:5px solid var(--bad)}
+.feedback.info{background:var(--warn-soft);border-left:5px solid var(--warn)}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ========== ② 情境引入 ========== */
+.story{background:linear-gradient(135deg,#f0f7f5,#e8f0f6);border-radius:12px;
+  padding:18px 20px;border:1px dashed var(--brand);margin:12px 0}
+.mission{border:2px solid var(--brand);border-radius:12px;padding:16px 20px;margin:14px 0;background:#fff}
+.mission h3{color:var(--brand2);margin-top:0}
+.constraints li{margin:6px 0 6px 22px}
+
+/* ========== ③ 知识预习：翻卡 ========== */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.flip{perspective:900px;height:130px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px;text-align:center}
+.flip-f{background:var(--brand);color:#fff;font-weight:600;font-size:16px}
+.flip-f small{font-weight:400;font-size:12px;opacity:.85;margin-top:4px}
+.flip-b{background:#fff;border:2px solid var(--brand);color:var(--ink);transform:rotateY(180deg);font-size:14px}
+.spec-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+.spec-table th,.spec-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.spec-table th{background:var(--brand-soft)}
+.spec-table tr:hover td{background:#fafdfc}
+
+/* ========== ④ 六步闯关 ========== */
+.level{border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.level-head{display:flex;align-items:center;gap:12px;background:#eef3f7;padding:12px 16px;cursor:pointer;user-select:none}
+.level-head .no{background:var(--brand);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.level-head .tt{font-weight:700;flex:1}
+.level-head .stars{color:#c9d4dd;font-size:18px;letter-spacing:2px}
+.level-head .stars b{color:var(--gold)}
+.level.locked .level-head{opacity:.55;cursor:not-allowed}
+.level-body{display:none;padding:16px 20px;border-top:1px solid var(--line)}
+.level.open .level-body{display:block}
+.quiz-q{margin:14px 0}
+.quiz-q .q{font-weight:600;margin-bottom:8px}
+.opts{display:grid;gap:8px}
+.opt{border:2px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:#fff;
+  font-size:15px;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.opt:hover{border-color:var(--brand)}
+.opt.picked{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.drag-list{list-style:none;display:grid;gap:8px}
+.drag-list li{border:2px solid var(--line);border-radius:10px;padding:9px 14px;background:#fff;cursor:grab}
+.drag-list li.dragging{opacity:.4}
+.drag-list li.over{border-color:var(--brand);border-style:dashed}
+.fillin{border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;width:100%;
+  font-family:inherit;margin:6px 0}
+.fillin:focus{border-color:var(--brand);outline:none}
+
+/* ========== ⑤ 仿真实训 ========== */
+.sim{background:#0f1e2a;color:#e8f0f6;border-radius:14px;padding:20px;margin:14px 0}
+.sim h3{color:#7fd6c0;margin-top:0}
+.sample-card{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.sample-card .sid{color:#7fd6c0;font-size:13px;font-weight:700}
+.sample-card .scene{font-size:15.5px;margin:6px 0}
+.sample-card .ai{background:#1d3450;border-left:4px solid #e0a437;padding:8px 12px;border-radius:6px;
+  font-size:14px;margin-top:8px;color:#f0d9a8}
+.sim-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sim-controls label{font-size:13.5px;color:#9fb8c9;display:block;margin-bottom:4px}
+.sim-controls select,.sim-controls button{border:none;border-radius:8px;padding:9px 12px;font-size:14.5px;font-family:inherit}
+.sim-controls select{background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63}
+.meter{background:#0a141d;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14.5px}
+.meter b{color:#ffd54d;font-size:18px}
+.sim-log{background:#0a141d;border-radius:10px;padding:12px 16px;font-size:13.5px;max-height:180px;overflow-y:auto;margin-top:10px}
+.sim-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.boom{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);z-index:999;
+  align-items:center;justify-content:center;padding:20px}
+.boom.on{display:flex}
+.boom-card{background:#1c1214;border:3px solid var(--bad);border-radius:16px;max-width:560px;
+  padding:30px;text-align:center;color:#ffd9d6}
+.boom-card h2{color:#ff6b60;font-size:26px;margin-bottom:10px}
+.boom-card .rule{background:#2a1618;border-radius:10px;padding:12px;margin:14px 0;text-align:left;font-size:14.5px}
+
+/* ========== ⑥ 检测 ========== */
+.quiz-score{display:flex;gap:18px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.score-ring{width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--brand) 0%,#e3eaf0 0);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--ink)}
+.score-ring i{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal}
+.locked-box{background:var(--warn-soft);border-left:5px solid var(--warn);border-radius:10px;
+  padding:14px 18px;margin:12px 0;display:none}
+.locked-box.on{display:block}
+
+/* ========== ⑦ 成就 ========== */
+.badges{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.badge{width:104px;text-align:center;opacity:.28;filter:grayscale(1);transition:.3s}
+.badge.got{opacity:1;filter:none}
+.badge .ico{width:76px;height:76px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:34px;background:linear-gradient(135deg,#ffd54d,#ffb300);
+  box-shadow:0 3px 10px rgba(255,179,0,.35)}
+.badge .nm{font-size:13.5px;font-weight:600}
+.checklist{list-style:none;margin:12px 0}
+.checklist li{padding:8px 12px;border:1px dashed var(--line);border-radius:8px;margin:6px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+.checklist li.done{background:var(--ok-soft);border-color:var(--ok);text-decoration:line-through}
+.checklist li::before{content:"☐";font-size:18px}
+.checklist li.done::before{content:"☑";color:var(--ok)}
+
+/* ========== 响应式/打印 ========== */
+@media(max-width:720px){
+  .sim-controls{grid-template-columns:1fr}
+  section{padding:18px 16px}
+  .topbar{font-size:12.5px}
+}
+@media print{
+  .topbar,.btn,.sim-controls,.boom{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .level-body{display:block!important}
+  .feedback{display:block!important}
+  .opt.right,.opt.wrong{outline:1px solid #999}
+  .badge{opacity:1;filter:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ ① 顶部条 ═══════════ -->
+<div class="topbar">
+  <b>LF1-Q2 标注规范执行与批次质检</b>
+  <span class="chip">学习情境 · 32h</span>
+  <span class="chip">任务等级 L1</span>
+  <span class="chip">达标线 80%</span>
+  <span class="chip">人工智能训练师（五级）方向</span>
+  <span class="spacer"></span>
+  <span id="progressTxt">进度 0%</span>
+  <div class="progress-mini"><i id="progressBar"></i></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ ② 情境引入 ═══════════ -->
+<section id="s2">
+  <h2 class="sec">② 情境引入：你接了一个真实批次</h2>
+  <div class="story">
+    <p>你通过了入职培训，今天组长交给你一个<b>外包批次</b>：某数据服务公司接下的道路场景图像标注项目，
+    <b>1000 条</b>待标数据，按<b>规范 v1.3</b>给图中"车辆／行人／骑行者"三类目标画框，
+    并判定每个目标的<b>遮挡</b>与<b>截断</b>属性。</p>
+    <p>组长只说了一句：<b>"这批是给自动驾驶感知模型训练用的，客户验收看一致性。"</b></p>
+  </div>
+  <div class="mission">
+    <h3>你的任务</h3>
+    <p>按规范完成本批次中你负责的 <b>250 条</b>标注，通过批次质检，交付合格的数据集。</p>
+    <h3>硬约束（违反任何一条，后果见"红线"）</h3>
+    <ul class="constraints">
+      <li>全程<b>平台内作业</b>，数据不出实训室</li>
+      <li>每 <b>50 条</b>送质检员抽检一次</li>
+      <li>整批 <b>5% 抽检合格率 &lt; 95% → 整批返工</b></li>
+      <li>单条参考工时 <b>22 秒（±15%）</b></li>
+    </ul>
+    <p class="small">已知条件：规范 v1.3、样例集 50 条、平台账号、自检清单、质检 SOP。<b>本模块所有数据均为教学样例，不含任何真实个人信息。</b></p>
+  </div>
+  <button class="btn" onclick="go('s3')">开始预习 →</button>
+</section>
+
+<!-- ═══════════ ③ 知识预习 ═══════════ -->
+<section id="s3">
+  <h2 class="sec">③ 知识预习：先把标准搞清楚</h2>
+  <p>点击卡片翻转查看定义。看不懂的条文先标记，带着问题进关。</p>
+  <div class="flipgrid">
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">三类目标<small>vehicle / person / rider</small></div>
+      <div class="flip-b">车辆：机动车（含两轮摩托）<br>行人：步行者<br>骑行者：骑自行车／电动车者<br><b>骑行者不算行人</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">遮挡<small>occlusion</small></div>
+      <div class="flip-b">目标被其他物体遮住。<br><b>部分遮挡 &lt;50%</b>：仍算目标<br><b>严重遮挡 ≥50%</b>：标注为"严重"属性<br><b>遮挡 ≥70%</b>：不标，写备注</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">截断<small>truncation</small></div>
+      <div class="flip-b">目标被画面边界切断。<br>出框 &lt;1/3：算目标，标"截断"<br>出框 ≥1/3：不标</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">一致性 Kappa<small>一致性指标</small></div>
+      <div class="flip-b">两个标注者对同批样本<br>判定一致的程度。<br><b>≥0.85 才允许发布规则</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">抽检双签<small>quality gate</small></div>
+      <div class="flip-b">质检员抽 5% 复核，<br>标注员与质检员<b>都要签字</b>。<br>签字＝本人真看过样本</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">预标注<small>AI 辅助</small></div>
+      <div class="flip-b">AI 先跑一版结果供参考。<br><b>必须逐条修正后才可提交</b>，<br>直接采用＝一票否决</div></div></div>
+  </div>
+  <h3>判定标准速查表（规范 v1.3 摘要）</h3>
+  <table class="spec-table">
+    <tr><th>情形</th><th>判定</th><th>属性</th></tr>
+    <tr><td>轿车完整可见</td><td>标"车辆"</td><td>无</td></tr>
+    <tr><td>轿车被路灯杆遮住约 35%</td><td>标"车辆"</td><td>部分遮挡</td></tr>
+    <tr><td>轿车被卡车遮住约 60%</td><td>标"车辆"</td><td>严重遮挡</td></tr>
+    <tr><td>轿车只露出车尾一小角（遮 75%）</td><td><b>不标</b></td><td>写备注</td></tr>
+    <tr><td>行人走出画面左边界（出框 1/4）</td><td>标"行人"</td><td>截断</td></tr>
+    <tr><td>骑自行车的人</td><td>标"骑行者"</td><td>按遮挡/截断判</td></tr>
+    <tr><td>推车通过的骑车人（脚落地）</td><td><b>标"行人"</b>（规范 v1.3 第 9 条）</td><td>—</td></tr>
+  </table>
+  <p class="small">记不清时随时回到本表。正式关卡里不提供此表——但你可以先把第 9 条这类"坑"记住。</p>
+  <button class="btn" onclick="go('s4')">进入六步闯关 →</button>
+</section>
+
+<!-- ═══════════ ④ 六步闯关 ═══════════ -->
+<section id="s4">
+  <h2 class="sec">④ 六步闯关：按真实工作流程练</h2>
+  <p class="small">关卡按顺序解锁。答错会告诉你是哪一条规范没说清——回去翻速查表，比背答案有用。</p>
+
+  <!-- 第①关 资讯 -->
+  <div class="level" id="lv1">
+    <div class="level-head" onclick="toggleLevel('lv1')">
+      <span class="no">1</span><span class="tt">① 资讯 · 读懂规范再动手</span><span class="stars" id="st1">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：组长发来规范 v1.3 和 50 条样例集，要求你<b>逐条复述判定标准</b>、确认签字后才开账号。先自测有没有真读懂。</p>
+      <div class="quiz-q" data-q="l1q1">
+        <div class="q">1. 规范里"骑行者"和"行人"的区别是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q1','A')">A. 骑得快的算骑行者</button>
+          <button class="opt" onclick="pick(this,'l1q1','B')">B. 骑行状态（脚在踏板上）算骑行者，推车通过算行人</button>
+          <button class="opt" onclick="pick(this,'l1q1','C')">C. 有自行车的画面里人都算骑行者</button>
+          <button class="opt" onclick="pick(this,'l1q1','D')">D. 两个类别可以随手换，不影响验收</button>
+        </div>
+        <div class="feedback" id="fb-l1q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q2">
+        <div class="q">2. 遮挡 30% 的车辆，正确判定是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q2','A')">A. 不标，因为被挡住了</button>
+          <button class="opt" onclick="pick(this,'l1q2','B')">B. 标"车辆"，属性记"部分遮挡"（&lt;50% 仍算目标）</button>
+          <button class="opt" onclick="pick(this,'l1q2','C')">C. 标"车辆"，属性记"严重遮挡"</button>
+          <button class="opt" onclick="pick(this,'l1q2','D')">D. 先跳过，等质检员定</button>
+        </div>
+        <div class="feedback" id="fb-l1q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q3">
+        <div class="q">3. 【复述签字】用一句话向组长复述"三类目标＋两个属性"的判定核心。</div>
+        <input class="fillin" id="l1q3" placeholder="例：车/人/骑行者三类，遮挡和截断看程度……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l1q3','目标|三类|遮挡|截断','fb-l1q3','复述通过。签字意味着你认账——后面判错就是判错。')">提交复述</button>
+        <div class="feedback" id="fb-l1q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv1','st1',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第②关 计划 -->
+  <div class="level locked" id="lv2">
+    <div class="level-head" onclick="toggleLevel('lv2')">
+      <span class="no">2</span><span class="tt">② 计划 · 排节奏、定送检点</span><span class="stars" id="st2">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：4 人分 1000 条，你负责 250 条。单条参考 22 秒。平台要求每 50 条送检一次。把工作节奏排出来。</p>
+      <div class="quiz-q" data-q="l2q1">
+        <div class="q">1. 你的 250 条应该安排几个送检节点？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1','A')">A. 1 个（全部做完再送）</button>
+          <button class="opt" onclick="pick(this,'l2q1','B')">B. 5 个（每 50 条一个，早发现问题早止损）</button>
+          <button class="opt" onclick="pick(this,'l2q1','C')">C. 250 个（每条都送）</button>
+          <button class="opt" onclick="pick(this,'l2q1','D')">D. 不用安排，质检员会来查</button>
+        </div>
+        <div class="feedback" id="fb-l2q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q2">
+        <div class="q">2. 250 条 × 22 秒 ≈ 1.5 小时纯标注。计划表里还必须预留什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1x','A')">A. 不用留，做完就行</button>
+          <button class="opt" onclick="pick(this,'l2q1x','B')">B. 返修时间（抽检不合格整批返工）＋送检等待时间</button>
+          <button class="opt" onclick="pick(this,'l2q1x','C')">C. 只预留吃饭时间</button>
+          <button class="opt" onclick="pick(this,'l2q1x','D')">D. 预留加班时间</button>
+        </div>
+        <div class="feedback" id="fb-l2q1x"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q3">
+        <div class="q">3. 【排序】把工作流按正确顺序排好（点选后拖拽或按顺序点击）：</div>
+        <ul class="drag-list" id="sortL2">
+          <li draggable="true" data-k="3">质检员抽检 5% 并双签</li>
+          <li draggable="true" data-k="1">读规范、复述标准、签字</li>
+          <li draggable="true" data-k="5">登记工时、自评、写改进</li>
+          <li draggable="true" data-k="2">排节奏、定 5 个送检点</li>
+          <li draggable="true" data-k="4">按规范打标、每 50 条送检、返修</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL2','fb-l2q3')">检查顺序</button>
+        <div class="feedback" id="fb-l2q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv2','st2',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第③关 决策 -->
+  <div class="level locked" id="lv3">
+    <div class="level-head" onclick="toggleLevel('lv3')">
+      <span class="no">3</span><span class="tt">③ 决策 · 讲清你的判定口径</span><span class="stars" id="st3">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：开标前，质检员抽你问："<b>遮挡 30% 到底算不算目标？为什么？</b>"——答不上来不许开标。</p>
+      <div class="quiz-q" data-q="l3q1">
+        <div class="q">1. 被质疑时，正确的回应方式是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q1','A')">A. "我按感觉标的，应该没问题"</button>
+          <button class="opt" onclick="pick(this,'l3q1','B')">B. "规范 v1.3 第 7 条：遮挡 &lt;50% 仍为目标，记部分遮挡；这批数据用于训练，漏标会让模型学不到小目标"</button>
+          <button class="opt" onclick="pick(this,'l3q1','C')">C. "别人也这么标的"</button>
+          <button class="opt" onclick="pick(this,'l3q1','D')">D. "那我不标了，等客户说"</button>
+        </div>
+        <div class="feedback" id="fb-l3q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q2">
+        <div class="q">2. 你和组友对"骑行者推车通过"判定不一致，正确做法？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q2','A')">A. 谁写的这票谁说了算</button>
+          <button class="opt" onclick="pick(this,'l3q2','B')">B. 查规范第 9 条；规范没写的，报质检员组织会商，按结论统一口径并记录</button>
+          <button class="opt" onclick="pick(this,'l3q2','C')">C. 各标各的，最后抽检再说</button>
+          <button class="opt" onclick="pick(this,'l3q2','D')">D. 问 AI，AI 说算啥算啥</button>
+        </div>
+        <div class="feedback" id="fb-l3q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q3">
+        <div class="q">3. 【一句话】判定口径必须对谁负责？（提示：数据下游是谁）</div>
+        <input class="fillin" id="l3q3" placeholder="输入你的答案">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l3q3','模型|下游|算法|训练','fb-l3q3','对。判定口径最终是对"下游模型训练效果"负责——这就是为什么要讲依据。')">提交</button>
+        <div class="feedback" id="fb-l3q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv3','st3',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第④关 实施 -->
+  <div class="level locked" id="lv4">
+    <div class="level-head" onclick="toggleLevel('lv4')">
+      <span class="no">4</span><span class="tt">④ 实施 · 真刀真枪打标（进仿真）</span><span class="stars" id="st4">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：账号开通。本关直接进入<b>标注比对模拟器</b>——你会看到平台里真实的工作界面长什么样。</p>
+      <div class="quiz-q" data-q="l4q1">
+        <div class="q">1. 打标过程中发现一条样本"遮住了 72% 的身形"，规范说 ≥70% 不标。你该？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q1','A')">A. 还是标上，多多益善</button>
+          <button class="opt" onclick="pick(this,'l4q1','B')">B. 不标，写备注"遮挡 72%，规范第 7 条不标"</button>
+          <button class="opt" onclick="pick(this,'l4q1','C')">C. 随便标个框意思一下</button>
+          <button class="opt" onclick="pick(this,'l4q1','D')">D. 跳过不记</button>
+        </div>
+        <div class="feedback" id="fb-l4q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q2">
+        <div class="q">2. 平台弹出"AI 预标注完成，是否一键采用？"你的做法？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q2','A')">A. 一键采用，效率高</button>
+          <button class="opt" onclick="pick(this,'l4q2','B')">B. 逐条核对修正后才提交（AI 只是参考）</button>
+          <button class="opt" onclick="pick(this,'l4q2','C')">C. 不用 AI，全部重标</button>
+          <button class="opt" onclick="pick(this,'l4q2','D')">D. 采用一半，剩下一半删掉</button>
+        </div>
+        <div class="feedback" id="fb-l4q2"></div>
+      </div>
+      <p class="small">↳ 通过本关两问后，下方<b>仿真实训区</b>解锁标注模拟器（也可直接下去玩）。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv4','st4',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑤关 检查 -->
+  <div class="level locked" id="lv5">
+    <div class="level-head" onclick="toggleLevel('lv5')">
+      <span class="no">5</span><span class="tt">⑤ 检查 · 抽检双签不是形式</span><span class="stars" id="st5">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：你做到第 200 条，质检员来抽检 5%（10 条），发现 2 条遮挡属性判错，合格率 80%。</p>
+      <div class="quiz-q" data-q="l5q1">
+        <div class="q">1. 合格率 80% &lt; 95%，按约束怎么处理？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q1','A')">A. 只改那 2 条，继续往下做</button>
+          <button class="opt" onclick="pick(this,'l5q1','B')">B. 整批返工——合格率 &lt;95% 是批次级结论，说明判定口径有系统性问题</button>
+          <button class="opt" onclick="pick(this,'l5q1','C')">C. 和质检员商量一下就算了</button>
+          <button class="opt" onclick="pick(this,'l5q1','D')">D. 把抽检记录改好看点</button>
+        </div>
+        <div class="feedback" id="fb-l5q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q2">
+        <div class="q">2. 双签时质检员说"我相信你，字我代签了"。你该？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q2','A')">A. 谢谢，效率高</button>
+          <button class="opt" onclick="pick(this,'l5q2','B')">B. 拒绝代签——签字＝本人真看过样本，代签双签就失去了意义</button>
+          <button class="opt" onclick="pick(this,'l5q2','C')">C. 看别人也这么签就算了</button>
+          <button class="opt" onclick="pick(this,'l5q2','D')">D. 让组友代签</button>
+        </div>
+        <div class="feedback" id="fb-l5q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q3">
+        <div class="q">3. 返工后第二次抽检合格率 96%。返修记录要写什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q3','A')">A. 只写"已返工"</button>
+          <button class="opt" onclick="pick(this,'l5q3','B')">B. 返修条数、原因分类、修改前后对比截图编号、二次抽检结果</button>
+          <button class="opt" onclick="pick(this,'l5q3','C')">C. 不用写记录</button>
+          <button class="opt" onclick="pick(this,'l5q3','D')">D. 写"客户要求返工的"</button>
+        </div>
+        <div class="feedback" id="fb-l5q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv5','st5',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑥关 评价 -->
+  <div class="level locked" id="lv6">
+    <div class="level-head" onclick="toggleLevel('lv6')">
+      <span class="no">6</span><span class="tt">⑥ 评价 · 知道自己差在哪</span><span class="stars" id="st6">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：批次交付。组长公布高频错判 Top3，按 Rubric 给你打分。轮到你自评。</p>
+      <div class="quiz-q" data-q="l6q1">
+        <div class="q">1. Rubric 四个维度里，"社会维"看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q1','A')">A. 打字快不快</button>
+          <button class="opt" onclick="pick(this,'l6q1','B')">B. 双签是否本人真看过样本、送检是否按节点、返修是否如实登记</button>
+          <button class="opt" onclick="pick(this,'l6q1','C')">C. 和组友关系好不好</button>
+          <button class="opt" onclick="pick(this,'l6q1','D')">D. 工时登记填了多少</button>
+        </div>
+        <div class="feedback" id="fb-l6q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q2">
+        <div class="q">2. 自评时你最该写的一条改进是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q2','A')">A. "下次会更快"</button>
+          <button class="opt" onclick="pick(this,'l6q2','B')">B. 指向具体判定短板，如"遮挡 40%—60% 区间判错 3 次，下次先查第 7 条再标"</button>
+          <button class="opt" onclick="pick(this,'l6q2','C')">C. "没有改进"</button>
+          <button class="opt" onclick="pick(this,'l6q2','D')">D. "希望客户口径更清楚"</button>
+        </div>
+        <div class="feedback" id="fb-l6q2"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv6','st6',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑤ 仿真实训 ═══════════ -->
+<section id="s5">
+  <h2 class="sec">⑤ 仿真实训：标注比对模拟器</h2>
+  <p>这里是平台工作台的模拟。对每张样本卡作出判定，系统按<b>规范 v1.3 标准答案</b>实时计算你的一致率。
+  <b>注意：界面里有两个"看起来能提高效率"的按钮——一个是红线，一个是陷阱。</b></p>
+  <div class="sim">
+    <h3>🗂 批次：RD-2026-1013（教学样例）｜你的工位：A-07</h3>
+    <div class="sample-card" id="sampleCard">
+      <div class="sid">样本 #102 ／ 共 12 张</div>
+      <div class="scene" id="sceneTxt">点击"开始标注"抽取第一张样本。</div>
+      <div class="ai" id="aiBox" style="display:none"></div>
+    </div>
+    <div class="sim-controls">
+      <div>
+        <label>目标判定（算什么）</label>
+        <select id="selTarget">
+          <option value="">— 请判定 —</option>
+          <option>车辆</option><option>行人</option><option>骑行者</option><option>不标</option>
+        </select>
+      </div>
+      <div>
+        <label>属性判定</label>
+        <select id="selAttr">
+          <option value="">— 请判定 —</option>
+          <option>无</option><option>部分遮挡</option><option>严重遮挡</option><option>截断</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn" id="btnSubmit" onclick="submitLabel()">提交本条判定</button>
+      <button class="btn warn" id="btnAI" style="display:none" onclick="aiTrap()">⚡ AI 已预标注，一键采用（+50% 效率）</button>
+      <button class="btn ghost" id="btnExport" style="background:#1d3450;color:#7fd6c0;border-color:#2c4a63" onclick="exportTrap()">📤 导出本批次结果到本地</button>
+    </div>
+    <div class="meter">一致率：<b id="agreeRate">—</b>　｜　已标：<b id="doneCnt">0</b>/12　｜　状态：<b id="simState">待开始</b></div>
+    <div class="sim-log" id="simLog"><div>系统：点击"开始标注"抽取样本。判定提交后不可修改——真实平台也是如此。</div></div>
+  </div>
+  <button class="btn" onclick="startSim()">▶ 开始标注（抽取 12 张教学样例）</button>
+  <p class="small">样例均为合成文字描述，不含真实图像与个人信息。12 张全部标完且一致率 ≥85%，本仿真实训通过。</p>
+</section>
+
+<!-- ═══════════ ⑥ 检测 ═══════════ -->
+<section id="s6">
+  <h2 class="sec">⑥ 检测：10 题定过关</h2>
+  <p class="small">单选／判断／排序混合。≥80%（8 题）过关；不过关会锁定"重学"入口——可以跳过，但记录会留着。</p>
+  <div id="quizBox"></div>
+  <div class="quiz-score">
+    <div class="score-ring" id="ring"><i id="ringTxt">0%</i></div>
+    <div>
+      <div id="quizVerdict" style="font-size:17px;font-weight:700">尚未提交</div>
+      <div class="small" id="quizDetail">达标线：80%（8/10）</div>
+    </div>
+    <button class="btn" onclick="gradeQuiz()">提交检测</button>
+  </div>
+  <div class="locked-box" id="lockBox">
+    <b>未达标。</b>系统已为你标出错题范围——回到③速查表和对应关卡重学，再回来测。真正的批次里，不合格的后果是<b>整批返工</b>。
+    <div style="margin-top:8px"><button class="btn ghost" onclick="go('s3')">回去重学</button></div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑦ 成就与去向 ═══════════ -->
+<section id="s7">
+  <h2 class="sec">⑦ 成就与去向</h2>
+  <div class="badges">
+    <div class="badge" id="bg1"><div class="ico">📖</div><div class="nm">规范读懂人</div></div>
+    <div class="badge" id="bg2"><div class="ico">🎯</div><div class="nm">判定口径清</div></div>
+    <div class="badge" id="bg3"><div class="ico">🛡</div><div class="nm">红线守住了</div></div>
+    <div class="badge" id="bg4"><div class="ico">🏅</div><div class="nm">检测过关</div></div>
+  </div>
+  <h3>本情境交付物自检（课前对一遍，课中交一遍）</h3>
+  <ul class="checklist" id="deliverList">
+    <li>T1 标注中间件（含逐条修正记录）</li>
+    <li>T5 批次质检单（合格率＋双签）</li>
+    <li>T6 返修记录（条数/原因/前后对比编号）</li>
+    <li>T7 预标注修正说明（用 AI 时必附，写清修正依据）</li>
+  </ul>
+  <h3>接下来</h3>
+  <p>下一个情境 <b>LF1-Q3 标注规则细化与争议样本裁定</b>：一致性报告显示本批 Kappa＝0.76，客户没回复口径——你要在口径缺失的情况下自己裁定规则。那才是 L3 的活。</p>
+  <p class="small">教师授课包（六步四层网格表、工单、Rubric、错误案例卡）见同目录《LF1-Q2_标注规范执行与批次质检_教师授课包_正式版.html》。</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════ 红线炸号弹窗 ═══════════ -->
+<div class="boom" id="boom">
+  <div class="boom-card">
+    <h2>💥 触发 D 类红线</h2>
+    <p id="boomMsg"></p>
+    <div class="rule" id="boomRule"></div>
+    <p class="small" style="color:#c9a9a6">在真实课程中，这意味着一票否决／本情境 0 分。在这里，意味着本关重来——记住这个手感。</p>
+    <button class="btn warn" onclick="closeBoom()">我记住了，重来</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 状态 ══════════════════ */
+var S = {
+  levels:{lv1:0,lv2:0,lv3:0,lv4:0,lv5:0,lv6:0},
+  answers:{}, fills:{}, sorts:{},
+  sim:{started:false, idx:0, done:0, agree:0, boom:false, finished:false},
+  quiz:{}, quizDone:false,
+  checklist:{}
+};
+try{ var saved = localStorage.getItem('lf1q2_module'); if(saved) S = Object.assign(S, JSON.parse(saved)); }catch(e){}
+function save(){ try{ localStorage.setItem('lf1q2_module', JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ══════════════════ 进度 ══════════════════ */
+function progress(){
+  var lv = Object.values(S.levels).filter(function(v){return v>0}).length;
+  var p = Math.round(lv/6*60) + (S.sim.finished?20:0) + (S.quizDone && S.quizPass?20:0);
+  p = Math.min(100, p);
+  document.getElementById('progressBar').style.width = p+'%';
+  document.getElementById('progressTxt').textContent = '进度 '+p+'%';
+}
+
+/* ══════════════════ 关卡 ══════════════════ */
+function go(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function toggleLevel(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('locked')){ flash('先完成上一关', 'info'); return; }
+  el.classList.toggle('open');
+}
+function unlock(){
+  var ids = ['lv1','lv2','lv3','lv4','lv5','lv6'];
+  for(var i=0;i<ids.length;i++){
+    var el = document.getElementById(ids[i]);
+    if(i===0 || S.levels[ids[i-1]]>0) el.classList.remove('locked');
+  }
+}
+function clearLevel(id, stId, stars){
+  var el = document.getElementById(id);
+  var qs = el.querySelectorAll('.quiz-q');
+  var answered = 0;
+  qs.forEach(function(q){
+    var k = q.dataset.q;
+    if(S.answers[k] || S.fills[k] || S.sorts[k]) answered++;
+  });
+  if(answered < qs.length){ flash('本关还有 '+(qs.length-answered)+' 题未作答', 'info'); return; }
+  S.levels[id] = stars;
+  var st = document.getElementById(stId);
+  st.innerHTML = '';
+  for(var i=0;i<3;i++) st.innerHTML += (i<stars?'<b>★</b>':'☆');
+  unlock(); save(); progress();
+  flash('本关完成！'+(stars<3?'（有题答错，星拿满的办法是回去改对）':'满星 ⭐⭐⭐'), 'good');
+}
+
+/* ══════════════════ 答题判定 ══════════════════ */
+var ANSWER = {
+  l1q1:'B', l1q2:'B', l2q1:'B', l2q1x:'B', l3q1:'B', l3q2:'B',
+  l4q1:'B', l4q2:'B', l5q1:'B', l5q2:'B', l5q3:'B', l6q1:'B', l6q2:'B'
+};
+var REASON = {
+  l1q1:'规范 v1.3：骑行状态算骑行者；推车通过（脚落地）按第 9 条算行人。',
+  l1q2:'第 7 条：遮挡 <50% 仍为目标，记"部分遮挡"；≥50% 记"严重遮挡"；≥70% 不标写备注。',
+  l2q1:'平台硬约束：每 50 条送检。250 条 = 5 个节点。早送检早发现口径问题，避免整批返工。',
+  l2q1x:'计划必须预留返修与送检等待——抽检不合格是批次级返工，不是改两条的事。',
+  l3q1:'讲依据＝规范条目＋数据用途。质检员质疑的就是这个，答不上来不许开标。',
+  l3q2:'规范没写的报会商、统一口径、留记录。口径不一致是一致性崩掉的根源。',
+  l4q1:'≥70% 不标，但必须写备注——不记就等于这条数据凭空消失。',
+  l4q2:'AI 预标注只是参考，逐条修正后才可提交。直接采用＝一票否决（红线②）。',
+  l5q1:'合格率 <95% 是批次级结论：说明判定口径有系统性问题，只改两条治标不治本。',
+  l5q2:'签字＝本人真看过样本。代签让双签失去意义，社会维直接扣到底。',
+  l5q3:'返修记录四要素：条数、原因分类、前后对比截图编号、二次抽检结果。可追溯才算闭环。',
+  l6q1:'社会维看协作诚信：双签是否真看、送检是否按节点、返修是否如实登记。',
+  l6q2:'改进必须指向具体判定短板＋可执行的下一步，不写"会更快"这种空话。'
+};
+function pick(btn, key, val){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.answers[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ANSWER[key]){
+    btn.classList.add('right');
+    fb.className = 'feedback good show';
+    fb.innerHTML = '✅ 正确。'+REASON[key];
+    if(key==='l4q2') document.getElementById('btnAI').style.display='inline-flex';
+  }else{
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '❌ 不对。'+REASON[key]+'（正确选项已标出，可再想一想）';
+    var right = ANSWER[key];
+    box.querySelectorAll('.opt').forEach(function(b,i){
+      if('ABCD'.indexOf(b.textContent.trim()[0])===0 && b.textContent.trim().startsWith(right+'.')){}
+    });
+  }
+}
+function checkFill(key, pattern, fbId, okMsg){
+  var v = document.getElementById(key).value.trim();
+  var fb = document.getElementById(fbId);
+  var re = new RegExp(pattern);
+  if(v.length < 6){ fb.className='feedback info show'; fb.innerHTML='再写具体点——复述是要说给组长听的。'; return; }
+  S.fills[key] = v; save();
+  if(re.test(v)){ fb.className='feedback good show'; fb.innerHTML='✅ '+okMsg; }
+  else{ fb.className='feedback bad show'; fb.innerHTML='❌ 漏了关键要素：'+pattern.split('|').join('／')+'。'; }
+}
+
+/* ══════════════════ 排序题 ══════════════════ */
+(function initDrag(){
+  var lists = document.querySelectorAll('.drag-list');
+  lists.forEach(function(ul){
+    var dragEl = null;
+    ul.addEventListener('dragstart', function(e){ dragEl = e.target; e.target.classList.add('dragging'); });
+    ul.addEventListener('dragend', function(e){ e.target.classList.remove('dragging'); });
+    ul.addEventListener('dragover', function(e){ e.preventDefault();
+      var after = getAfter(ul, e.clientY);
+      if(after == null) ul.appendChild(dragEl); else ul.insertBefore(dragEl, after);
+    });
+    // 键盘可达：上下箭头移动
+    ul.querySelectorAll('li').forEach(function(li){
+      li.tabIndex = 0;
+      li.addEventListener('keydown', function(e){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li);
+      });
+    });
+  });
+  function getAfter(ul, y){
+    var items = [].filter.call(ul.querySelectorAll('li:not(.dragging)'), function(el){
+      var r = el.getBoundingClientRect(); return y < r.top + r.height/2;
+    });
+    return items[0] || null;
+  }
+})();
+function checkSort(ulId, fbId){
+  var ul = document.getElementById(ulId);
+  var order = [].map.call(ul.querySelectorAll('li'), function(li){ return li.dataset.k; }).join('');
+  var fb = document.getElementById(fbId);
+  S.sorts[ulId] = order; save();
+  if(order === '12345'){
+    fb.className='feedback good show';
+    fb.innerHTML='✅ 顺序正确。真实工作流就是这样：先懂标准，再排计划，先讲口径，再动手，抽检闭环，最后复盘。';
+  }else{
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 顺序还不对。提示：签字在排计划之前；送检在打标过程中，不是做完才送。';
+  }
+}
+
+/* ══════════════════ 仿真实训 ══════════════════ */
+var SAMPLES = [
+  {id:'#101', scene:'路口日景。一辆白色轿车完整可见，位于画面中央。', ans:['车辆','无'], why:'完整目标，无遮挡无截断。'},
+  {id:'#102', scene:'主干道。一辆轿车被路灯杆遮住约 35% 车身。', ans:['车辆','部分遮挡'], why:'第 7 条：<50% 仍为目标，记部分遮挡。'},
+  {id:'#103', scene:'停车场。一辆 SUV 被旁边卡车遮住约 60%，车型可辨。', ans:['车辆','严重遮挡'], why:'≥50% 记严重遮挡；车型可辨仍要标。'},
+  {id:'#104', scene:'夜间街道。一个人骑自行车通过斑马线，脚在踏板上。', ans:['骑行者','无'], why:'骑行状态＝骑行者，不是行人（第 8 条）。'},
+  {id:'#105', scene:'小区门口。一人推自行车步行通过，脚落地。', ans:['行人','无'], why:'第 9 条：推车通过算行人——这是本批高频错判 Top1。'},
+  {id:'#106', scene:'雨天。一名行人撑伞走出画面左边界，出框约 1/4。', ans:['行人','截断'], why:'出框 <1/3 算目标，记截断。'},
+  {id:'#107', scene:'路口。一辆电动车遮住骑行者约 72%，仅见车头。', ans:['不标',''], why:'遮挡 ≥70% 不标，写备注。注意：不是"严重遮挡"就完了。'},
+  {id:'#108', scene:'施工区。一名工人被安全网遮住约 45%，动作清晰。', ans:['行人','部分遮挡'], why:'工人也是行人；45% <50% 记部分遮挡。'},
+  {id:'#109', scene:'立交桥下。一辆面包车被桥墩遮住约 55%，车牌不可见。', ans:['车辆','严重遮挡'], why:'车牌不可见不影响判定，看的是遮挡比例与车型可辨性。'},
+  {id:'#110', scene:'商圈。一名成人牵手一名儿童步行，均完整可见。', ans:['行人','无'], why:'两个独立目标各标一个框，不要合框。'},
+  {id:'#111', scene:'隧道。一辆轿车被前车遮住约 80%，仅见车顶一角。', ans:['不标',''], why:'≥70% 不标。别和"严重遮挡"混淆——比例是硬杠。'},
+  {id:'#112', scene:'乡道。一名骑行者被路边树木遮住约 30%，骑行姿态清晰。', ans:['骑行者','部分遮挡'], why:'<50% 记部分遮挡；推车/骑行判定优先于遮挡。'}
+];
+function startSim(){
+  S.sim = {started:true, idx:0, done:0, agree:0, boom:false, finished:false};
+  save(); nextSample();
+  document.getElementById('simState').textContent = '标注中';
+  document.getElementById('simState').style.color = '#7fd6c0';
+}
+function nextSample(){
+  var sm = SAMPLES[S.sim.idx];
+  document.getElementById('sceneTxt').textContent = sm.scene;
+  document.querySelector('#sampleCard .sid').textContent = '样本 '+sm.id+' ／ 共 12 张（第 '+(S.sim.idx+1)+' 张）';
+  document.getElementById('selTarget').value = '';
+  document.getElementById('selAttr').value = '';
+  var ai = document.getElementById('aiBox');
+  if(S.sim.idx === 4){ // 第5张出现 AI 诱饵
+    ai.style.display = 'block';
+    ai.innerHTML = '🤖 <b>AI 预标注结果</b>：行人 / 部分遮挡（置信度 0.91）';
+  }else ai.style.display = 'none';
+  document.getElementById('btnAI').style.display = (S.sim.idx===4 && S.answers.l4q2==='B') ? 'inline-flex' : 'none';
+}
+function simLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('simLog').prepend(d);
+}
+function submitLabel(){
+  if(!S.sim.started || S.sim.finished) return;
+  var sm = SAMPLES[S.sim.idx];
+  var t = document.getElementById('selTarget').value;
+  var a = document.getElementById('selAttr').value;
+  if(!t || !a){ simLog('⚠ 目标和属性都要判', '#e0a437'); return; }
+  var ok = (t === sm.ans[0]) && (sm.ans[1] === '' ? true : a === sm.ans[1]);
+  S.sim.done++;
+  if(ok){ S.sim.agree++; simLog('样本 '+sm.id+' ✅ 一致（'+sm.why+'）', '#7fd6c0'); }
+  else simLog('样本 '+sm.id+' ❌ 不一致。标准答案：'+sm.ans[0]+'／'+(sm.ans[1]||'—')+'。'+sm.why, '#ff9b94');
+  S.sim.idx++;
+  if(S.sim.idx >= SAMPLES.length){
+    finishSim();
+  }else nextSample();
+  save(); progress();
+}
+function finishSim(){
+  S.sim.finished = true;
+  var rate = Math.round(S.sim.agree/S.sim.done*100);
+  document.getElementById('agreeRate').textContent = rate+'%';
+  document.getElementById('doneCnt').textContent = S.sim.done;
+  document.getElementById('simState').textContent = rate>=85 ? '本批通过 ✅' : '本批返工 ❌';
+  document.getElementById('simState').style.color = rate>=85 ? '#7fd6c0' : '#ff9b94';
+  simLog('—— 批次结束：一致率 '+rate+'%（≥85% 通过）。'+(rate<85?'真实场景下，<95% 整批返工。':''), '#ffd54d');
+  if(rate>=85) flash('仿真实训通过！徽章"红线守住了"前提是你没碰那两个按钮。', 'good');
+  save(); progress();
+}
+function aiTrap(){
+  boom('你采用了 AI 预标注结果，未逐条修正直接提交。',
+       'D 类红线②：AI 预标注结果未经逐条修正即提交 → 一票否决。AI 是参考，签字的人是你，责任就是你。');
+  simLog('💥 触发红线②：AI 结果一键采用', '#ff6b60');
+}
+function exportTrap(){
+  boom('你把批次结果导出到了本地。',
+       'D 类红线①：导出／截屏／外传原图或标注结果 → 课程 0 分＋校纪处理。数据不出实训室，没有例外。');
+  simLog('💥 触发红线①：导出结果到本地', '#ff6b60');
+}
+function boom(msg, rule){
+  document.getElementById('boomMsg').textContent = msg;
+  document.getElementById('boomRule').textContent = rule;
+  document.getElementById('boom').classList.add('on');
+}
+function closeBoom(){ document.getElementById('boom').classList.remove('on'); }
+
+/* ══════════════════ 检测 ══════════════════ */
+var QUIZ = [
+  {t:'规范 v1.3 中，遮挡比例达到多少时目标"不标、写备注"？', o:['≥50%','≥70%','≥90%','任何遮挡都不标'], a:1,
+   r:'第 7 条：≥70% 不标；50%—70% 记"严重遮挡"仍要标。'},
+  {t:'推着自行车步行通过的目标，应判定为？', o:['骑行者','行人','不标','车辆'], a:1,
+   r:'第 9 条：推车通过（脚落地）算行人。本批高频错判 Top1。'},
+  {t:'每 50 条送检一次，主要目的是？', o:['走流程','早发现口径问题，避免整批返工','方便计时','没有目的'], a:1,
+   r:'送检是质量门：把批次级风险切成小段暴露。'},
+  {t:'5% 抽检合格率 80%，正确处理是？', o:['只改错的两条','整批返工','和质检员商量','改抽检记录'], a:1,
+   r:'<95% 是批次级结论，说明口径有系统性问题。'},
+  {t:'关于"双签"，正确的是？', o:['可以代签','签字＝本人真看过样本','只签一次就行','签在组友名字旁'], a:1,
+   r:'代签让双签失去意义，社会维直接扣到底。'},
+  {t:'AI 预标注结果的正确用法？', o:['一键采用效率高','逐条核对修正后提交','不能用 AI','让 AI 自己判'], a:1,
+   r:'AI 是参考层；直接采用＝一票否决。'},
+  {t:'遮挡 55%、车牌不可见的面包车？', o:['不标','标"车辆"＋严重遮挡','标"车辆"＋部分遮挡','写备注跳过'], a:1,
+   r:'≥50% 记严重遮挡但车型可辨仍要标；车牌不可见不影响判定。'},
+  {t:'两名行人（成人牵儿童）完整可见，正确标注是？', o:['合一个框','各标一个独立目标框','只标成人','不标'], a:1,
+   r:'每个独立目标一个框，合框会教坏模型。'},
+  {t:'【判断】"工时登记按计划填就行，不用按实际。"', o:['对','错'], a:1,
+   r:'错。虚报工时＝诚信问题，Rubric 发展维直接到底。'},
+  {t:'【排序】正确工作流顺序是？', o:['读规范签字→排计划→讲口径→打标送检→复盘','排计划→打标→读规范→复盘','打标→送检→签字→排计划','读规范→打标→送检→复盘→排计划'], a:0,
+   r:'先懂标准再排计划，先讲口径再动手，抽检在过程中，复盘收尾。'}
+];
+(function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  QUIZ.forEach(function(q, i){
+    var div = document.createElement('div');
+    div.className = 'quiz-q'; div.dataset.q = 'fq'+i;
+    var html = '<div class="q">'+(i+1)+'. '+esc(q.t)+'</div><div class="opts">';
+    q.o.forEach(function(o, j){
+      html += '<button class="opt" onclick="quizPick(this,\'fq'+i+'\','+j+','+q.a+')">'+'ABCD'[j]+'. '+esc(o)+'</button>';
+    });
+    html += '</div><div class="feedback" id="fb-fq'+i+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+function quizPick(btn, key, val, ans){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.quiz[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ans){
+    btn.classList.add('right');
+    fb.className='feedback good show'; fb.innerHTML='✅ '+QUIZ[parseInt(key.slice(2))].r;
+  }else{
+    btn.classList.add('wrong');
+    fb.className='feedback bad show'; fb.innerHTML='❌ '+QUIZ[parseInt(key.slice(2))].r;
+  }
+}
+function gradeQuiz(){
+  var answered = 0, right = 0;
+  QUIZ.forEach(function(q, i){
+    var v = S.quiz['fq'+i];
+    if(v !== undefined){ answered++; if(v === q.a) right++; }
+  });
+  if(answered < QUIZ.length){ flash('还有 '+(QUIZ.length-answered)+' 题未作答', 'info'); return; }
+  S.quizDone = true; S.quizPass = right >= 8;
+  var pct = Math.round(right/QUIZ.length*100);
+  document.getElementById('ringTxt').textContent = pct+'%';
+  document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+  var v = document.getElementById('quizVerdict');
+  if(S.quizPass){
+    v.textContent = '✅ 过关（'+right+'/10）'; v.style.color = 'var(--ok)';
+    document.getElementById('lockBox').classList.remove('on');
+    document.getElementById('bg4').classList.add('got');
+  }else{
+    v.textContent = '❌ 未达标（'+right+'/10，需 8 题）'; v.style.color = 'var(--bad)';
+    document.getElementById('lockBox').classList.add('on');
+    document.getElementById('bg4').classList.remove('got');
+  }
+  document.getElementById('quizDetail').textContent = '答对 '+right+' 题；错题解析已展开，回去重学再测。';
+  save(); progress();
+}
+
+/* ══════════════════ 交付物清单 ══════════════════ */
+(function initList(){
+  var ul = document.getElementById('deliverList');
+  ul.querySelectorAll('li').forEach(function(li, i){
+    if(S.checklist[i]) li.classList.add('done');
+    li.onclick = function(){ li.classList.toggle('done'); S.checklist[i] = li.classList.contains('done'); save(); };
+  });
+})();
+
+/* ══════════════════ 提示 ══════════════════ */
+function flash(msg, type){
+  var d = document.createElement('div');
+  d.className = 'feedback '+(type==='good'?'good':type==='info'?'info':'bad')+' show';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:200;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:260px;text-align:center';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+/* ══════════════════ 徽章初始 ══════════════════ */
+(function initBadges(){
+  if(S.levels.lv1>0) document.getElementById('bg1').classList.add('got');
+  if(S.levels.lv3>0) document.getElementById('bg2').classList.add('got');
+  if(S.sim.finished && !S.sim.boom) document.getElementById('bg3').classList.add('got');
+  if(S.quizDone && S.quizPass) document.getElementById('bg4').classList.add('got');
+})();
+
+unlock(); progress();
+</script>
+</body>
+</html>

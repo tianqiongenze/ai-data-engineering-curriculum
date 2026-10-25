@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>构建铝铸件缺陷检测训练数据集与特征表 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">LF3 模型训练与评估</span>
+  <span class="meta">教师授课包 · V1.0 · 蓝色GitBook风 · 承载 LF3-Q1 构建铝铸件缺陷检测训练数据集与特征表 · 生成于 2026-10-25 · D类红线 4 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">授课包信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">48 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub"><li><a href="#assume">口径与假设说明</a></li></ol>
+  </nav>
+  <main>
+    <h1>构建铝铸件缺陷检测训练数据集与特征表 · 教师授课包</h1>
+    <div class="subtitle">LF3 模型训练与评估 ｜ 学习情境 LF3-Q1 ｜ 48h / 3cr · S4 · L2 ｜ 对应任务 3.1（构建可复现训练数据集并出数据卡）</div>
+    <section id="info"><h2><span class="num">01</span>授课包信息</h2><div class="kv"><div><b>课程</b>模型训练与评估（LF3，112h/7cr）</div><div><b>情境</b>LF3-Q1 构建铝铸件缺陷检测训练数据集与特征表（48h/3cr·S4·L2）</div><div><b>对应任务</b>Table1 任务 3.1</div><div><b>绑定原子</b>LF3-Q1-A13 / A14（均首次教学）</div><div><b>核心决策点</b>三集划分与泄漏检查（固定随机种子、可复现）</div><div><b>授课对象</b>2026 级 32 人 · GPU 工位分组轮转</div><div><b>场所</b>数据加工工位＋GPU 训练工位</div><div><b>本情境交付</b>B-01 数据集规格书、B-02 数据卡、B-03 版本冻结单、B-04 检查表</div></div><div class="card"><span class="label">本情境的能力落点</span><p style="margin:4px 0;">学生从"有一堆图"走到"拿得出可复现、可查泄漏、可冻结的训练数据集"：能按产线×光照×类别分层采样、固定随机种子做三集划分（A13）；能查同源图泄漏、做特征编码与分布检查并出数据卡（A14）；能双人复核签字、版本冻结（A14）。</p></div></section><section id="scene"><h2><span class="num">02</span>情境描述与教学目标</h2><p><b>情境描述</b>（课标原文）：某汽车零部件厂铝铸件表面质检项目，算法侧给定"4 类缺陷 + 漏检优先于误检"的评测口径，需从 3 条产线 12,000 张原始图构建训练数据集 v1 并冻结。约束：三条产线相机型号与光照不一致；不得使用客户产线实时流；48 小时内交数据卡；原始图不得出校。</p><p><b>已知条件</b>：模型需求说明、评测口径单、数据卡模板、3 条产线图像（教学样例）、特征编码规范。</p><p><b>交付物</b>（课标原文）：B-01 数据集规格书、B-02 数据卡、B-03 版本冻结单、B-04 检查表。</p><p><b>评价要点</b>（课标原文）：专业维看三集分布与泄漏检查证据；方法维看脚本可复现与工时偏差；社会维看双人复核签字；发展维看改进条是否指向流程。</p><h3>六步总表（课标原文·教师／学生活动与学时）</h3><div class="tablewrap"><table><thead><tr><th style="width:80px">步骤</th><th>教师活动</th><th>学生活动</th><th class="c" style="width:56px">学时</th><th style="width:190px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td>发模型需求说明、评测口径单、数据卡模板；只答疑不讲授（讲授 ≤10′/次）</td><td>读标签体系与口径，划出 6 项硬约束（模态／类别／漏检优先／三集比例／随机种子／交付时点）</td><td class="c">7</td><td>工单信息栏</td></tr><tr><td class="c">② 计划</td><td>给采样与划分模板，巡组纠"无工时计划"</td><td>写分层采样方案（产线×光照×类别）、工器具清单、分工与工时</td><td class="c">6</td><td>采样与划分计划表</td></tr><tr><td class="c">③ 决策</td><td>组织方案评审，每组必提 1 条反对意见；签字放行</td><td>讲方案、答质疑、修订后签字</td><td class="c">5</td><td>决策记录（签字）</td></tr><tr><td class="c">④ 实施</td><td>巡视，重点查数据流向与授权边界；不代做</td><td>去重→三集划分（固定种子）→特征编码→泄漏/偏移/不平衡检查→出 v1 与数据卡</td><td class="c">21</td><td>数据集 v1 + 数据卡 + 脚本</td></tr><tr><td class="c">⑤ 检查</td><td>抽查 20%，指定 A 层交叉复核 B 层划分脚本</td><td>自检清单逐项打勾；互检脚本可复现性与类别分布</td><td class="c">5</td><td>检查表 + 分布比对表</td></tr><tr><td class="c">⑥ 评价</td><td>按 Rubric 打分，讲评典型泄漏案例</td><td>自评、互评、写 ≥1 条改进项，签署版本冻结单</td><td class="c">4</td><td>评分表 + 冻结单</td></tr><tr><td class="c"><b>合计</b></td><td colspan="2">六步加平 48＝情境学时 ✅；实施 21h 占 43.8%（&lt;50%）</td><td class="c"><b>48</b></td><td>—</td></tr></tbody></table></div><p class="small" style="color:var(--ink-3)">原子：A13、A14（首次教学）。</p><h3>教学目标（PGSD-KSA 分层口径）</h3><div class="tablewrap"><table><thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:150px">达标线</th></tr></thead><tbody><tr><td class="c">P 专业能力</td><td>能按分层采样方案完成三集划分并固定随机种子，脚本可复现；能做同源图泄漏检查、特征编码与分布偏移检查，出数据卡字段齐全</td><td>LF3-Q1-A13 / A14</td><td>脚本可复现＋泄漏 0 漏项</td></tr><tr><td class="c">G 方法能力</td><td>能说出采样分层依据（产线×光照×类别）与三集比例依据；泄漏检查方法可复算</td><td>LF3-Q1-A13</td><td>分层依据＋检查记录</td></tr><tr><td class="c">S 社会能力</td><td>能双人复核签字、按节点交数据卡、版本冻结不私改</td><td>LF3-Q1-A14</td><td>复核零缺签＋冻结单</td></tr><tr><td class="c">D 发展能力</td><td>能从本批沉淀 1 条可复用的采样/检查规则，说出对下游训练的影响</td><td>LF3-Q1-A13 / A14</td><td>≥1 条规则建议</td></tr></tbody></table></div></section><section id="grid"><h2><span class="num">03</span>6×4 网格教学活动表</h2><p>行＝六步，列＝四层。每格写"这一层在这一步做什么、教师给什么支持"。四层红线要求完全相同。</p><div class="tablewrap"><table class="grid-table"><thead><tr><th>六步</th><th>A 领跑型（20%）</th><th>B 主力型（50%）</th><th>C 跟进型（20%）</th><th>D 兜底型（10%）</th></tr></thead><tbody><tr><td>① 资讯<br><span style="font-weight:400;color:#6b7c93">7 学时</span></td><td>独立通读需求与口径，预判 3 处易泄漏点（同图出现在多产线）</td><td>按引导文读口径、划 6 项硬约束、填工单信息栏</td><td>用填空式信息栏逐项勾 6 项硬约束</td><td>教师带读前 3 项约束，同伴领读"随机种子"一条</td></tr><tr><td>② 计划<br><span style="font-weight:400;color:#6b7c93">6 学时</span></td><td>自定采样优先级并预估每层样本量，做类别不足的风险预判</td><td>按模板写分层采样方案＋工时，三集比例写清</td><td>从给定 2 套划分比例中选 1 套并写理由</td><td>用"分层卡片"贴出产线×光照×类别三格</td></tr><tr><td>③ 决策<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>讲分层方案与不足预案，答质疑后定稿</td><td>组内讲方案、答反对意见、修订签字</td><td>教师逐组审并签字；取舍由教师给 2 选项</td><td>教师一对一确认先做哪层、何时举手</td></tr><tr><td>④ 实施<br><span style="font-weight:400;color:#6b7c93">21 学时</span></td><td>独立完成划分+特征编码+泄漏检查，指导 C/D 层</td><td>按方案去重→划分→编码→检查→出数据卡</td><td>在 B 层帮扶下完成去重与三集划分，泄漏检查由 B 层复核</td><td>在陪同下做去重与版本登记，不独立写划分脚本</td></tr><tr><td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>交叉复核 B 层划分脚本可复现性并签字</td><td>自检清单逐项打勾、互检脚本与分布</td><td>用打勾式检查卡逐项过，不会的举手</td><td>教师带着做 3 项核心检查并口头复述</td></tr><tr><td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>自评+互评+讲 1 个泄漏点识别经验，签冻结单</td><td>自评+互评、写 1 条改进项、签冻结单</td><td>教师点评为主，复述"本次泄漏点是什么"</td><td>口头复述"今天学了什么+一条红线"</td></tr></tbody></table></div></section><section id="time"><h2><span class="num">04</span>48 学时时间分配</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td class="c">7 学时</td><td>发需求说明＋口径单＋数据卡模板；只答疑不讲授；划 6 项硬约束</td><td>工单信息栏</td></tr><tr><td class="c">② 计划</td><td class="c">6 学时</td><td>写分层采样方案＋工时；三集比例与随机种子写清</td><td>采样与划分计划表</td></tr><tr><td class="c">③ 决策</td><td class="c">5 学时</td><td>方案评审，每组必提 1 条反对意见；签字放行</td><td>决策记录</td></tr><tr><td class="c">④ 实施</td><td class="c">21 学时</td><td>去重→划分（固定种子）→特征编码→泄漏/偏移/不平衡检查→数据卡</td><td>数据集 v1＋数据卡＋脚本</td></tr><tr><td class="c">⑤ 检查</td><td class="c">5 学时</td><td>抽查 20%＋A 层交叉复核脚本可复现性</td><td>检查表＋分布比对表</td></tr><tr><td class="c">⑥ 评价</td><td class="c">4 学时</td><td>Rubric 打分，讲评典型泄漏案例；签版本冻结单</td><td>评分表＋冻结单</td></tr><tr><td class="c"><b>合计</b></td><td class="c"><b>48 学时</b></td><td colspan="2">7+6+5+21+5+4 = 48</td></tr></tbody></table></div><div class="card ok"><span class="label">时间弹性方案</span><p style="margin:4px 0;">GPU 工位或平台排队可压⑥评价 1h；<b>④实施中的泄漏检查与⑤检查不得压</b>。缺特征编码规范不得开④实施步；原始图不出校是红线，任何导出动作先报教师。</p></div></section><section id="order"><h2><span class="num">05</span>任务工单（学生版·八栏）</h2><div class="order"><div class="row"><div class="k">1 任务名称与编号</div><div class="v">铝铸件缺陷检测训练数据集构建 · 编号 LF3-Q1-A13—A14｜工单号 T-TR-2026-1204</div></div><div class="row"><div class="k">2 情境描述</div><div class="v">从 3 条产线 12,000 张原始图构建训练数据集 v1 并冻结；口径"4 类缺陷+漏检优先"；48h 内交数据卡；原始图不得出校。</div></div><div class="row"><div class="k">3 交付要求</div><div class="v"><ol><li>B-01 数据集规格书（分层方案＋三集比例＋随机种子）</li><li>B-02 数据卡（字段齐全、泄漏检查结果）</li><li>B-03 版本冻结单（双人签字）</li><li>B-04 检查表（自检+互检）</li></ol><p style="margin:6px 0 0">合格标准：脚本可复现；泄漏 0 漏项；数据卡字段齐全率 100%；双人签字。</p></div></div><div class="row"><div class="k">4 已知条件</div><div class="v">模型需求说明、评测口径单、数据卡模板、3 条产线图像（教学样例）、特征编码规范。</div></div><div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v"><ol><li>原始图复制到个人设备或网盘 → 本情境 0 分＋违规上报。</li><li>未固定随机种子、无法复现划分 → 重做。</li><li>三集存在同源图泄漏仍提交 → 本情境 0 分。</li><li>使用客户产线实时流 → 停止实训＋纪律处理。</li></ol></div></div><div class="row"><div class="k">6 工作过程记录</div><div class="v"><ol><li>资讯：我划出的 6 项硬约束是……</li><li>计划：分层维度是……；三集比例是……；随机种子是……</li><li>决策：反对意见提了什么、我怎么修订的……</li><li>实施：去重了多少条；泄漏检查命中了几处；特征编码怎么做……</li><li>检查：脚本他人能否复现；分布比对结果……</li><li>评价：最易泄漏的点是……；下次改进项……</li></ol></div></div><div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全勾并签字后方可冻结版本。</div></div><div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 签字：学生 ______ 复核人 ______ 教师 ______</div></div></div></section><section id="guide"><h2><span class="num">06</span>引导文六问</h2><p>学生自己找答案，教师只回答"往哪找"，不直接给结论。</p><ol class="q6"><li><b>资讯</b>：评测口径"漏检优先于误检"对你划类别阈值有什么影响？6 项硬约束里哪一项最容易在实施步被忘掉？</li><li><b>计划</b>：三条产线相机型号和光照不一致，你凭什么分层？分层后某类样本不足怎么办？随机种子为什么必须写进脚本？</li><li><b>决策</b>：如果按产线分层导致某类缺陷样本不足，你的替代方案是什么？代价是什么？</li><li><b>实施</b>：同一张图同时出现在两条产线里算不算泄漏？你怎么在脚本里查出来？</li><li><b>检查</b>：别人拿你的脚本跑一遍，能复现同样的三集吗？数据卡里哪些字段是必填、漏了会怎样？</li><li><b>评价</b>：这次最容易漏的泄漏类型是哪一种？能不能写成一条可复用的检查规则？</li></ol></section><section id="check"><h2><span class="num">07</span>检查表（8 项）</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead><tbody><tr><td class="c">1</td><td>三集比例与种子</td><td>训练/验证/测试比例符合口径，随机种子已固定写入脚本</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">2</td><td>分层采样</td><td>按产线×光照×类别分层，各层样本量有记录</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">3</td><td>去重</td><td>同图去重完成，去重记录可查</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">4</td><td>泄漏检查</td><td>同源图泄漏 0 漏项，检查脚本可复现</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">5</td><td>特征编码</td><td>归一化/字段标准化按规范执行，有记录</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">6</td><td>分布检查</td><td>类别分布与偏移检查有比对表</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">7</td><td>数据卡字段</td><td>数据卡字段齐全率 100%，无空字段</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">8</td><td>版本冻结</td><td>双人复核签字，冻结单齐全，无私改</td><td class="c">□合格 □不合格</td></tr></tbody></table></div></section><section id="rubric"><h2><span class="num">08</span>Rubric 评分表</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead><tbody><tr><td class="c">专业能力</td><td class="c">40%</td><td>脚本可复现、泄漏 0 漏项、数据卡字段 100% 齐全、一次性冻结</td><td>脚本可复现、泄漏 0 漏项、数据卡齐全（达标）</td><td>有 1 处泄漏或数据卡缺字段，整改后复验</td><td>泄漏未查即冻结，或脚本不可复现</td><td class="c"></td></tr><tr><td class="c">方法能力</td><td class="c">25%</td><td>分层依据+泄漏检查方法均可复算，能解释分布偏移来源</td><td>分层有依据，检查记录齐全</td><td>分层依据缺失，需提示才补</td><td>照抄模板无依据</td><td class="c"></td></tr><tr><td class="c">社会能力</td><td class="c">20%</td><td>双人复核零缺签、按节点交付、主动指出他人泄漏点</td><td>复核签字齐全、按节点交付</td><td>需提醒才复核</td><td>代签或知情不报</td><td class="c"></td></tr><tr><td class="c">发展能力</td><td class="c">15%</td><td>提出 1 条被采纳的采样/检查规则并说明对训练的影响</td><td>改进项具体可执行</td><td>改进项笼统</td><td>无改进项或抄袭</td><td class="c"></td></tr><tr><td class="c"><b>合计</b></td><td class="c">100%</td><td colspan="4">总分 = 四维加权；<b>情境达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td><td class="c"></td></tr></tbody></table></div></section><section id="err"><h2><span class="num">09</span>典型错误案例卡</h2><details open><summary>ERR-LF3-001：没固定随机种子——同事重跑不出同样的三集</summary><div class="body"><p><b>现象</b>：某组划分脚本用 time() 做随机种子，交付后复现校验跑出完全不同的三集，版本冻结作废。</p><p><b>错误做法</b>：觉得"结果差不多就行"，没把种子写进脚本。</p><p><b>真实原因</b>：三集划分必须可复现：固定种子是硬约束，脚本内写死并在数据卡记录。</p><p><b>纠正</b>：纠正：脚本内固定 seed、数据卡记录种子值；检查表第 1 项就是查这个。</p><p><b>关联原子</b>：LF3-Q1-A13（采样划分与特征编码）</p></div></details><details open><summary>ERR-LF3-002：同源图泄漏——同一张图出现在训练集和测试集</summary><div class="body"><p><b>现象</b>：某组按文件哈希去重，但同图经过不同产线压缩后哈希不同，泄漏未被查出，模型指标虚高。</p><p><b>错误做法</b>：只按文件名/哈希去重，没做内容级（感知哈希/尺寸）去重。</p><p><b>真实原因</b>：泄漏会让指标虚高、上线后失真；"漏检优先"口径下更要查同源图。</p><p><b>纠正</b>：纠正：去重加内容级特征；泄漏检查脚本在冻结前必跑，检查表第 4 项查证据。</p><p><b>关联原子</b>：LF3-Q1-A14（数据卡编制与泄漏检查）</p></div></details><details open><summary>ERR-LF3-003：数据卡字段填一半就冻结</summary><div class="body"><p><b>现象</b>：某组数据卡"样本量"字段抄了总数，未按三集拆开，复核人没看就签字。</p><p><b>错误做法</b>：把数据卡当形式，复核签字流于流程。</p><p><b>真实原因</b>：数据卡是下游训练与审计的入口，字段不齐＝不可用；双人复核是真查不是走过场。</p><p><b>纠正</b>：纠正：数据卡模板强制逐字段填；复核人对照脚本输出核字段；检查表第 7 项。</p><p><b>关联原子</b>：LF3-Q1-A14（数据卡编制与版本冻结）</p></div></details></section><section id="safe"><h2><span class="num">10</span>安全提示卡（D 类红线·4 条）</h2><div class="card warn"><span class="label">红线即一票否决，四层要求完全相同</span><div class="tablewrap" style="margin:10px 0 0;background:#fff"><table><thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead><tbody><tr><td class="c">1</td><td>原始图复制到个人设备或网盘</td><td>本情境 0 分＋违规上报</td><td>出口日志＋USB 白名单</td></tr><tr><td class="c">2</td><td>未固定随机种子、无法复现划分</td><td>重做</td><td>脚本复现校验</td></tr><tr><td class="c">3</td><td>三集存在同源图泄漏仍提交</td><td>本情境 0 分</td><td>泄漏检查脚本复跑</td></tr><tr><td class="c">4</td><td>使用客户产线实时流</td><td>停止实训＋纪律处理</td><td>网络出口监控</td></tr></tbody></table></div></div><p style="color:#6b7c93;font-size:13px;margin-top:8px">Q1 开课前签《数据使用承诺书》，未签不发图像；原始图全程只在实训平台内访问，不得下载、不得截图、不得外传；课程结束 24h 内教师监督清空本地缓存并登记。</p></section><section id="notes"><h2><span class="num">11</span>教师备课备注</h2><details open><summary>高频错判 Top3 与处置</summary><div class="body"><ol><li><b>不固定随机种子</b>（最高发）。纠法——开课先演 ERR-LF3-001；检查表第 1 项必查。</li><li><b>只按文件名去重</b>，漏同源图。纠法——去重必须含内容级（感知哈希/尺寸），讲评 ERR-LF3-002 的"指标虚高"。</li><li><b>数据卡字段填一半</b>。纠法——数据卡模板逐字段必填，复核人对照脚本输出核，ERR-LF3-003。</li></ol></div></details><details open><summary>答疑口径：只指条文，不判标签</summary><div class="body"><ul><li>问"这个图算不算缺陷"——答"去查口径单第几条"。</li><li>问"三集比例多少"——答"口径单写的什么、你为什么这么分"，不给现成数。</li><li>问"有没有泄漏"——答"你的泄漏检查脚本怎么写的、跑了没"，不代查。</li></ul></div></details><details open><summary>分层调整建议</summary><div class="body"><ul><li><b>A 层加做</b>：补 1 条内容级去重规则；担任"泄漏检查第一复核人"。</li><li><b>B 层标准</b>：全流程独立完成＋自检互检。</li><li><b>C 层减量</b>：去重与三集划分在 B 层帮扶下做，泄漏检查由 B 层复核。</li><li><b>D 层减动作不减要求</b>：只做去重与版本登记，不独立写划分脚本；红线四条相同。</li></ul></div></details><details open><summary>设备与耗材准备</summary><div class="body"><ul><li>3 条产线图像（教学样例）已脱敏入库；GPU 工位分组轮转。</li><li>打印件：工单 32 份、口径单 32 份、数据卡模板 32 份、检查表 32 份、Rubric 32 份。</li><li>特征编码规范、去重脚本模板、泄漏检查脚本模板各 1 套（开课前跑通）。</li></ul></div></details><details open><summary>企业介入与衔接</summary><div class="body"><p>企业算法工程师可远程参与③决策步方案评审 2h。本情境交付的 v1 是 Q2 训练的执行对象，数据卡是 Q2 模型卡的输入——数据卡字段不齐，Q2 开不了工。</p></div></details></section>
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属课程标准 112h/7crh，情境 LF3-Q1 共 48h（六步 7+6+5+21+5+4），本包为情境级授课包，六步学时为情境总账；若拆为单次课按课标⑦.4 弹性条款执行。</p>
+      <p>② 能力原子编号按课标④.2 绑定；本包不训练、不考核超出情境边界的能力（如定级裁定权、架构定稿权、越权承诺）。</p>
+      <p>③ 资产名称、工单号、验收线数值均为教学虚构载体，不对应任何真实企业；模块与仿真内数据全部标注"教学样例"。</p>
+      <p>④ 本页交互仅用锚点与 CSS（:target、details），无脚本、无外部依赖，可离线打开与打印。</p>
+    </section>
+  </main>
+</div>
+<footer>
+  LF3 模型训练与评估 · 教师授课包 V1.0 ｜ 承载 LF3-Q1 构建铝铸件缺陷检测训练数据集与特征表 ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+</body>
+</html>

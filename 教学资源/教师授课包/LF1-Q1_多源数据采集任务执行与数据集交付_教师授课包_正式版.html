@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF1-Q1 多源数据采集任务执行与数据集交付 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">LF1-Q1 多源数据采集任务执行与数据集交付</span>
+  <span class="meta">教师授课包 · V1.0 · GitBook 风 · 承载课标 Q1（36h·L2·任务 1.1） · 生成于 2026-10-25 · D 类红线 7 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">情境信息条</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">36 学时六步时间分配</a></li>
+      <li><a href="#order">任务工单（八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表（四维四档）</a></li>
+      <li><a href="#err">典型错误案例卡（3 张）</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub">
+      <li><a href="#assume">口径与假设说明</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <h1>多源数据采集任务执行与数据集交付 · 教师授课包</h1>
+    <div class="subtitle">LF1 数据采集与标注 ｜ 情境 LF1-Q1 ｜ 能力等级 L2 ｜ 36h/2.25cr（六步 5＋5＋4＋14＋4＋4）｜ 对应任务 1.1 ｜ 配套学生模块《LF1-Q1_多源数据采集任务执行与数据集交付_学生互动学习模块_正式版.html》</div>
+
+    <!-- 1 -->
+    <section id="info">
+      <h2><span class="num">01</span>情境信息条</h2>
+      <div class="kv">
+        <div><b>课程</b>LF1 数据采集与标注（96h/6cr，理论 32h＋实践 64h）</div>
+        <div><b>情境</b>LF1-Q1 多源数据采集与数据集交付（36h/2.25cr·L2）</div>
+        <div><b>对应任务</b>Table1 1.1 多源数据采集与数据集交付</div>
+        <div><b>绑定原子</b>LF1-Q1-A01 / A02 / A27（均首次教学）</div>
+        <div><b>授课对象</b>2026 级 32 人 · 16 工位（2 人 1 套轮换）</div>
+        <div><b>场所</b>数据采集实训区（智能制造轴承外观检测工位＋隔离网）</div>
+        <div><b>核心决策点</b>授权边界与抽样方案（配参数前先核授权，越界不采并当场记录）</div>
+        <div><b>本情境交付</b>T1 签收单＋T2 授权核对单＋T3 批次记录表＋T4 数据集清单＋T7 人机分工说明</div>
+      </div>
+      <div class="card">
+        <span class="label">本情境的能力落点</span>
+        <p style="margin:4px 0;">学生从"会按脚本采数"走到"带着授权链独立交付"：能依需求单配置采集参数并完成试采与全量（A01，G1/G4），能按命名与目录规范入库并完成去重与完整性初检（A02，G2），能在开机前核对授权书编号并签采集确认单、对越界要求当场拒绝并留痕（A27，G3）。本课是<b>全专业唯一在采集现场训练"授权边界"的情境</b>。</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="scene">
+      <h2><span class="num">02</span>情境描述与教学目标</h2>
+      <p><b>情境描述</b>：校内智能制造实训区"轴承外观检测"工位需为下游模型采集 <b>500 张缺陷图像＋200 条工位语音指令</b>。约束：只用已签授权书的产线数据、不得摄入人脸与工牌、不停线、周五前交付。已知条件：需求单、采集 SOP v2、相机与麦克风阵列、Python 半成品脚本、命名规范。</p>
+      <p><b>六步学时</b>：资讯 5 ｜ 计划 5 ｜ 决策 4 ｜ 实施 14 ｜ 检查 4 ｜ 评价 4 ＝ <b>36h</b>（实施占比 38.9%，⑥.2 校验：36＋32＋28＝96）。</p>
+      <h3>教学目标（ABCD 分层口径·绑课标 G1—G4）</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子／目标</th><th style="width:120px">达标线</th></tr></thead>
+          <tbody>
+            <tr><td class="c">P 职业能力</td><td>能依需求单在 40min 内完成 1 个 ≥500 条批次采集，成功率 ≥95%、交付要素齐全</td><td>LF1-Q1-A01（G1）</td><td>一次性通过 ≥80%</td></tr>
+            <tr><td class="c">G 通用能力</td><td>能按命名与目录规范入库并完成去重与完整性初检，命名合规 100%、重复率 ≤0.5%</td><td>LF1-Q1-A02（G2）</td><td>清单齐全率 100%</td></tr>
+            <tr><td class="c">S 社会能力</td><td>能在开机前核对授权书编号并签采集确认单，对越界要求当场拒绝并留痕，越界 0 次</td><td>LF1-Q1-A27（G3）</td><td>越界 0 次</td></tr>
+            <tr><td class="c">D 发展能力</td><td>能用 LLM 出采集脚本草案，逐行复核参数并小样本实测，产出 ≥1 条被采纳的修改记录</td><td>LF1-Q1-A01（G4）</td><td>≥1 条修改记录</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="grid">
+      <h2><span class="num">03</span>6×4 网格教学活动表</h2>
+      <p>行＝六步（左列标注课标学时），列＝四层。每格写"这一层学生在这一步做什么、教师给什么支持"，不写"讨论""练习"。<b>四层红线要求完全相同</b>。</p>
+      <div class="tablewrap">
+        <table class="grid-table">
+          <thead>
+            <tr>
+              <th>六步</th>
+              <th>A 领跑型（20%）</th>
+              <th>B 主力型（50%）</th>
+              <th>C 跟进型（20%）</th>
+              <th>D 兜底型（10%）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>① 资讯<br><span style="font-weight:400;color:#6b7c93">5h</span></td>
+              <td>独立通读需求单与 SOP v2，划出 4 项硬约束（模态／量级／授权／命名），写出"我预判会出错的 3 处"</td>
+              <td>按引导文读需求单、SOP 与授权书样本，填信息栏，标出 3 处不确定条款</td>
+              <td>用填空式信息栏（已给 4 项提示），逐项找答案；不确定的圈出待问</td>
+              <td>教师配授权书样本与工位照片口头讲解 4 项硬约束，同伴领读 SOP 第 1—4 条，D 层复述 1 遍</td>
+            </tr>
+            <tr>
+              <td>② 计划<br><span style="font-weight:400;color:#6b7c93">5h</span></td>
+              <td>自定节奏方案：把 500 张按工位分 3 段，预估每段工时与失败率，做风险预判（哪段最易超时）</td>
+              <td>按模板列 6 步、工器具、工时、2 人分工，强制填"补采预案（20% 失败率）""命名冲突"两栏</td>
+              <td>从 2 个给定节奏方案（先易后难／均匀分配）中选 1 个，写出选择理由，补采预案照模板填</td>
+              <td>使用"步骤卡"（7 张按实施步顺序排列），教师确认顺序后贴在工位挡板</td>
+            </tr>
+            <tr>
+              <td>③ 决策<br><span style="font-weight:400;color:#6b7c93">4h</span></td>
+              <td>上台讲节奏方案与授权核对时序，接受教师与同伴质疑（"失败 20% 怎么补"），当场修订</td>
+              <td>组内讲方案，接受教师抽评；把"遇到越界要求怎么办"写成一句话规则</td>
+              <td>教师逐组审核计划表并签字；授权核对由教师演示 1 次后 C 层复述</td>
+              <td>教师一对一确认：先核哪个编号、什么时候举手、找谁复核，确认后放行</td>
+            </tr>
+            <tr>
+              <td>④ 实施<br><span style="font-weight:400;color:#6b7c93">14h</span></td>
+              <td>独立完成配参数→试采 20 条→全量→补采→入库→初检，兼指导同组 C/D 层；记录 3 个边界情形（曝光／取景／命名）</td>
+              <td>独立按方案采集，试采 20 条验证参数后全量；成功/失败量记 T3；异常（卡顿、参数失配、敏感入镜）立即记录并上报</td>
+              <td>在 B 层帮扶下完成参数配置与部分采集量（先做高对比度工位子集），命名入库由 B 层复核</td>
+              <td>在 B 层以上陪同下做辅助动作（架机位、换存储卡、登记 T3），不独立配参数、不独立核授权</td>
+            </tr>
+            <tr>
+              <td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">4h</span></td>
+              <td>设计本批补充检查项（补 2 条清单未覆盖的），交叉复核他人数据集并签字</td>
+              <td>按 8 项检查清单逐项自检，改完再互检，互检签字后交教师抽查</td>
+              <td>用打勾式检查卡逐项过，不会的项举手由 B 层带做</td>
+              <td>教师带着做 3 项核心检查（授权单时序、命名合规、重复率），口头复述结果</td>
+            </tr>
+            <tr>
+              <td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">4h</span></td>
+              <td>自评＋互评＋上台讲 1 个边界情形的处置依据，提出 1 条流程改进建议</td>
+              <td>自评＋接受互评，写 1 条改进项（下次课开头核对）</td>
+              <td>以教师点评为主，学生复述"我这次补采的几条是什么原因"</td>
+              <td>口头复述"今天学会了什么＋一条红线"，教师在评价栏签字确认</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="time">
+      <h2><span class="num">04</span>36 学时六步时间分配</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">课标学时</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead>
+          <tbody>
+            <tr><td class="c">① 资讯</td><td class="c">5h</td><td>发工单＋需求单＋SOP＋授权书样本；讲授 ≤10min，其余只答疑、只指"往哪找"；读 SOP 划 4 项硬约束</td><td>信息栏＋约束清单</td></tr>
+            <tr><td class="c">② 计划</td><td class="c">5h</td><td>给计划表模板，强制填"补采预案""命名冲突"两栏；列 6 步、工器具、工时、2 人分工</td><td>计划表</td></tr>
+            <tr><td class="c">③ 决策</td><td class="c">4h</td><td>逐组质疑"失败 20% 怎么补""授权书编号在哪核"，签字放行后才允许开机</td><td>决策记录（签字）</td></tr>
+            <tr><td class="c">④ 实施</td><td class="c">14h</td><td>巡视＋安全监督，只纠红线不代做；记录各组首次失败原因；学生配参数→试采 20 条→全量→记成功/失败量→按预案补采→命名入库→去重与完整性初检</td><td>数据包＋批次记录表＋数据集清单</td></tr>
+            <tr><td class="c">⑤ 检查</td><td class="c">4h</td><td>抽查 20%，按交付清单逐项核，当众公布缺项；学生自检打勾→同伴互检签字→补缺</td><td>自检表＋互检签字</td></tr>
+            <tr><td class="c">⑥ 评价</td><td class="c">4h</td><td>按 Rubric 打分，讲评 2 个典型失败（命名冲突、静默丢帧）；学生自评、互评、写 1 条改进项</td><td>评分表＋反思条</td></tr>
+            <tr><td class="c"><b>合计</b></td><td class="c"><b>36h</b></td><td colspan="2">5＋5＋4＋14＋4＋4＝36h；实施占比 38.9%（＜50% ✅，⑥.2 校验通过）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card ok">
+        <span class="label">时间弹性方案（课标 ⑦.4）</span>
+        <p style="margin:4px 0;">设备故障可压 Q1⑤⑥ 各 1h（实施步不减），缺口课后以补采演练补齐；<b>决策步与授权核对不可压</b>——课时再紧也不删。Q1 实施步配双师：1 人指导采集、1 人守授权与设备安全（⑦.2）。</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="order">
+      <h2><span class="num">05</span>任务工单（学生版·八栏）</h2>
+      <div class="order">
+        <div class="row"><div class="k">1 任务名称与编号</div><div class="v">轴承外观检测工位多源数据采集 · 批次 CQ-2026-1101（教学样例）｜对应任务 1.1｜原子 LF1-Q1-A01/A02/A27｜工单按 T1 任务签收单格式</div></div>
+        <div class="row"><div class="k">2 情境描述</div><div class="v">校内智能制造实训区"轴承外观检测"工位需为下游模型采集 500 张缺陷图像＋200 条工位语音指令。约束：只用已签授权书的产线数据、不得摄入人脸与工牌、不停线、周五前交付。这批数据将直接进入下游模型训练，授权链断一批废一批。</div></div>
+        <div class="row"><div class="k">3 交付要求</div><div class="v">
+          <ol>
+            <li>T1 任务签收单（学生＋教师签）</li>
+            <li>T2 授权核对单（授权书编号＋范围＋签字时序，学生＋教师＋企业法务）</li>
+            <li>T3 批次记录表（成功／失败／补采逐条留痕，学生＋组长）</li>
+            <li>T4 数据集清单（命名与重复率，学生＋教师）</li>
+            <li>T7 人机分工说明（用 AI 出脚本草案时必附：哪段 AI 生成、改了哪、谁复核签字）</li>
+          </ol>
+          <p style="margin:6px 0 0">合格标准：命名合规 100%、重复率 ≤0.5%、批次成功率 ≥95%、越界采集 0 次、敏感数据外传 0 次。</p>
+        </div></div>
+        <div class="row"><div class="k">4 已知条件</div><div class="v">需求单（场景／模态／量级／授权范围）；采集 SOP v2；相机与麦克风阵列（1080P 与 48kHz 同步）；Python 半成品脚本；命名规范；授权书样本 SQ-2026-031（教学样例）；采集 SOP 试采量 20 条。</div></div>
+        <div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v">
+          <ol>
+            <li>未核授权书编号即开机采集 → 本情境 0 分＋重做（⑥.3 Q1①／⑩.1）。</li>
+            <li>采集画面含人脸／车牌／工牌 → 立即删除＋一票否决（⑥.3 Q1②／⑩.1）；不得留存、不得外传（⑩.2.2）。</li>
+            <li>擅改他人已配参数且不记录 → 专业维 −20% 并恢复默认（⑥.3 Q1③）。</li>
+            <li>数据上传公有云或外发（含"发同学帮跑脚本"）→ 一票否决（⑩.1）。</li>
+            <li>采集范围超需求单场景与量级，"多采一点备用"视为越界（⑩.2.4）→ 按⑧.4：本情境 0 分＋重做＋合规再培训。</li>
+            <li>含人脸／车牌的原始样本上传任何外部服务 → 一票否决（⑦.3 🔴／⑩.2.2）。</li>
+            <li>伪造数据（改成功率／合格率）→ 课程 0 分＋重修＋记入诚信档案（⑧.4）。</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">6 工作过程记录</div><div class="v">
+          <ol>
+            <li>资讯：我读到的 4 项硬约束是……；授权书编号与范围是……</li>
+            <li>计划：我列了几步、工器具有哪些、2 人怎么分工……；补采预案（20% 失败率）是……</li>
+            <li>决策：我的方案与备选……；授权核对时序我是怎么排的……</li>
+            <li>实施：试采 20 条的结果（成功/失败量）……；参数变更记录……；异常（卡顿/敏感入镜/命名冲突）记录……</li>
+            <li>检查：初检三条线实测值……；我改了哪几项……</li>
+            <li>评价：本次最费时间的是……；下次改进项是……</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全部打勾并签字后，方可交教师抽查与同伴互检。</div></div>
+        <div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 抽查结论：合格 / 返工 ｜ 签字：学生 ______ 组长 ______ 教师 ______</div></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="guide">
+      <h2><span class="num">06</span>引导文六问</h2>
+      <p>学生自己找答案，教师只回答"往哪找"，不直接给参数结论、不代配参数。</p>
+      <ol class="q6">
+        <li><b>资讯</b>：这一批要交什么？4 项硬约束里哪一项断了整批就废？授权书 SQ-2026-031 的范围边界在哪里，"两个不得"具体指什么？</li>
+        <li><b>计划</b>：500 张你打算分几段？每段多少条、预计多少分钟、安排在哪几个工位轮次？补采预案按 20% 失败率要备多少？命名冲突预案怎么定？</li>
+        <li><b>决策</b>：失败 20% 怎么补、授权书编号在哪核——用一句话说清。如果第 2 段超时 15 分钟，你砍哪一段、依据是什么？遇到越界要求（"顺路多采点"），你按什么顺序处置？</li>
+        <li><b>实施</b>：现在第几段第几条？试采 20 条的成功率是多少、和计划的 20% 失败率差多少？刚才调了一次曝光，变更记录写在哪一行？敏感画面入镜你做了什么？</li>
+        <li><b>检查</b>：你怎么证明这 500 张＋200 条是合格的？重复率怎么算、阈值是多少？抽检回退的几条，是参数问题、命名问题还是取景问题？</li>
+        <li><b>评价</b>：哪一段最费时间、为什么？这次踩的坑能不能写成一条流程改进建议？下次同类批次你会先做什么？</li>
+      </ol>
+    </section>
+
+    <!-- 7 -->
+    <section id="check">
+      <h2><span class="num">07</span>检查表（8 项）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1</td><td>授权核对单（T2）</td><td>授权书编号 SQ-2026-031 已核，范围与"两个不得"已复述，签字时序早于设备开机日志</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">2</td><td>采集确认单签字</td><td>T1 签收单学生＋教师双签齐全，无代签、无补签倒挂</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">3</td><td>模态与量级</td><td>500 张图像＋200 条语音，一项不多一项不少；无授权范围外场景</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">4</td><td>参数配置与试采</td><td>1080P 与 48kHz 同步；试采 20 条完成并记录成功/失败量后上全量</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">5</td><td>命名合规</td><td>命名规范执行 100%，冲突文件已修正并登记变更</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">6</td><td>重复率</td><td>去重后重复率 ≤0.5%，重复帧处置已登记 T3</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">7</td><td>批次记录表（T3）</td><td>成功／失败／补采逐条留痕，补采数据与原批同参数同命名</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">8</td><td>补采预案执行</td><td>按 20% 失败率预案执行补采，预案执行情况写入 T3 与反思条</td><td class="c">□合格 □不合格</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="rubric">
+      <h2><span class="num">08</span>Rubric 评分表（四维四档）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="c">专业能力<br><span style="font-weight:400;font-size:11.5px">成功率／命名合规率／重复率</span></td><td class="c">40%</td>
+              <td>一次性通过 ≥95%、批次成功率 ≥95%、命名 100%、重复率 ≤0.2%</td>
+              <td>一次性通过 80—94%（达标）、成功率 ≥95%、命名 100%、重复率 ≤0.5%</td>
+              <td>通过 70—79% 或重复率 0.5%—1%，返工后复验</td>
+              <td>通过 &lt;70% 或成功率 &lt;95%，整批重采</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">方法能力<br><span style="font-weight:400;font-size:11.5px">补采预案是否真被执行</span></td><td class="c">25%</td>
+              <td>补采预案被执行且偏差可解释，工时偏差 &lt;10%，2 套备选与回退</td>
+              <td>预案被执行，偏差 &lt;20%，含备选</td>
+              <td>预案写了没跑（补采靠临时起意），偏差 &lt;35%</td>
+              <td>无计划表或照抄模板，预案缺失</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">社会能力<br><span style="font-weight:400;font-size:11.5px">授权核对单签字时序</span></td><td class="c">20%</td>
+              <td>签字时序零倒挂，越界要求当场拒绝并留痕 ≥2 次，主动上报他人违规</td>
+              <td>授权核对单双签齐全、时序正确</td>
+              <td>需提醒补签，或越界要求只拒绝未留痕</td>
+              <td>代签／漏签，或知情不报，或越界采集</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">发展能力<br><span style="font-weight:400;font-size:11.5px">脚本修改是否有实测依据</span></td><td class="c">15%</td>
+              <td>脚本修改经小样本实测验证，改进项被采纳并入案例库</td>
+              <td>改进项具体可执行（有时间、有做法）</td>
+              <td>改进项笼统（"下次细心点"）</td>
+              <td>无改进项或反思抄袭</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c"><b>合计</b></td><td class="c">100%</td>
+              <td colspan="4">总分＝四维加权；<b>达标线 ≥80 分</b>（交付包一次性通过率 ≥80%，⑧.1）；任一 D 类红线违反，本情境 0 分＋重做</td>
+              <td class="c"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="err">
+      <h2><span class="num">09</span>典型错误案例卡（3 张）</h2>
+      <details open>
+        <summary>ERR-LF1-001：两人命名理解不一致，交付后数据集清单对不上</summary>
+        <div class="body">
+          <p><b>现象</b>：一组两人分采 A—B 段，一人按"工位_日期_序号"、一人按"日期_工位_序号"命名，T4 数据集清单汇总时 500 条无法按目录归类，交付被打回。</p>
+          <p><b>错误做法</b>：判为"学生不细心"，让两人通宵重命名 500 条。</p>
+          <p><b>真实原因</b>：计划步"命名冲突"强制栏空着没填——两人对命名规范的理解没有在开工前对齐；规范本身写得清楚，缺的是"冲突预案"这一步。</p>
+          <p><b>排查路径</b>：① 调出两人计划表对比命名栏 → ② 抽查 20 条看分布 → ③ 回溯六步② 模板强制栏 → ④ 确认属流程缺项，非个人失误。</p>
+          <p><b>预防措施</b>：开工前用 10 条样例做"试命名＋互查"，结果写入当日班前记录；计划表"命名冲突"栏必须写明"以哪份规范第几条为准、冲突找谁裁定"。</p>
+          <p><b>关联原子</b>：LF1-Q1-A02（命名与目录规范）、六步②计划</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF1-002：静默丢帧——200 条语音实际入库 176 条，成功率 88%＜95%</summary>
+        <div class="body">
+          <p><b>现象</b>：一组按脚本全量采集后直接入库，未做完整性初检。下游训练时发现语音指令缺了 24 条，集中在脚本超时段；补采时工位已恢复生产，原场景无法复现。</p>
+          <p><b>错误做法</b>：把缺的 24 条用"类似场景"语音凑数交付。</p>
+          <p><b>真实原因</b>：脚本超时异常未捕获（半成品脚本的已知缺口），实施步"记成功/失败量"这一步被跳过——只采不记，丢帧就变成静默的。</p>
+          <p><b>排查路径</b>：① 对比 T3 记录与实际入库数 → ② 跑脚本日志找超时段 → ③ 回溯 SOP"先小样本后全量" → ④ 确认试采 20 条本可暴露该问题。</p>
+          <p><b>预防措施</b>：试采 20 条即核对成功/失败量与脚本日志；全量后先初检（成功率 ≥95%）再入库；异常即停即记，补采按预案执行。</p>
+          <p><b>关联原子</b>：LF1-Q1-A01（采集执行）、LF1-Q1-A02（完整性初检）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF1-003：擅改他人已配参数且不记录，两批数据参数不一致</summary>
+        <div class="body">
+          <p><b>现象</b>：B 层学生发现曝光偏暗，直接把自己工位的曝光调大，未记录也未告知配参数的搭档；同批图像一半按原参数、一半按新参数采集，下游训练时分布不一致。</p>
+          <p><b>错误做法</b>：抽检时只说"我调了下曝光"，说不清改了哪些参数、什么时候改的、影响哪几条。</p>
+          <p><b>真实原因</b>：把"改参数"当个人操作，不当流程动作——参数是两人共用的生产设置，改动必须记录＋验证＋告知。</p>
+          <p><b>排查路径</b>：① 比对两段图像曝光直方图 → ② 查参数变更记录（应有却没有） → ③ 回溯红线⑥.3 Q1③ → ④ 确认违规并恢复默认后重采受影响段。</p>
+          <p><b>预防措施</b>：改参三件套进工位挡板：记录原因＋小样本验证＋告知原主人；参数设置区贴"擅改且不记录＝专业维 −20% 并恢复默认"。</p>
+          <p><b>关联原子</b>：LF1-Q1-A01（参数配置）、红线⑥.3 Q1③</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 10 -->
+    <section id="safe">
+      <h2><span class="num">10</span>安全提示卡（D 类红线·7 条）</h2>
+      <div class="card warn">
+        <span class="label">红线即一票否决，四层要求完全相同</span>
+        <div class="tablewrap" style="margin:10px 0 0;background:#fff">
+          <table>
+            <thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead>
+            <tbody>
+              <tr><td class="c">1</td><td>未核授权书编号即开机采集</td><td>本情境 0 分＋重做</td><td>授权核对单签字时序 vs 设备开机日志</td></tr>
+              <tr><td class="c">2</td><td>采集画面含人脸／车牌／工牌等可识别人物</td><td>立即删除＋一票否决</td><td>抽检原始包 10%；现场核取景范围</td></tr>
+              <tr><td class="c">3</td><td>擅改他人已配参数且不记录</td><td>专业维 −20% 并恢复默认</td><td>参数变更日志＋图像直方图比对</td></tr>
+              <tr><td class="c">4</td><td>数据上传公有云或外发（含"发同学帮跑脚本"）</td><td>一票否决</td><td>网络出口日志＋抽问</td></tr>
+              <tr><td class="c">5</td><td>采集范围超需求单场景与量级（"多采一点备用"视为越界）</td><td>本情境 0 分＋重做＋合规再培训</td><td>交付清单 vs 需求单逐项核</td></tr>
+              <tr><td class="c">6</td><td>含人脸／车牌的原始样本上传任何外部服务</td><td>一票否决</td><td>隔离网出口日志＋T7 比对</td></tr>
+              <tr><td class="c">7</td><td>伪造数据（改成功率／合格率、补签双签）</td><td>课程 0 分＋重修＋记入诚信档案</td><td>T3 记录 vs 实际入库数复算</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="color:#6b7c93;font-size:13px;margin-top:8px">课前 3 分钟由当班安全员复述红线 1 条（⑩.3）；违规按"停线—记录—复盘—复训"四步处理，两次违规退出本课实训环节。首课已完成 45min 红线专题（法条 15′＋三个真实违规案例 20′＋红线签字承诺 10′）。</p>
+    </section>
+
+    <!-- 11 -->
+    <section id="notes">
+      <h2><span class="num">11</span>教师备课备注</h2>
+      <details open>
+        <summary>常见卡点与处置（按发生概率排序）</summary>
+        <div class="body">
+          <ol>
+            <li><b>授权核对走过场</b>：学生把 T2 当表格填，签字时序晚于开机日志。纠法——授权书样本只发纸质，开机以"签字＋核对编号"双动作放行；教师演示一次"倒挂"案例，让学生看见红线长什么样。</li>
+            <li><b>试采被跳过</b>：学生急着上全量，"20 条试采浪费时间"。纠法——试采 20 条的结果（成功/失败率）是决策步质疑的靶子，没有试采数据不许签决策记录。</li>
+            <li><b>静默丢帧**：只采不记，成功率本末倒置。纠法——T3 按"每 50 条一记"执行；初检三条线（命名 100%／重复率 ≤0.5%／成功率 ≥95%）不过，数据集不许入库。</li>
+            <li><b>命名冲突返工</b>：见 ERR-LF1-001；一旦出现，当堂做 10 条试命名对齐，不要让两人各自回去猜。</li>
+            <li><b>参数被随手改**：见 ERR-LF1-003；改参三件套（记录＋验证＋告知）贴工位挡板，教师抽查只查变更日志。</li>
+          </ol>
+        </div>
+      </details>
+      <details>
+        <summary>分层调整建议（本情境）</summary>
+        <div class="body">
+          <ul>
+            <li><b>A 层加做</b>：补 2 条检查项并说明理由；担任组内"授权边界第一复核人"；把 3 个边界情形处置依据写成 1 页纸。</li>
+            <li><b>B 层标准</b>：500 张＋200 条全量＋试采＋初检＋互检。</li>
+            <li><b>C 层减量</b>：在 B 层帮扶下完成参数配置与部分采集量（先做高对比度工位子集），命名入库由 B 层复核。</li>
+            <li><b>D 层减动作不减要求</b>：只做架机位、换存储卡、登记 T3 等辅助动作，不独立配参数、不独立核授权；红线 7 条对其完全相同。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>设备与耗材准备清单</summary>
+        <div class="body">
+          <ul>
+            <li>多模态采集终端（相机＋麦克风阵列＋支架）8 套，4 人/套；采集存储与只读样本库 8 套（≥2TB）；标注双屏工作站 16 套备用。</li>
+            <li>隔离网络与门禁：采集区禁外网、USB 白名单；出口日志留存备查。</li>
+            <li>产线载体：轴承外观检测工位 1 条（可用仿真替代，仿真:真机 ≤1:1）；采集不停线，轮换按工位每轮 30min。</li>
+            <li>打印件：工单（T1）32 份、授权核对单（T2）32 份、计划表 32 份、检查表 32 份、Rubric 32 份、批次记录表（T3）64 份（每 50 条 1 张，双联）。</li>
+            <li>双师配置：Q1 实施步 2 名教师在场（1 人指导采集、1 人守授权与设备安全，⑦.2）。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>下次课衔接</summary>
+        <div class="body">
+          <p>本情境交付的数据集（T4）是 LF1-Q2 标注规范执行的输入；收齐改进项，下次课开头 5 分钟逐条核对"上次写的改进项做到了没有"；本情境暴露的参数与命名问题，作为 Q2 资讯步的 3 分钟专题；ERR-LF1-001/002 若被验证，同步提交 SOP v2 修订建议给课程负责人。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属 LF1 课程标准 96h/6cr，情境 LF1-Q1 共 36h（六步 5＋5＋4＋14＋4＋4，⑥.2 校验加平）；本包按情境级六步学时组织，不拆单次课分钟数——设备与轮换以院校课表为准。</p>
+      <p>② 能力原子编号 LF1-Q1-A01／A02／A27 按课标⑥.3 Q1 编排；目标 G1—G4 引用④.2 原文，红线引用⑥.3 Q1、⑩.1、⑩.2、⑦.3、⑧.4 原文，未改编数字与后果。</p>
+      <p>③ 批次号 CQ-2026-1101、授权书编号 SQ-2026-031 均为教学虚构载体，不对应任何真实企业与授权；场景数据一律标注"教学样例"，不含任何真实个人信息。</p>
+      <p>④ 本页交互仅用锚点与 CSS（<code>:target</code>、<code>details</code>），无脚本、无外部依赖，可离线打开与打印；配套学生互动模块见《LF1-Q1_多源数据采集任务执行与数据集交付_学生互动学习模块_正式版.html》。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  LF1-Q1 多源数据采集任务执行与数据集交付 · 教师授课包 V1.0 ｜ 承载课标 Q1（36h·L2·任务 1.1）｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+
+</body>
+</html>

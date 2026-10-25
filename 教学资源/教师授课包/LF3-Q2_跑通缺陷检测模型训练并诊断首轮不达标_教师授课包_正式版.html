@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跑通缺陷检测模型训练并诊断首轮不达标 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">LF3 模型训练与评估</span>
+  <span class="meta">教师授课包 · V1.0 · 蓝色GitBook风 · 承载 LF3-Q2 跑通缺陷检测模型训练并诊断首轮不达标 · 生成于 2026-10-25 · D类红线 5 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">授课包信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">64 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub"><li><a href="#assume">口径与假设说明</a></li></ol>
+  </nav>
+  <main>
+    <h1>跑通缺陷检测模型训练并诊断首轮不达标 · 教师授课包</h1>
+    <div class="subtitle">LF3 模型训练与评估 ｜ 学习情境 LF3-Q2 ｜ 64h / 4cr · S4 · L3 ｜ 对应任务 3.2（执行段+诊断段：训练评测与四类分层归因）</div>
+    <section id="info"><h2><span class="num">01</span>授课包信息</h2><div class="kv"><div><b>课程</b>模型训练与评估（LF3，112h/7cr）</div><div><b>情境</b>LF3-Q2 跑通缺陷检测模型训练并诊断首轮不达标（64h/4cr·S4·L3）</div><div><b>对应任务</b>Table1 任务 3.2（执行段+诊断段）</div><div><b>绑定原子</b>LF3-Q2-A15 / A19（执行段）、A17 / A21（诊断段）</div><div><b>核心决策点</b>不达标时四类归因（数据/超参/代码/算力）</div><div><b>授课对象</b>2026 级 32 人 · 2×GPU 分组轮转</div><div><b>场所</b>GPU 训练工位</div><div><b>本情境交付</b>B-05 执行确认单、B-06 指标表、B-07 归因分布表、B-08 调优报告、B-09 模型卡</div></div><div class="card"><span class="label">本情境的能力落点</span><p style="margin:4px 0;">学生从"能跑训练"走到"跑得完、测得准、归得对"：能按工单执行训练与评测并归档实验（A15/A19）；能对首轮不达标做四类分层归因、设计 ≤3 组 A/B 对照并留回退记录（A17/A21）。</p></div></section><section id="scene"><h2><span class="num">02</span>情境描述与教学目标</h2><p><b>情境描述</b>（课标原文）：承接 Q1 冻结的 v1，按训练工单在 2×GPU 上跑训练与评测，验收线由产品方按"漏检率"给定。首轮评测未达线，测试集本身可信度存疑（部分样本标签来自外包批次）。约束：超参变更须指导人签认；单次训练 ≤4h（算力配额）；诊断段由本人主责、算法负责人评审方案；异常回退上一版本。本情境含执行段（按工单跑训练与评测）与诊断段（分层归因与调优）两段，六步全程贯通。</p><p><b>已知条件</b>：训练工单、配置模板、评测规范、算力配额单、Q1 冻结的 v1 与数据卡。</p><p><b>交付物</b>（课标原文）：B-05 训练工单执行确认单、B-06 指标表、B-07 归因分布表、B-08 调优报告（含回退记录）、B-09 模型卡。</p><p><b>评价要点</b>（课标原文）：专业维看指标口径一致与复测有效性；方法维看四类归因是否有证据、A/B 是否可比；社会维看签认与答辩应答；发展维看是否把失败实验转成可复用案例。</p><h3>六步总表（课标原文·教师／学生活动与学时）</h3><div class="tablewrap"><table><thead><tr><th style="width:80px">步骤</th><th>教师活动</th><th>学生活动</th><th class="c" style="width:56px">学时</th><th style="width:190px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td>发训练工单、配置模板、评测规范、算力配额单</td><td>核对数据集版本／超参／算力三项，填执行确认单；标出"验收线口径"与"测试集来源"两处疑点</td><td class="c">8</td><td>执行确认单</td></tr><tr><td class="c">② 计划</td><td>给双段计划模板（执行段/诊断段分列）</td><td>写执行段步骤与监控点；写诊断段 3 条候选归因路径与回退方案</td><td class="c">7</td><td>双段计划表</td></tr><tr><td class="c">③ 决策</td><td>质疑归因优先级；签认超参变更</td><td>讲归因假设与证据来源，答质疑，修订方案后签认</td><td class="c">8</td><td>决策记录（签认）</td></tr><tr><td class="c">④ 实施</td><td>执行段巡视显存与告警处置；诊断段只给"往哪找"不给答案</td><td>执行段 13h：启训练、监控、异常即停、评测出指标、归档；诊断段 17h：抽检 200 条反推主因、四类归因、≤3 组 A/B、留回退</td><td class="c">30</td><td>训练日志+指标表+归因分布表+调优报告</td></tr><tr><td class="c">⑤ 检查</td><td>抽查 20%；核 A/B 对照可比性</td><td>复核复测指标；检查数据卡与模型卡字段一致性；互检归因证据链</td><td class="c">7</td><td>检查表+可比性核对表</td></tr><tr><td class="c">⑥ 评价</td><td>组织归因答辩（每组 5′讲+3′质疑），按 Rubric 打分</td><td>答辩、自评互评、写改进条、提交案例卡 1 条</td><td class="c">4</td><td>评分表+反思条+案例卡</td></tr><tr><td class="c"><b>合计</b></td><td colspan="2">六步加平 64＝情境学时 ✅；实施 实施 30h 占 46.9%（&lt;50%）</td><td class="c"><b>64</b></td><td>—</td></tr></tbody></table></div><p class="small" style="color:var(--ink-3)">原子：A15、A19（执行段首次教学）；A17、A21（诊断段首次教学）。</p><h3>教学目标（PGSD-KSA 分层口径）</h3><div class="tablewrap"><table><thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:150px">达标线</th></tr></thead><tbody><tr><td class="c">P 专业能力</td><td>能按工单执行训练与评测、监控显存与损失曲线、异常即停上报；能对不达标做四类分层归因并设计 ≤3 组 A/B 对照复测</td><td>LF3-Q2-A15/A19/A17/A21</td><td>指标口径一致＋归因有证据</td></tr><tr><td class="c">G 方法能力</td><td>归因优先级有证据来源；A/B 对照可比（同种子/同测试集/同口径）</td><td>LF3-Q2-A17</td><td>归因分布表+可比性核对</td></tr><tr><td class="c">S 社会能力</td><td>超参变更签认、答辩应答、实验记录如实归档（失败组保留）</td><td>LF3-Q2-A15</td><td>签认齐全＋零隐报</td></tr><tr><td class="c">D 发展能力</td><td>把失败实验转成可复用案例卡，说清对下一版训练的影响</td><td>LF3-Q2-A21</td><td>≥1 条案例卡</td></tr></tbody></table></div></section><section id="grid"><h2><span class="num">03</span>6×4 网格教学活动表</h2><p>行＝六步，列＝四层。每格写"这一层在这一步做什么、教师给什么支持"。四层红线要求完全相同。</p><div class="tablewrap"><table class="grid-table"><thead><tr><th>六步</th><th>A 领跑型（20%）</th><th>B 主力型（50%）</th><th>C 跟进型（20%）</th><th>D 兜底型（10%）</th></tr></thead><tbody><tr><td>① 资讯<br><span style="font-weight:400;color:#6b7c93">8 学时</span></td><td>独立核对三项并预判"测试集来源"风险</td><td>按引导文核对三项、填确认单、标两处疑点</td><td>用填空式确认单逐项勾</td><td>教师带读"验收线口径"一条</td></tr><tr><td>② 计划<br><span style="font-weight:400;color:#6b7c93">7 学时</span></td><td>自定监控点与归因优先级，预估算力配额边界</td><td>按双段模板写执行/诊断计划与回退方案</td><td>从给定 2 套归因路径模板中选 1 套</td><td>用"归因卡片"贴出四类归因</td></tr><tr><td>③ 决策<br><span style="font-weight:400;color:#6b7c93">8 学时</span></td><td>讲归因优先级与证据，答质疑后签认</td><td>组内讲假设与证据、答质疑、签认超参</td><td>教师逐组审并签认；超参变更给 2 选项</td><td>教师一对一确认先跑哪个假设</td></tr><tr><td>④ 实施<br><span style="font-weight:400;color:#6b7c93">30 学时</span></td><td>独立完成执行段+诊断段，指导 C/D 层</td><td>按方案训练评测、异常即停、归因、A/B、留回退</td><td>在 B 层帮扶下完成执行段，诊断段由 B 层带</td><td>在陪同下做监控记录与归档，不独立调超参</td></tr><tr><td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">7 学时</span></td><td>交叉复核 A/B 可比性并签字</td><td>自检清单逐项勾、互检归因证据链、核数据卡与模型卡</td><td>用打勾式检查卡逐项过</td><td>教师带着做 3 项核心检查并复述</td></tr><tr><td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>答辩陈述归因链，提交案例卡</td><td>答辩、自评互评、写改进条</td><td>教师点评为主，复述"本次归因对错在哪"</td><td>口头复述"今天学了什么+一条红线"</td></tr></tbody></table></div></section><section id="time"><h2><span class="num">04</span>64 学时时间分配</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td class="c">8 学时</td><td>发工单+配置模板+评测规范+配额单；核对三项、标疑点</td><td>执行确认单</td></tr><tr><td class="c">② 计划</td><td class="c">7 学时</td><td>双段计划（执行/诊断分列）；3 条归因路径+回退方案</td><td>双段计划表</td></tr><tr><td class="c">③ 决策</td><td class="c">8 学时</td><td>质疑归因优先级；签认超参变更；签字放行</td><td>决策记录</td></tr><tr><td class="c">④ 实施</td><td class="c">30 学时</td><td>执行段 13h＋诊断段 17h：训练评测、四类归因、A/B、回退记录</td><td>训练日志+指标表+归因表+调优报告</td></tr><tr><td class="c">⑤ 检查</td><td class="c">7 学时</td><td>抽查 20%；核 A/B 可比性（同种子/同测试集/同口径）</td><td>检查表+可比性核对表</td></tr><tr><td class="c">⑥ 评价</td><td class="c">4 学时</td><td>归因答辩 5′讲+3′质疑；Rubric 打分</td><td>评分表+反思条+案例卡</td></tr><tr><td class="c"><b>合计</b></td><td class="c"><b>64 学时</b></td><td colspan="2">8+7+8+30+7+4 = 64</td></tr></tbody></table></div><div class="card ok"><span class="label">时间弹性方案</span><p style="margin:4px 0;">算力排队可压⑥评价 1h；<b>④实施中的归档与⑤检查不得压</b>。单次训练超 4h 必须分段 checkpoint；异常即停上报是红线，不许绕告警续跑。</p></div></section><section id="order"><h2><span class="num">05</span>任务工单（学生版·八栏）</h2><div class="order"><div class="row"><div class="k">1 任务名称与编号</div><div class="v">铝铸件缺陷检测模型训练评测与归因 · 编号 LF3-Q2-A15/A19/A17/A21｜工单号 T-TR-2026-1218</div></div><div class="row"><div class="k">2 情境描述</div><div class="v">承接 Q1 冻结 v1，按工单跑训练评测；验收线按漏检率；首轮不达标，测试集可信度存疑。执行段＋诊断段两段贯通。</div></div><div class="row"><div class="k">3 交付要求</div><div class="v"><ol><li>B-05 执行确认单（三项核对＋签认）</li><li>B-06 指标表（口径一致）</li><li>B-07 归因分布表（四类分层）</li><li>B-08 调优报告（含回退记录）</li><li>B-09 模型卡（与数据卡字段一致）</li></ol><p style="margin:6px 0 0">合格标准：指标口径一致；归因有证据；A/B 可比；失败实验 100% 归档。</p></div></div><div class="row"><div class="k">4 已知条件</div><div class="v">训练工单、配置模板、评测规范、算力配额单、Q1 冻结的 v1 与数据卡、2×GPU。</div></div><div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v"><ol><li>未签认即改超参 → 本次实验作废＋重做。</li><li>隐去失败实验只报达标 → 一票否决。</li><li>把客户数据或模型权重上传公网/外部 API → 本课 0 分＋上报。</li><li>测试集参与训练（含"看一眼再调"）→ 本次结果作废。</li><li>未留回退记录即覆盖上一版本 → 重做。</li></ol></div></div><div class="row"><div class="k">6 工作过程记录</div><div class="v"><ol><li>资讯：我核对的三项结果；两处疑点……</li><li>计划：执行段监控点；诊断段 3 条归因路径……</li><li>决策：签认了哪次超参变更；质疑了什么……</li><li>实施：第几轮训练；损失曲线变化；归因结论；A/B 结果；回退记录……</li><li>检查：A/B 是否可比；模型卡与数据卡字段一致吗……</li><li>评价：这次归因对错在哪；案例卡……</li></ol></div></div><div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全勾并签字后方可交答辩。</div></div><div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 答辩结论：通过/补答 ｜ 签字：学生 ______ 评审人 ______</div></div></div></section><section id="guide"><h2><span class="num">06</span>引导文六问</h2><p>学生自己找答案，教师只回答"往哪找"，不直接给结论。</p><ol class="q6"><li><b>资讯</b>：验收线"漏检率"的口径是什么？测试集标签来自外包批次，这个疑点对诊断意味着什么？</li><li><b>计划</b>：四类归因（数据/超参/代码/算力）你先怀疑哪一类？凭什么？回退方案触发条件是什么？</li><li><b>决策</b>："为什么先怀疑标签而不是学习率？"——你的证据来源是什么？</li><li><b>实施</b>：损失曲线现在什么形态？异常即停你上报了吗？抽检 200 条反推出的主因是？</li><li><b>检查</b>：你的 A/B 对照同种子、同测试集、同口径吗？模型卡和数据卡字段一致吗？</li><li><b>评价</b>：这次失败的实验能不能写成一条可复用案例？它提醒下一版注意什么？</li></ol></section><section id="check"><h2><span class="num">07</span>检查表（8 项）</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead><tbody><tr><td class="c">1</td><td>三项核对</td><td>数据集版本/超参/算力三项核对并填确认单</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">2</td><td>超参签认</td><td>超参变更均有指导人签认，无未签改动</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">3</td><td>异常即停</td><td>显存/告警异常即停上报，无绕告警续跑</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">4</td><td>指标口径</td><td>指标表口径与验收线一致，无混口径</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">5</td><td>四类归因</td><td>归因分布表四类分层，各有证据</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">6</td><td>A/B 可比</td><td>同种子/同测试集/同口径，对照可复算</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">7</td><td>回退记录</td><td>未达标调优留回退记录，未覆盖上一版本</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">8</td><td>实验归档</td><td>失败实验 100% 归档，无隐报</td><td class="c">□合格 □不合格</td></tr></tbody></table></div></section><section id="rubric"><h2><span class="num">08</span>Rubric 评分表</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead><tbody><tr><td class="c">专业能力</td><td class="c">40%</td><td>执行段零异常绕跑、指标口径一致、四类归因证据链完整、A/B 可比</td><td>执行段合规、归因有证据、复测有效（达标）</td><td>归因部分无证据，整改后复验</td><td>异常绕跑或隐报失败实验</td><td class="c"></td></tr><tr><td class="c">方法能力</td><td class="c">25%</td><td>归因优先级有证据来源、A/B 设计可复算、能解释归因取舍</td><td>归因有依据，A/B 可比性记录齐全</td><td>归因依据缺失，需提示才补</td><td>照抄模板无依据</td><td class="c"></td></tr><tr><td class="c">社会能力</td><td class="c">20%</td><td>超参变更签认齐全、答辩应答准确、主动指出他人归因漏洞</td><td>签认齐全、答辩应答基本准确</td><td>需提醒才签认</td><td>代签或隐报失败实验</td><td class="c"></td></tr><tr><td class="c">发展能力</td><td class="c">15%</td><td>失败实验转成被采纳的案例卡并说明对下一版影响</td><td>改进项具体可执行</td><td>改进项笼统</td><td>无案例卡或抄袭</td><td class="c"></td></tr><tr><td class="c"><b>合计</b></td><td class="c">100%</td><td colspan="4">总分 = 四维加权；<b>情境达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td><td class="c"></td></tr></tbody></table></div></section><section id="err"><h2><span class="num">09</span>典型错误案例卡</h2><details open><summary>ERR-LF3-004：测试集"看一眼再调"——隐性泄漏让指标虚高</summary><div class="body"><p><b>现象</b>：某组调参时反复看测试集指标"对着调"，最终"达标"但换新数据即崩。</p><p><b>错误做法</b>：把测试集当验证集用，用测试集指标做调参依据。</p><p><b>真实原因</b>：测试集只能用于最终评测；看一眼再调＝泄漏，结果作废。</p><p><b>纠正</b>：纠正：只许看验证集调参；测试集评测放最后一步；检查表第 6 项查可比性。</p><p><b>关联原子</b>：LF3-Q2-A15（训练评测）</p></div></details><details open><summary>ERR-LF3-005：隐去失败实验——只归档达标那组</summary><div class="body"><p><b>现象</b>：某组归档记录里只有最终达标实验，失败 5 组被删。</p><p><b>错误做法</b>：怕被扣分，把失败实验删掉。</p><p><b>真实原因</b>：失败实验是归因与复盘的原料；隐去＝诚信问题，一票否决。</p><p><b>纠正</b>：纠正：归档全量实验；检查表第 8 项查"失败组保留率 100%"。</p><p><b>关联原子</b>：LF3-Q2-A19（实验记录归档）</p></div></details><details open><summary>ERR-LF3-006：归因拍脑袋——"感觉是超参问题"</summary><div class="body"><p><b>现象</b>：某组首轮不达标直接调学习率，无任何证据，三轮后越调越差。</p><p><b>错误做法</b>：跳过归因直接调参。</p><p><b>真实原因</b>：四类归因要先有证据（抽检/曲线/对比），"感觉"不是证据。</p><p><b>纠正</b>：纠正：先抽检 200 条反推主因，再设计 A/B；讲评"先归因后调参"。</p><p><b>关联原子</b>：LF3-Q2-A17（分层归因）</p></div></details></section><section id="safe"><h2><span class="num">10</span>安全提示卡（D 类红线·5 条）</h2><div class="card warn"><span class="label">红线即一票否决，四层要求完全相同</span><div class="tablewrap" style="margin:10px 0 0;background:#fff"><table><thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead><tbody><tr><td class="c">1</td><td>未签认即改超参</td><td>本次实验作废＋重做</td><td>签认记录核对</td></tr><tr><td class="c">2</td><td>隐去失败实验只报达标</td><td>一票否决</td><td>归档完整性抽检</td></tr><tr><td class="c">3</td><td>客户数据/模型权重上传公网或外部 API</td><td>本课 0 分＋上报</td><td>出口日志</td></tr><tr><td class="c">4</td><td>测试集参与训练（含看一眼再调）</td><td>本次结果作废</td><td>测试集调用记录</td></tr><tr><td class="c">5</td><td>未留回退记录即覆盖上一版本</td><td>重做</td><td>版本记录核对</td></tr></tbody></table></div></div><p style="color:#6b7c93;font-size:13px;margin-top:8px">Q2 开课前签《算力与数据使用承诺》；训练全程记录显存/损失曲线；异常即停上报不许绕告警；客户数据与模型权重不出校、不上公网。</p></section><section id="notes"><h2><span class="num">11</span>教师备课备注</h2><details open><summary>高频错判 Top3 与处置</summary><div class="body"><ol><li><b>测试集对着调</b>（最高发）。纠法——只许看验证集，测试集评测放最后；ERR-LF3-004。</li><li><b>跳过归因直接调参</b>。纠法——先抽检 200 条反推，再设计 A/B；"先归因后调参"写在黑板。</li><li><b>删失败实验</b>。纠法——归档全量、失败组保留率 100%，ERR-LF3-005 讲评。</li></ol></div></details><details open><summary>答疑口径：只给"往哪找"，不给答案</summary><div class="body"><ul><li>问"是不是超参问题"——答"你的抽检结论是什么、曲线怎么走的"。</li><li>问"学习率调到多少"——答"你的 A/B 方案是什么、同种子吗"，不代定参数。</li><li>问"这指标算不算达标"——答"验收线口径是什么、你怎么算的"。</li></ul></div></details><details open><summary>分层调整建议</summary><div class="body"><ul><li><b>A 层加做</b>：补 1 条归因判断规则；担任"归因第一质询人"。</li><li><b>B 层标准</b>：执行段+诊断段全流程独立完成。</li><li><b>C 层减量</b>：执行段独立、诊断段在 B 层带下做四类归因。</li><li><b>D 层减动作不减要求</b>：只做监控记录与归档，不独立调超参；红线五条相同。</li></ul></div></details><details open><summary>设备与耗材准备</summary><div class="body"><ul><li>2×GPU 按组轮转，算力配额单下发；单次训练 ≤4h 分段 checkpoint。</li><li>训练工单、配置模板、评测规范、算力配额单、数据卡打印件各 32 份。</li><li>实验记录模板、归因分布表模板、模型卡模板各 1 套。</li></ul></div></details><details open><summary>企业介入与衔接</summary><div class="body"><p>企业算法工程师远程参与③决策步归因方案评审 2h、⑥评价步答辩评审 2h。Q2 交付的模型包是 LF4-Q1 部署的对象，模型卡字段不齐，LF4 联调无法核对版本。</p></div></details></section>
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属课程标准 112h/7crh，情境 LF3-Q2 共 64h（六步 8+7+8+30+7+4），本包为情境级授课包，六步学时为情境总账；若拆为单次课按课标⑦.4 弹性条款执行。</p>
+      <p>② 能力原子编号按课标④.2 绑定；本包不训练、不考核超出情境边界的能力（如定级裁定权、架构定稿权、越权承诺）。</p>
+      <p>③ 资产名称、工单号、验收线数值均为教学虚构载体，不对应任何真实企业；模块与仿真内数据全部标注"教学样例"。</p>
+      <p>④ 本页交互仅用锚点与 CSS（:target、details），无脚本、无外部依赖，可离线打开与打印。</p>
+    </section>
+  </main>
+</div>
+<footer>
+  LF3 模型训练与评估 · 教师授课包 V1.0 ｜ 承载 LF3-Q2 跑通缺陷检测模型训练并诊断首轮不达标 ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+</body>
+</html>

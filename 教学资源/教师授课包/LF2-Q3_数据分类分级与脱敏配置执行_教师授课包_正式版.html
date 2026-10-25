@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF2-Q3 数据分类分级与脱敏配置执行 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">LF2 数据治理与质量管控</span>
+  <span class="meta">教师授课包 · V1.0 · 蓝色GitBook风 · 承载 LF2-Q3 数据分类分级与脱敏配置执行 · 生成于 2026-10-25 · D类红线 4 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">授课包信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">36 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub">
+      <li><a href="#assume">口径与假设说明</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <h1>数据分类分级与脱敏配置执行 · 教师授课包</h1>
+    <div class="subtitle">LF2 数据治理与质量管控 ｜ 学习情境 LF2-Q3 ｜ 36h / 2.25cr · S3 · L2 ｜ 对应任务 2.3（执行级：只执行、不定级）</div>
+
+    <!-- 1 -->
+    <section id="info">
+      <h2><span class="num">01</span>授课包信息</h2>
+      <div class="kv">
+        <div><b>课程</b>数据治理与质量管控（LF2，112h/7cr）</div>
+        <div><b>情境</b>LF2-Q3 数据分类分级与脱敏配置执行（36h/2.25cr·S3·L2）</div>
+        <div><b>对应任务</b>Table1 任务 2.3（执行级：只执行不定级）</div>
+        <div><b>绑定原子</b>LF2-Q3-A11 / A12（均首次教学）</div>
+        <div><b>核心决策点</b>照单标级＋脱敏策略匹配（掩码／泛化／假名化）</div>
+        <div><b>授课对象</b>2026 级 32 人 · 16 工位（2 人 1 台）</div>
+        <div><b>场所</b>数据加工工位＋数据平台测试环境（含脱敏工具与 DLP）</div>
+        <div><b>本情境交付</b>T9 级别对照表＋敏感字段清单、T10 脱敏配置与可用性验证记录、抽查复核表、整改记录</div>
+      </div>
+      <div class="card">
+        <span class="label">本情境的能力落点</span>
+        <p style="margin:4px 0;">学生从"知道要脱敏"走到"照单配得对、验得住、退得回"：能依既定分类分级清单逐字段标注级别，清单外字段登记上报而不自行判级（A11）；能按级别与敏感字段规则库配置脱敏策略（掩码／泛化／假名化）并验证可用性，抽查 10% 无泄漏、可用性下降 ≤3pp（A12）；能对不合规项按清单退回整改并闭环，复核表零缺签（A12）。</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="scene">
+      <h2><span class="num">02</span>情境描述与教学目标</h2>
+      <p><b>情境描述</b>（课标原文）：智能客服语料数据集（通话转写 8000 条＋工单文本 2 万条＋坐席工牌照 300 张）需在测试环境开放给算法组试用。企业法务已给<b>既定分类分级清单</b>与敏感字段规则库；本课只负责"照单标注、按级配置、抽查复核"，<b>定级争议一律退回法务</b>。约束：不得使用真实个人信息生成新样本、脱敏后可用性下降 ≤3pp、抽查 10%。</p>
+      <p><b>已知条件</b>：资产清单、既定分类分级清单、敏感字段规则库、脱敏规范、测试环境账号（只读样本库共用）。</p>
+      <p><b>交付物</b>（课标原文）：T9 级别对照表＋敏感字段清单、T10 脱敏配置与可用性验证记录、抽查复核表、整改记录。</p>
+      <p><b>评价要点</b>（课标原文）：专业维看漏检率与可用性下降幅度；方法维看策略选择有无依据；社会维看清单外字段是否老实上报；发展维看有无可复用的字段识别规则。</p>
+
+      <h3>六步总表（课标原文·教师／学生活动与学时）</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th style="width:80px">步骤</th><th>教师活动</th><th>学生活动</th><th class="c" style="width:56px">学时</th><th style="width:190px">产出</th></tr></thead>
+          <tbody>
+            <tr><td class="c">① 资讯</td><td>发资产清单＋分级清单＋脱敏规范；强调"清单外字段不自行定级"</td><td>逐字段读清单、标出清单未覆盖字段并登记（不自行判级）</td><td class="c">5</td><td>资产-级别对照表（初稿）</td></tr>
+            <tr><td class="c">② 计划</td><td>给模板，强制填"策略选择依据""可用性怎么验"</td><td>匹配敏感字段规则、选策略（掩码／泛化／假名化）、定验证方法</td><td class="c">4</td><td>脱敏字段清单＋配置计划</td></tr>
+            <tr><td class="c">③ 决策</td><td>逐组问"这个字段为什么用泛化不用掩码"，签字放行</td><td>讲策略取舍、被质疑、修订、签字</td><td class="c">4</td><td>决策记录（签字）</td></tr>
+            <tr><td class="c">④ 实施</td><td>巡视，只纠红线（真实数据外传、越权定级）</td><td>配置脱敏→测试集验证可用性→抽查 10%→登记不合规项</td><td class="c">13</td><td>脱敏配置＋验证记录＋抽查表</td></tr>
+            <tr><td class="c">⑤ 检查</td><td>组织交叉抽查（他人查自己的配置），核对漏检</td><td>交叉抽查、复算泄漏项、按清单退回整改</td><td class="c">5</td><td>抽查复核表＋整改记录</td></tr>
+            <tr><td class="c">⑥ 评价</td><td>按 Rubric 打分，讲评"脱敏了但不可用""可用但漏了字段"两类</td><td>自评、互评、写改进项</td><td class="c">5</td><td>评分表＋反思条</td></tr>
+            <tr><td class="c"><b>合计</b></td><td colspan="2">六步加平 36＝情境学时 ✅；实施 13h 占 36.1%（&lt;50%）</td><td class="c"><b>36</b></td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="color:var(--ink-3)">原子：A11、A12（均首次教学）。定级裁定归 S4《数据安全与隐私保护》，本课只训练"照单执行＋抽查复核"。</p>
+
+      <h3>教学目标（PGSD-KSA 分层口径）</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:150px">达标线</th></tr></thead>
+          <tbody>
+            <tr><td class="c">P 专业能力</td><td>能依既定分类分级清单逐字段标注级别，敏感字段漏检率 ≤2%；能按级别配置脱敏策略（掩码／泛化／假名化）并验证可用性，抽查 10% 无泄漏、可用性下降 ≤3pp</td><td>LF2-Q3-A11 / A12（G10 / G11）</td><td>抽查无泄漏＋下降 ≤3pp</td></tr>
+            <tr><td class="c">G 方法能力</td><td>策略选择能说出规则库依据，验证方法可复算（先配置、再跑数、再对比门槛）</td><td>LF2-Q3-A12</td><td>配置计划两栏必填</td></tr>
+            <tr><td class="c">S 社会能力</td><td>能对不合规项按清单退回整改并闭环，复核表零缺签；清单外字段老实上报</td><td>LF2-Q3-A12（G12）</td><td>退回闭环＋零缺签</td></tr>
+            <tr><td class="c">D 发展能力</td><td>能沉淀可复用的字段识别规则，说出对下游算法组试用的影响</td><td>LF2-Q3-A11 / A12</td><td>≥1 条规则建议</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="grid">
+      <h2><span class="num">03</span>6×4 网格教学活动表</h2>
+      <p>行＝六步（时间按六步学时：5／4／4／13／5／5），列＝四层。每格写"这一层学生在这一步做什么、教师给什么支持"，不写"讨论""练习"。四层红线要求完全相同。</p>
+      <div class="tablewrap">
+        <table class="grid-table">
+          <thead>
+            <tr>
+              <th>六步</th>
+              <th>A 领跑型（20%）</th>
+              <th>B 主力型（50%）</th>
+              <th>C 跟进型（20%）</th>
+              <th>D 兜底型（10%）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>① 资讯<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td>
+              <td>独立通读三份清单，对照资产字段逐项对账，预判 3 处易漏字段（如身份证号变体、备注栏夹带）</td>
+              <td>按引导文读资产清单与分级清单，填资产-级别对照表，标出清单未覆盖字段并登记</td>
+              <td>用填空式对照表（已给字段名）逐项找级别；拿不准的圈出，交 B 层复核</td>
+              <td>教师带读清单前 10 个字段，同伴领读"清单外怎么办"一条，D 层复述一遍</td>
+            </tr>
+            <tr>
+              <td>② 计划<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td>
+              <td>自定配置顺序方案（先 L3 后 L2 再 L1），预估验证集跑数与抽查时间，做风险预判（哪个字段最易配错策略）</td>
+              <td>按模板填脱敏字段清单与配置计划，"策略选择依据""可用性怎么验"两栏强制填写</td>
+              <td>从 2 个给定配置顺序（先敏感后一般 / 按资产分批）中选 1 个，写出选择理由</td>
+              <td>使用"策略卡"（掩码／泛化／假名化三张图卡），教师确认顺序后贴在工位挡板</td>
+            </tr>
+            <tr>
+              <td>③ 决策<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td>
+              <td>上台讲策略取舍（"工号为什么用泛化不用掩码"），接受教师与质量岗质疑，当场修订</td>
+              <td>组内讲配置计划，接受质量岗抽评；把"清单外字段怎么办"写成一句话规则</td>
+              <td>教师逐组审核配置计划并签字；策略取舍由教师给出 2 个选项供选</td>
+              <td>教师一对一确认：先配哪 3 个字段、什么时候举手、找谁复核，确认后放行</td>
+            </tr>
+            <tr>
+              <td>④ 实施<br><span style="font-weight:400;color:#6b7c93">13 学时</span></td>
+              <td>独立完成 8 类字段配置并跑通验证；记录 2 个边界字段的取舍依据；指导同组 C/D 层</td>
+              <td>独立完成字段配置→测试集验证可用性→抽查 10%→登记不合规项；异常（工具报错、还原测试存疑）立即记录并上报</td>
+              <td>在 B 层帮扶下完成 L1／L2 字段配置（先做不脱敏与泛化），L3 字段由 B 层复核后配置</td>
+              <td>在 B 层以上陪同下做辅助动作（登记清单外字段、勾选自检项），不独立配置 L3 字段</td>
+            </tr>
+            <tr>
+              <td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td>
+              <td>设计本批补充检查项（补 1 条规则库未覆盖的字段识别规则），交叉抽查他人 50 条并签字</td>
+              <td>按 8 项检查清单逐项自检，改完再互检；复算泄漏项，按清单退回整改</td>
+              <td>用打勾式检查卡逐项过，不会的项举手由 B 层带做</td>
+              <td>教师带着做 3 项核心检查（级别照单、策略对条目、假名表隔离），口头复述结果</td>
+            </tr>
+            <tr>
+              <td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td>
+              <td>自评 + 互评 + 上台讲 1 个边界字段的取舍依据，提出 1 条字段识别规则建议</td>
+              <td>自评 + 接受互评，写 1 条改进项（下次课开头核对）</td>
+              <td>以教师点评为主，学生复述"这次退回整改的几条是什么原因"</td>
+              <td>口头复述"今天学会了什么 + 一条红线"，教师在评价栏签字确认</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="time">
+      <h2><span class="num">04</span>36 学时时间分配</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead>
+          <tbody>
+            <tr><td class="c">① 资讯</td><td class="c">5 学时</td><td>发资产清单＋分级清单＋脱敏规范；只答疑不讲授（讲授 ≤10min）；逐字段对账，登记清单外字段</td><td>资产-级别对照表（初稿）</td></tr>
+            <tr><td class="c">② 计划</td><td class="c">4 学时</td><td>匹配敏感字段规则、选策略（掩码／泛化／假名化）、定验证方法；"策略选择依据""可用性怎么验"两栏必填</td><td>脱敏字段清单＋配置计划</td></tr>
+            <tr><td class="c">③ 决策</td><td class="c">4 学时</td><td>逐组问"这个字段为什么用泛化不用掩码"；讲策略取舍、被质疑、修订；签字放行后才允许开配</td><td>决策记录（签字）</td></tr>
+            <tr><td class="c">④ 实施</td><td class="c">13 学时</td><td>配置脱敏→测试集验证可用性→抽查 10%→登记不合规项；质量岗（企业数据治理工程师可远程）参与抽查复核</td><td>脱敏配置＋验证记录＋抽查表</td></tr>
+            <tr><td class="c">⑤ 检查</td><td class="c">5 学时</td><td>交叉抽查（他人查自己的配置）→复算泄漏项→按清单退回整改→复核复签</td><td>抽查复核表＋整改记录</td></tr>
+            <tr><td class="c">⑥ 评价</td><td class="c">5 学时</td><td>按 Rubric 打分，讲评"脱敏了但不可用""可用但漏了字段"两类典型错误；自评互评写改进项</td><td>评分表＋反思条</td></tr>
+            <tr><td class="c"><b>合计</b></td><td class="c"><b>36 学时</b></td><td colspan="2">5+4+4+13+5+5 = 36；实施占 36.1%，未超 50%；决策 4h 未压缩</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card ok">
+        <span class="label">时间弹性方案</span>
+        <p style="margin:4px 0;">平台故障或工具排队可压⑥评价 1h；<b>④实施中的抽查 10% 与⑤检查不得压</b>（课标⑦.4：Q2 决策步与 Q3 抽查不得压——压了抽查，泄漏项就带进交付包）。缺脱敏工具不得开④实施步，只可开"策略设计＋纸面验证"并下调能力等级（课标⑨.1）。</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="order">
+      <h2><span class="num">05</span>任务工单（学生版·八栏）</h2>
+      <div class="order">
+        <div class="row"><div class="k">1 任务名称与编号</div><div class="v">智能客服语料数据集分类分级与脱敏配置执行 · 编号 LF2-Q3-A11—A12｜工单号 T-DQ-2026-1107</div></div>
+        <div class="row"><div class="k">2 情境描述</div><div class="v">智能客服语料数据集（通话转写 8000 条＋工单文本 2 万条＋坐席工牌照 300 张）需在测试环境开放给算法组试用。企业法务已给既定分类分级清单与敏感字段规则库；本课只负责"照单标注、按级配置、抽查复核"，定级争议一律退回法务。</div></div>
+        <div class="row"><div class="k">3 交付要求</div><div class="v">
+          <ol>
+            <li>T9 资产-级别对照表＋敏感字段清单（清单外字段单独登记）</li>
+            <li>T10 脱敏配置与可用性验证记录（含验证集指标与下降 pp）</li>
+            <li>抽查复核表（抽查 10%＋还原测试，零缺签）</li>
+            <li>整改记录（不合规项按清单退回、闭环复签）</li>
+          </ol>
+          <p style="margin:6px 0 0">合格标准：敏感字段漏检率 ≤2%；抽查 10% 无泄漏；脱敏后可用性下降 ≤3pp；复核表零缺签。</p>
+        </div></div>
+        <div class="row"><div class="k">4 已知条件</div><div class="v">资产清单；企业法务既定分类分级清单 V1.0；敏感字段规则库（R-01—R-08）；脱敏规范；测试环境账号（只读样本库共用，生产库账号不下发）。</div></div>
+        <div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v">
+          <ol>
+            <li>不得使用真实个人信息构造测试样本或对外演示 → 一票否决。</li>
+            <li>脱敏后仍可还原到个人（如掩码位数不足、假名表未隔离保管）→ 课程 0 分＋重新配置。</li>
+            <li>对清单外字段自行定级或擅改清单 → 本情境 0 分＋按越权处理。</li>
+            <li>（全课）把数据集或配置导出到个人设备／外网 → 课程 0 分。</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">6 工作过程记录</div><div class="v">
+          <ol>
+            <li>资讯：我对照了哪些字段；清单未覆盖的字段我登记了……</li>
+            <li>计划：我的配置顺序是……；"策略选择依据"我写了……；可用性用什么验证集验……</li>
+            <li>决策：质量岗质疑我的哪个字段、我怎么答的、修订了哪一处……</li>
+            <li>实施：现在配到第几个字段；假名表隔离放在哪；抽查比例与结果……</li>
+            <li>检查：我改了哪几项；退回整改了几条；复核签了谁……</li>
+            <li>评价：本次最易漏的字段是……；下次改进项是……</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全部打勾并签字后，方可交质量岗抽查复核。</div></div>
+        <div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 质量岗抽查结论：无泄漏 / 有泄漏退回 ｜ 签字：学生 ______ 复核人 ______ 教师 ______</div></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="guide">
+      <h2><span class="num">06</span>引导文六问</h2>
+      <p>学生自己找答案，教师只回答"往哪找"（清单哪一条、规则库哪一号），不直接给判定结论。</p>
+      <ol class="q6">
+        <li><b>资讯</b>：这批资产有哪三类？哪些字段在既定清单内、哪些在清单外？清单外字段你在对照表上打什么标记、送到哪里？</li>
+        <li><b>计划</b>：L3 字段你打算配什么策略？掩码保留几位、假名表放哪？可用性怎么验——用哪个验证集、对比哪条基线？</li>
+        <li><b>决策</b>：工号为什么用泛化不用掩码？如果算法组说"泛化后统计没法用"，你按什么顺序处置（记录→查规则库→退回法务）？</li>
+        <li><b>实施</b>：现在配到第几个字段？和计划差多少？假名映射表隔离保管做了什么动作？抽查 10% 抽的是哪几个字段？</li>
+        <li><b>检查</b>：你怎么证明脱敏后不能还原到个人？还原测试怎么做的？交叉抽查发现的问题按什么流程退回、谁复签？</li>
+        <li><b>评价</b>：哪类字段最容易漏（提示：变体、备注夹带）？这次踩的坑能不能写成一条可复用的字段识别规则？</li>
+      </ol>
+    </section>
+
+    <!-- 7 -->
+    <section id="check">
+      <h2><span class="num">07</span>检查表（8 项）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1</td><td>清单版本核对</td><td>使用法务既定清单 V1.0，未擅改、未私补版本</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">2</td><td>字段对账</td><td>资产字段 100% 对照，清单外字段单独登记上报</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">3</td><td>级别照单标注</td><td>逐字段按清单标级别，零自行定级、零越权</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">4</td><td>策略匹配有据</td><td>每个字段能说出规则库条目（R-01—R-08）与策略</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">5</td><td>假名表隔离</td><td>假名映射表与数据分离保管、权限最小化，未同目录存放</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">6</td><td>可用性验证</td><td>验证集指标已记录，可用性下降 ≤3pp</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">7</td><td>抽查 10%</td><td>抽查比例与字段覆盖合规，还原测试全部无法还原</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">8</td><td>退回整改闭环</td><td>不合规项按清单退回、整改后复核复签，复核表零缺签</td><td class="c">□合格 □不合格</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="rubric">
+      <h2><span class="num">08</span>Rubric 评分表</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="c">专业能力</td><td class="c">40%</td>
+              <td>抽查 10% 无泄漏，可用性下降 &lt;0.5pp，敏感字段漏检率 ≤1%，配置一次性通过</td>
+              <td>抽查 10% 无泄漏，可用性下降 ≤3pp，漏检率 ≤2%（达标）</td>
+              <td>漏检率 2%—5%，或可用性下降 3—5pp，整改后复验通过</td>
+              <td>抽查发现可还原项，或下降 &gt;5pp，或存在越权定级</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">方法能力</td><td class="c">25%</td>
+              <td>每个策略有规则库依据＋业务用途双说明，验证方法可复算，能解释下降来源</td>
+              <td>策略有依据，验证集与门槛比对记录齐全</td>
+              <td>部分策略依据缺失，需提示才补验证记录</td>
+              <td>照抄模板无依据，或未验证即交付</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">社会能力</td><td class="c">20%</td>
+              <td>清单外字段主动登记上报，退回整改零缺签，交叉抽查主动指出他人问题</td>
+              <td>退回整改按清单执行，复核表齐全</td>
+              <td>需提醒才登记，协作被动</td>
+              <td>知情不报，或擅改清单、代签复核</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">发展能力</td><td class="c">15%</td>
+              <td>提出 1 条被采纳的可复用字段识别规则，并说明对下游试用的影响</td>
+              <td>改进项具体、可执行（有时间、有做法）</td>
+              <td>改进项笼统（"下次注意"）</td>
+              <td>无改进项或反思抄袭</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c"><b>合计</b></td><td class="c">100%</td>
+              <td colspan="4">总分 = 四维加权；<b>情境达标线 ≥80 分（交付包一次性通过率 ≥80%）</b>；任一 D 类红线违反，本情境 0 分并重做</td>
+              <td class="c"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="err">
+      <h2><span class="num">09</span>典型错误案例卡</h2>
+      <details open>
+        <summary>ERR-LF2-006：脱敏了但不可用——手机号整列过度掩码，算法组关联分析全废</summary>
+        <div class="body">
+          <p><b>现象</b>：某组把工单"客户手机号"整列做深度掩码（仅保留前 3 位），交付后算法组反馈无法做用户去重关联，验证集一致性指标下降 12pp，远超 ≤3pp 门槛，整批退回重配。</p>
+          <p><b>错误做法</b>：认为"掩得越狠越安全"，配置前不问算法组要什么用途，也不做可用性验证。</p>
+          <p><b>真实原因</b>：规则库 R-01 写明"掩码（保留前 3 后 4）"——既保联系用途又不可枚举还原；该组自行加码，把"安全"做成了"不可用"。方法维看策略选择有无依据，依据就是规则库条目。</p>
+          <p><b>排查路径</b>：① 调出配置记录与规则库条目比对 → ② 跑验证集复算下降 pp → ③ 还原测试确认无泄漏（安全侧没问题）→ ④ 定位为过度配置而非配置不足。</p>
+          <p><b>预防措施</b>：配置计划表强制填"策略选择依据"；实施步先跑小样本验证再全量；把"过度脱敏"纳入讲评两类典型错误之一。</p>
+          <p><b>关联原子</b>：LF2-Q3-A12（脱敏策略配置与可用性验证）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF2-007：可用但漏了字段——身份证号变体字段漏检，抽查 10% 被还原测试击中</summary>
+        <div class="body">
+          <p><b>现象</b>：某组工单文本配了脱敏，但"客户证件号（变体命名 id_no）"未纳入敏感字段清单，L3 字段明文流入测试环境；质量岗抽查 10% 时还原测试直接命中，按泄露处理。</p>
+          <p><b>错误做法</b>：只对账了清单上点名字段，认为"清单没写这个名字就没有"。</p>
+          <p><b>真实原因</b>：字段对账要做的是"资产全部字段 × 清单"双向核对，变体、同义、备注栏夹带都要过；漏检率门槛是 ≤2%，一个 L3 变体字段就击穿。</p>
+          <p><b>纠正</b>：对账表增加"变体/同义字段"一列；漏检字段按清单退回整改并登记，复核复签后复抽查。</p>
+          <p><b>关联原子</b>：LF2-Q3-A11（逐字段照单标注、清单外登记）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF2-008：清单外字段自行定级——"客户情绪标签"被学生私定 L1 并补进清单</summary>
+        <div class="body">
+          <p><b>现象</b>：某组发现"客户情绪标签"不在既定清单内，自行判定"不敏感、定 L1"，还顺手在清单副本上补了一行，被版本比对当场发现。</p>
+          <p><b>错误做法</b>：把"提高效率"凌驾于权限边界之上，认为"定个 L1 没什么"。</p>
+          <p><b>真实原因</b>：权限边界是"只执行不定级"——分级清单与敏感字段规则库由企业法务／数据 Owner 出具；清单未覆盖字段登记上报，不自行判级，擅改清单按越权处理。</p>
+          <p><b>纠正</b>：对照表设"清单外·登记退回"专列；清单版本哈希随工单存档，改动即留痕；该生本情境 0 分＋按越权处理，补训后重做。</p>
+          <p><b>关联原子</b>：LF2-Q3-A11（照单标注）＋⑩.2.4（权限边界）</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 10 -->
+    <section id="safe">
+      <h2><span class="num">10</span>安全提示卡（D 类红线·4 条）</h2>
+      <div class="card warn">
+        <span class="label">红线即一票否决，四层要求完全相同</span>
+        <div class="tablewrap" style="margin:10px 0 0;background:#fff">
+          <table>
+            <thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead>
+            <tbody>
+              <tr><td class="c">1</td><td>使用真实个人信息构造测试样本或对外演示</td><td>一票否决</td><td>样本来源登记＋抽问</td></tr>
+              <tr><td class="c">2</td><td>脱敏后仍可还原到个人（位数不足、假名表未隔离）</td><td>课程 0 分＋重新配置</td><td>抽查 10%＋还原测试</td></tr>
+              <tr><td class="c">3</td><td>对清单外字段自行定级或擅改清单</td><td>本情境 0 分＋按越权处理</td><td>清单版本比对＋字段对账</td></tr>
+              <tr><td class="c">4</td><td>（全课）把数据集或配置导出到个人设备／外网</td><td>课程 0 分</td><td>出口日志＋USB 白名单</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="color:#6b7c93;font-size:13px;margin-top:8px">Q3 开课前签《数据使用承诺书》，未签不发测试环境账号；每次课前 3 分钟随机 1 人复述 1 条红线，答不出全组延迟进入实施步；违规按"停线—记录—复盘—复训"四步处理。脱敏后的数据仍按原级别管理，不得外传、不得留存；课程结束 24h 内由教师监督清空个人目录并登记（⑩.2.2）。</p>
+    </section>
+
+    <!-- 11 -->
+    <section id="notes">
+      <h2><span class="num">11</span>教师备课备注</h2>
+      <details open>
+        <summary>高频错判 Top3 与处置（按发生概率排序）</summary>
+        <div class="body">
+          <ol>
+            <li><b>清单外字段自行定级</b>（最高发）：学生觉得"定个 L1 没什么"。纠法——开课先演 ERR-LF2-008；对照表只给"清单外·登记退回"一个出口；教师巡堂只问一句"这个字段在清单第几行"。</li>
+            <li><b>掩码位数凭感觉</b>：认为掩得越多越安全，或随便留几位。纠法——位数以规则库条目为准（R-01 留前 3 后 4），配置前先背条目再动手；讲评时把 ERR-LF2-006 的 12pp 摆出来。</li>
+            <li><b>只验可用性、不验可还原</b>：验证记录里只有指标下降，没有还原测试。纠法——抽查 10% 必须含还原测试动作；复核表第 7 项就是查这个，缺一项即退回。</li>
+          </ol>
+        </div>
+      </details>
+      <details>
+        <summary>答疑口径：只指条文，不判标签</summary>
+        <div class="body">
+          <ul>
+            <li>学生问"这个字段算什么级别"——只答"去查清单第几行、规则库哪一条"，不代替法务判级；口径与课标⑦.1"只答去查哪一条第几款"一致。</li>
+            <li>学生问"这个策略行不行"——只答"策略选择依据那一栏你写了什么、规则库条目是哪号"，判定留给质量岗抽查。</li>
+            <li>学生问"清单好像漏了字段"——引导走登记上报流程，表扬这个发现（社会维加分项），但严禁私补清单。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>分层调整建议（本情境）</summary>
+        <div class="body">
+          <ul>
+            <li><b>A 层加做</b>：补 1 条规则库未覆盖的字段识别规则并说明理由；担任组内"策略取舍第一质询人"。</li>
+            <li><b>B 层标准</b>：8 类字段全量配置＋可用性验证＋自检＋互检。</li>
+            <li><b>C 层减量</b>：先完成 L1／L2 字段配置，L3 字段由 B 层复核后配置。</li>
+            <li><b>D 层减动作不减要求</b>：只做登记与勾选，不独立配置 L3、不碰假名表；红线四条对其完全相同。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>设备与耗材准备清单</summary>
+        <div class="body">
+          <ul>
+            <li>数据加工工位 16 套（2 人 1 台）；测试环境账号按组分配，生产库账号一律不下发。</li>
+            <li>脱敏工具与 DLP 平台级授权 1 套（开课前验证掩码/泛化/假名化三类策略可用；<b>缺假名化功能不得开④实施步</b>）。</li>
+            <li>假名映射表隔离存储位置与权限提前配置（最小化授权，仅复核人可读）。</li>
+            <li>打印件：工单 32 份、清单摘要 32 份、规则库摘要 32 份、检查表 32 份、Rubric 32 份、抽查单 64 份（双联）。</li>
+            <li>倒计时卡 16 张（贴挡板），用于实施步抽查节点提示。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>企业介入与下次课衔接</summary>
+        <div class="body">
+          <p>企业介入每学期 ≥6 学时：本情境用于<b>抽查复核 2h</b>（企业数据治理工程师可远程参与④实施步抽查）。本情境评价步可压 1h，<b>抽查环节不得压</b>。</p>
+          <p>衔接：本次沉淀的"可复用字段识别规则"提交给数据 Owner，作为清单 V1.1 修订建议；定级争议集中的字段，随 T9 上报法务，由 S4《数据安全与隐私保护》精读法条后裁定——本校内不训练、不考核定级权。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属 LF2 课程标准 112h/7cr，情境 LF2-Q3 共 36h（六步 5+4+4+13+5+5），本包为情境级授课包，六步学时为情境总账；若拆分为单次课，按课标⑦.4 弹性条款执行（可压⑥评价 1h，不压抽查）。</p>
+      <p>② 能力原子编号 LF2-Q3-A11／A12 按课标④.2 绑定（G10／G11／G12）；A11 已按 Table1 V1.0 任务 2.3 降 L2 口径收敛为"依既定清单逐字段标注"，定级裁定权仍在企业法务／数据 Owner。</p>
+      <p>③ 资产名称、清单版本号（V1.0）、规则库编号（R-01—R-08）、工单号均为教学虚构载体，不对应任何真实企业；模块与仿真内数据全部标注"教学样例"（合成数据，已标生成参数）。</p>
+      <p>④ 本页交互仅用锚点与 CSS（<code>:target</code>、<code>details</code>），无脚本、无外部依赖，可离线打开与打印。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  LF2 数据治理与质量管控 · 教师授课包 V1.0 ｜ 承载 LF2-Q3 数据分类分级与脱敏配置执行 ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+
+</body>
+</html>

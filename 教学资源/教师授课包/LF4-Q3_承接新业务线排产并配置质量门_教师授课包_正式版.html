@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>承接新业务线排产并配置质量门 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">LF4 AI 数据服务部署与运维</span>
+  <span class="meta">教师授课包 · V1.0 · 蓝色GitBook风 · 承载 LF4-Q3 承接新业务线排产并配置质量门 · 生成于 2026-10-25 · D类红线 5 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">授课包信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">36 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub"><li><a href="#assume">口径与假设说明</a></li></ol>
+  </nav>
+  <main>
+    <h1>承接新业务线排产并配置质量门 · 教师授课包</h1>
+    <div class="subtitle">LF4 AI 数据服务部署与运维 ｜ 学习情境 LF4-Q3 ｜ 36h / 2.25cr · S5 · L3 ｜ 对应任务 4.3（执行级：排产与质量门配置，不定标准）</div>
+    <section id="info"><h2><span class="num">01</span>授课包信息</h2><div class="kv"><div><b>课程</b>AI 数据服务部署与运维（LF4，112h/7cr）</div><div><b>情境</b>LF4-Q3 承接新业务线排产并配置质量门（36h/2.25cr·S5·L3）</div><div><b>对应任务</b>Table1 任务 4.3（执行级：不定标准不带教考核）</div><div><b>绑定原子</b>LF4-Q3-A23 / A24 / A25 / A26（本课首次教学）</div><div><b>核心决策点</b>交期紧压不压质检比例</div><div><b>授课对象</b>2026 级 32 人 · 排产沙盘＋平台门限配置</div><div><b>场所</b>部署运维实训室＋数据生产平台</div><div><b>本情境交付</b>B-10 能力盘点与差距表、B-11 排产表、B-12 质量门配置记录、B-13 试运行报告、B-14 质量周报</div></div><div class="card"><span class="label">本情境的能力落点</span><p style="margin:4px 0;">学生从"会算人头"走到"排得平、配得准、守得住"：能盘点四段能力缺口、测算人天与节奏（A23/A24）；能把既定质量门配置到平台、试运行 2 周后报偏差与修正建议（A25/A26）；守住"不改阈值、越权不承诺"的边界。</p></div></section><section id="scene"><h2><span class="num">02</span>情境描述与教学目标</h2><p><b>情境描述</b>（课标原文）：公司接新业务线（新模态+量级翻倍+交期 6 周），架构已由部门定（自建 60% + 预标注人审 40%），本人负责盘点能力缺口、测算人天与节奏、把既定质量门配置到平台、试运行 2 周后报偏差。约束：架构与门限定稿权在部门负责人，本课只做执行与修正建议；试运行期间不得改动已定阈值；排产须可加总到人天。</p><p><b>已知条件</b>：需求单、既有架构说明、成本-质量模型、平台门限配置手册、历史批次数据（教学样例）。</p><p><b>交付物</b>（课标原文）：B-10 能力盘点与差距表、B-11 排产表、B-12 质量门配置记录、B-13 试运行报告与修正建议、B-14 质量周报。</p><p><b>评价要点</b>（课标原文）：专业维看缺口识别与门限配置准确；方法维看人天测算与偏差归因；社会维看会签与越权边界；发展维看建议是否可被采纳。</p><h3>六步总表（课标原文·教师／学生活动与学时）</h3><div class="tablewrap"><table><thead><tr><th style="width:80px">步骤</th><th>教师活动</th><th>学生活动</th><th class="c" style="width:56px">学时</th><th style="width:190px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td>发需求单、既有架构说明、成本-质量模型、平台门限配置手册</td><td>盘点采集—标注—质检—训练四段能力缺口，列出 3 项最紧约束（人／机／期）</td><td class="c">5</td><td>能力盘点表+差距表</td></tr><tr><td class="c">② 计划</td><td>给排产模板，查"人天是否可加总"</td><td>按架构测算各段人天与节奏，写试运行观察指标与周报框架</td><td class="c">4</td><td>排产表</td></tr><tr><td class="c">③ 决策</td><td>扮演需求方压交期，要求给出"降配版"与"标准版"两套</td><td>讲两套排产的取舍与风险，答质疑，形成会签稿</td><td class="c">4</td><td>会签稿（学生+教师）</td></tr><tr><td class="c">④ 实施</td><td>巡视，守"不改既定阈值"这条线</td><td>配质量门（抽检比例/一致率阈值/返工规则）→试运行 2 周（历史批次模拟）→按实测偏差出修正建议→周报</td><td class="c">14</td><td>门限配置记录+试运行数据+修正建议+周报</td></tr><tr><td class="c">⑤ 检查</td><td>抽查 20%，核门限配置与既定规则逐条一致</td><td>自检配置一致率；互检排产人天加总与试运行偏差计算</td><td class="c">4</td><td>检查表+一致率核对表</td></tr><tr><td class="c">⑥ 评价</td><td>按 Rubric 打分，讲评"用建议代替执行"的边界</td><td>自评互评、写改进条、提交会签版试运行报告</td><td class="c">5</td><td>评分表+试运行报告</td></tr><tr><td class="c"><b>合计</b></td><td colspan="2">六步加平 36＝情境学时 ✅；实施 实施 14h 占 38.9%（&lt;50%）</td><td class="c"><b>36</b></td><td>—</td></tr></tbody></table></div><p class="small" style="color:var(--ink-3)">原子：A23、A24、A25、A26（本课首次教学）。</p><h3>教学目标（PGSD-KSA 分层口径）</h3><div class="tablewrap"><table><thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:150px">达标线</th></tr></thead><tbody><tr><td class="c">P 专业能力</td><td>能盘点四段能力缺口、测算人天与节奏；能把既定质量门配置到平台并试运行报偏差</td><td>LF4-Q3-A23/A24/A25</td><td>缺口识别＋门限配置准确</td></tr><tr><td class="c">G 方法能力</td><td>人天测算可加总、偏差归因有方法；修正建议指向流程</td><td>LF4-Q3-A26</td><td>排产可加总＋偏差归因</td></tr><tr><td class="c">S 社会能力</td><td>会签齐全、越权不承诺（不定标准/不承诺交期价格）、试运行不改阈值</td><td>LF4-Q3-A26</td><td>会签＋零越权</td></tr><tr><td class="c">D 发展能力</td><td>修正建议可被采纳，说出对质量门体系的改进</td><td>LF4-Q3-A26</td><td>≥1 条被采纳建议</td></tr></tbody></table></div></section><section id="grid"><h2><span class="num">03</span>6×4 网格教学活动表</h2><p>行＝六步，列＝四层。每格写"这一层在这一步做什么、教师给什么支持"。四层红线要求完全相同。</p><div class="tablewrap"><table class="grid-table"><thead><tr><th>六步</th><th>A 领跑型（20%）</th><th>B 主力型（50%）</th><th>C 跟进型（20%）</th><th>D 兜底型（10%）</th></tr></thead><tbody><tr><td>① 资讯<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>独立盘点并预判最紧约束（人/机/期）</td><td>按引导文盘点四段缺口、列 3 项最紧约束</td><td>用填空式差距表逐段勾缺口</td><td>教师带读"架构已定、只做执行"一条</td></tr><tr><td>② 计划<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>自定排产节奏并预估风险，做"降配版"预案</td><td>按模板测算各段人天、写观察指标与周报框架</td><td>从给定 2 套排产模板中选 1 套并写理由</td><td>用"排产卡片"贴出四段人天</td></tr><tr><td>③ 决策<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>讲两套排产取舍与风险，答质疑后会签</td><td>组内讲标准版/降配版、答需求方质疑、会签</td><td>教师逐组审并会签；取舍给 2 选项</td><td>教师一对一确认先保质检比例还是先保交期</td></tr><tr><td>④ 实施<br><span style="font-weight:400;color:#6b7c93">14 学时</span></td><td>独立配质量门+试运行+报偏差，指导 C/D 层</td><td>按手册配质量门、试运行 2 周、报偏差、出周报</td><td>在 B 层帮扶下配质量门，偏差计算由 B 层复核</td><td>在陪同下做记录与门限核对，不独立改阈值</td></tr><tr><td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td><td>交叉复核门限一致性并签字</td><td>自检清单逐项勾、互检排产加总与偏差计算</td><td>用打勾式检查卡逐项过</td><td>教师带着做 3 项核心检查并复述</td></tr><tr><td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>自评+互评+讲 1 条修正建议，交会签版报告</td><td>自评互评、写改进条、交会签版报告</td><td>教师点评为主，复述"用建议代替执行"的边界</td><td>口头复述"今天学了什么+一条红线"</td></tr></tbody></table></div></section><section id="time"><h2><span class="num">04</span>36 学时时间分配</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td class="c">5 学时</td><td>发需求单+架构说明+成本质量模型+门限手册；盘点四段缺口</td><td>能力盘点表+差距表</td></tr><tr><td class="c">② 计划</td><td class="c">4 学时</td><td>排产模板；人天可加总；试运行观察指标与周报框架</td><td>排产表</td></tr><tr><td class="c">③ 决策</td><td class="c">4 学时</td><td>压交期、要两套（标准/降配）；答质疑；会签</td><td>会签稿</td></tr><tr><td class="c">④ 实施</td><td class="c">14 学时</td><td>配质量门→试运行 2 周→报偏差→修正建议→周报</td><td>门限配置+试运行数据+修正建议+周报</td></tr><tr><td class="c">⑤ 检查</td><td class="c">4 学时</td><td>抽查 20%；核门限配置与既定规则逐条一致</td><td>检查表+一致率核对表</td></tr><tr><td class="c">⑥ 评价</td><td class="c">5 学时</td><td>Rubric 打分；讲评"用建议代替执行"；交会签版报告</td><td>评分表+试运行报告</td></tr><tr><td class="c"><b>合计</b></td><td class="c"><b>36 学时</b></td><td colspan="2">5+4+4+14+4+5 = 36</td></tr></tbody></table></div><div class="card ok"><span class="label">时间弹性方案</span><p style="margin:4px 0;">可压⑥评价 1h；<b>④实施中的试运行与⑤检查不得压</b>。试运行期间不改既定阈值；越权承诺交期/价格即红线；排产人天必须可加总。</p></div></section><section id="order"><h2><span class="num">05</span>任务工单（学生版·八栏）</h2><div class="order"><div class="row"><div class="k">1 任务名称与编号</div><div class="v">新业务线排产与质量门配置 · 编号 LF4-Q3-A23/A24/A25/A26｜工单号 T-DP-2027-0122</div></div><div class="row"><div class="k">2 情境描述</div><div class="v">新业务线（新模态+量级翻倍+交期 6 周），架构已定（自建 60%+预标注人审 40%）。本人负责盘点缺口、测算人天、配置既定质量门、试运行 2 周报偏差。执行级：不定标准、不带教考核。</div></div><div class="row"><div class="k">3 交付要求</div><div class="v"><ol><li>B-10 能力盘点与差距表</li><li>B-11 排产表（人天可加总）</li><li>B-12 质量门配置记录</li><li>B-13 试运行报告与修正建议</li><li>B-14 质量周报</li></ol><p style="margin:6px 0 0">合格标准：缺口识别准确；排产可加总；门限配置与既定规则逐条一致；偏差有归因。</p></div></div><div class="row"><div class="k">4 已知条件</div><div class="v">需求单、既有架构说明、成本-质量模型、平台门限配置手册、历史批次数据（教学样例）。</div></div><div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v"><ol><li>擅自修改已定质量门阈值 → 本情境 0 分＋重做。</li><li>排产人天无法加总或偏差 &gt;30% 且无说明 → 退回重做。</li><li>试运行数据编造或挑选有利批次 → 课程 0 分。</li><li>越权对需求方承诺交期或价格 → 停止该环节＋记录。</li><li>使用未脱敏真实业务数据做试运行 → 本情境 0 分。</li></ol></div></div><div class="row"><div class="k">6 工作过程记录</div><div class="v"><ol><li>资讯：四段能力缺口分别是什么；最紧约束……</li><li>计划：各段人天测算；试运行观察指标……</li><li>决策：标准版 vs 降配版取舍；会签意见……</li><li>实施：门限配置；试运行 2 周偏差；修正建议……</li><li>检查：门限配置与既定规则一致吗；排产能加总吗……</li><li>评价：修正建议是什么；越权边界守住了吗……</li></ol></div></div><div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全勾并签字后方可交会签版报告。</div></div><div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 会签：通过/退回 ｜ 签字：学生 ______ 复核人 ______ 教师 ______</div></div></div></section><section id="guide"><h2><span class="num">06</span>引导文六问</h2><p>学生自己找答案，教师只回答"往哪找"，不直接给结论。</p><ol class="q6"><li><b>资讯</b>：采集—标注—质检—训练四段的能力缺口分别是什么？人/机/期哪一项最紧？</li><li><b>计划</b>：各段人天怎么测？加起来等于总人天吗？试运行观察哪些指标？</li><li><b>决策</b>：需求方压交期，你的"降配版"和"标准版"差在哪？代价是什么？</li><li><b>实施</b>：质量门（抽检比例/一致率阈值/返工规则）配得和既定规则一致吗？试运行偏差多少、归因是什么？</li><li><b>检查</b>：门限配置逐条对了吗？排产人天加总对吗？偏差计算对吗？</li><li><b>评价</b>：你的修正建议能不能被采纳？"用建议代替执行"这条边界你守住了吗？</li></ol></section><section id="check"><h2><span class="num">07</span>检查表（8 项）</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead><tbody><tr><td class="c">1</td><td>四段盘点</td><td>采集/标注/质检/训练四段缺口盘点齐全</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">2</td><td>最紧约束</td><td>人/机/期 3 项最紧约束列出</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">3</td><td>排产加总</td><td>各段人天可加总到总人天</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">4</td><td>门限一致</td><td>质量门配置与既定规则逐条一致</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">5</td><td>不改阈值</td><td>试运行期间未改动已定阈值</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">6</td><td>偏差归因</td><td>试运行偏差有数据、有归因</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">7</td><td>越权边界</td><td>未承诺交期/价格、未擅定标准</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">8</td><td>会签齐全</td><td>会签稿与试运行报告签字齐全</td><td class="c">□合格 □不合格</td></tr></tbody></table></div></section><section id="rubric"><h2><span class="num">08</span>Rubric 评分表</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead><tbody><tr><td class="c">专业能力</td><td class="c">40%</td><td>缺口识别准确、排产可加总、门限配置零偏差、修正建议可采纳</td><td>缺口识别、排产加总、门限一致（达标）</td><td>门限部分不一致，整改后复验</td><td>擅改阈值或编造试运行数据</td><td class="c"></td></tr><tr><td class="c">方法能力</td><td class="c">25%</td><td>人天测算可复算、偏差归因有方法、修正建议指向流程</td><td>人天加总、偏差有归因</td><td>测算依据缺失，需提示才补</td><td>照抄模板无测算</td><td class="c"></td></tr><tr><td class="c">社会能力</td><td class="c">20%</td><td>会签齐全、越权不承诺、试运行不改阈值、主动指出风险</td><td>会签齐全、边界守住</td><td>需提醒才守边界</td><td>越权承诺或擅改阈值</td><td class="c"></td></tr><tr><td class="c">发展能力</td><td class="c">15%</td><td>修正建议被采纳并说明对质量门体系的改进</td><td>改进项具体可执行</td><td>改进项笼统</td><td>无建议或抄袭</td><td class="c"></td></tr><tr><td class="c"><b>合计</b></td><td class="c">100%</td><td colspan="4">总分 = 四维加权；<b>情境达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td><td class="c"></td></tr></tbody></table></div></section><section id="err"><h2><span class="num">09</span>典型错误案例卡</h2><details open><summary>ERR-LF4-007：交期紧压质检比例——抽检降到 2% 交付爆雷</summary><div class="body"><p><b>现象</b>：某组被需求方催单后把抽检比例从 10% 压到 2%，试运行"看起来快了"，交付后漏检集中爆发。</p><p><b>错误做法</b>：拿质检比例换交期，觉得"先交上去再说"。</p><p><b>真实原因</b>：交期紧不压质检比例是质量门的底线；压了＝质量门失守。</p><p><b>纠正</b>：纠正：质量门配置锁死既定比例；检查表第 4/5 项；讲评 ERR-LF4-007。</p><p><b>关联原子</b>：LF4-Q3-A25（质量门配置）</p></div></details><details open><summary>ERR-LF4-008：擅自改阈值——把一致率阈值从 0.85 调到 0.80</summary><div class="body"><p><b>现象</b>：某组觉得"0.85 太难达标"，试运行中把一致率阈值私改为 0.80，被版本比对发现。</p><p><b>错误做法</b>：把"提高达标率"凌驾于"执行既定规则"之上。</p><p><b>真实原因</b>：阈值定稿权在部门负责人，执行层只能照配、报偏差、提建议。</p><p><b>纠正</b>：纠正：门限配置与既定规则逐条比对；检查表第 4 项；红线①。</p><p><b>关联原子</b>：LF4-Q3-A26（执行边界）</p></div></details><details open><summary>ERR-LF4-009：越权承诺交期——"这个月底一定交"</summary><div class="body"><p><b>现象</b>：某组在需求方追问下擅自承诺交期，部门排产无法兑现，承诺落空。</p><p><b>错误做法</b>：分不清"执行层"与"决策层"的边界。</p><p><b>真实原因</b>：交期/价格承诺是越权行为，执行层只能报测算与建议。</p><p><b>纠正</b>：纠正：会签稿固定"只报测算不承诺"；检查表第 7 项；红线④。</p><p><b>关联原子</b>：LF4-Q3-A23（能力盘点与测算）</p></div></details></section><section id="safe"><h2><span class="num">10</span>安全提示卡（D 类红线·5 条）</h2><div class="card warn"><span class="label">红线即一票否决，四层要求完全相同</span><div class="tablewrap" style="margin:10px 0 0;background:#fff"><table><thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead><tbody><tr><td class="c">1</td><td>擅自修改已定质量门阈值</td><td>本情境 0 分＋重做</td><td>版本比对</td></tr><tr><td class="c">2</td><td>排产人天无法加总或偏差>30%且无说明</td><td>退回重做</td><td>加总校验</td></tr><tr><td class="c">3</td><td>试运行数据编造或挑选有利批次</td><td>课程 0 分</td><td>数据抽检</td></tr><tr><td class="c">4</td><td>越权对需求方承诺交期或价格</td><td>停止该环节＋记录</td><td>会签稿核</td></tr><tr><td class="c">5</td><td>使用未脱敏真实业务数据做试运行</td><td>本情境 0 分</td><td>数据来源登记</td></tr></tbody></table></div></div><p style="color:#6b7c93;font-size:13px;margin-top:8px">Q3 开课前签《执行边界承诺》；质量门阈值以既定规则为准，试运行期间锁定不改；越权承诺交期/价格即红线；试运行只用脱敏教学数据。</p></section><section id="notes"><h2><span class="num">11</span>教师备课备注</h2><details open><summary>高频错判 Top3 与处置</summary><div class="body"><ol><li><b>交期紧压质检比例</b>（最高发）。纠法——"交期紧不压质检比例"写黑板；ERR-LF4-007。</li><li><b>擅自改阈值</b>。纠法——门限配置与既定规则逐条比对；ERR-LF4-008。</li><li><b>越权承诺交期</b>。纠法——会签稿固定"只报测算不承诺"；ERR-LF4-009。</li></ol></div></details><details open><summary>答疑口径：只指条文，不判结论</summary><div class="body"><ul><li>问"能不能压抽检"——答"看既定门限规则第几条"。</li><li>问"阈值能不能改"——答"定稿权在谁、你是什么角色"。</li><li>问"交期能不能答应"——答"你的测算和会签稿怎么写的"。</li></ul></div></details><details open><summary>分层调整建议</summary><div class="body"><ul><li><b>A 层加做</b>：补 1 条质量门修正建议；担任"排产加总第一复核人"。</li><li><b>B 层标准</b>：盘点+测算+配门限+试运行+报偏差全流程独立。</li><li><b>C 层减量</b>：配门限独立，排产测算在 B 层帮扶下做。</li><li><b>D 层减动作不减要求</b>：只做记录与门限核对，不独立改配置；红线五条相同。</li></ul></div></details><details open><summary>设备与耗材准备</summary><div class="body"><ul><li>数据生产平台门限配置账号按组分配；历史批次教学数据已脱敏。</li><li>需求单、架构说明、成本-质量模型、门限配置手册打印件各 32 份。</li><li>排产模板、偏差分析模板、质量周报模板各 1 套。</li></ul></div></details><details open><summary>企业介入与衔接</summary><div class="body"><p>企业数据生产项目主管远程参与③决策步压交期演练与⑥评价步评审各 2h。Q3 沉淀的修正建议是质量门 V2 修订的输入，也是本专业"数据生产项目主管"目标岗的能力落点。</p></div></details></section>
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属课程标准 112h/7crh，情境 LF4-Q3 共 36h（六步 5+4+4+14+4+5），本包为情境级授课包，六步学时为情境总账；若拆为单次课按课标⑦.4 弹性条款执行。</p>
+      <p>② 能力原子编号按课标④.2 绑定；本包不训练、不考核超出情境边界的能力（如定级裁定权、架构定稿权、越权承诺）。</p>
+      <p>③ 资产名称、工单号、验收线数值均为教学虚构载体，不对应任何真实企业；模块与仿真内数据全部标注"教学样例"。</p>
+      <p>④ 本页交互仅用锚点与 CSS（:target、details），无脚本、无外部依赖，可离线打开与打印。</p>
+    </section>
+  </main>
+</div>
+<footer>
+  LF4 AI 数据服务部署与运维 · 教师授课包 V1.0 ｜ 承载 LF4-Q3 承接新业务线排产并配置质量门 ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+</body>
+</html>

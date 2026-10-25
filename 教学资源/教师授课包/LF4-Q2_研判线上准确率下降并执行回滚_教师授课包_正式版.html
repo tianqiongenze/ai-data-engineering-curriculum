@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研判线上准确率下降并执行回滚 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">LF4 AI 数据服务部署与运维</span>
+  <span class="meta">教师授课包 · V1.0 · 蓝色GitBook风 · 承载 LF4-Q2 研判线上准确率下降并执行回滚 · 生成于 2026-10-25 · D类红线 5 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">授课包信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">6×4 网格教学活动表</a></li>
+      <li><a href="#time">40 学时时间分配</a></li>
+      <li><a href="#order">任务工单（学生版·八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub"><li><a href="#assume">口径与假设说明</a></li></ol>
+  </nav>
+  <main>
+    <h1>研判线上准确率下降并执行回滚 · 教师授课包</h1>
+    <div class="subtitle">LF4 AI 数据服务部署与运维 ｜ 学习情境 LF4-Q2 ｜ 40h / 2.5cr · S5 · L3 ｜ 对应任务 4.2（线上漂移监测与模型回滚）</div>
+    <section id="info"><h2><span class="num">01</span>授课包信息</h2><div class="kv"><div><b>课程</b>AI 数据服务部署与运维（LF4，112h/7cr）</div><div><b>情境</b>LF4-Q2 研判线上准确率下降并执行回滚（40h/2.5cr·S5·L3）</div><div><b>对应任务</b>Table1 任务 4.2</div><div><b>绑定原子</b>LF4-Q2-A21 / A22（首次教学）、A30（回滚授权，本课巩固）</div><div><b>核心决策点</b>漂移了先回滚还是先排查（先恢复后溯因）</div><div><b>授课对象</b>2026 级 32 人 · 值班教练制</div><div><b>场所</b>部署运维实训室（监控看板＋沙箱）</div><div><b>本情境交付</b>B-06 漂移分析表、B-07 回滚记录、B-08 事件复盘报告、B-09 补标需求单</div></div><div class="card"><span class="label">本情境的能力落点</span><p style="margin:4px 0;">学生从"会看告警"走到"判得准、处置对、复得清"：能判漂移类型（PSI/KL、缺失率、分布）、定处置（观察/补标重训/灰度切回/全量回滚）、走二级审批回滚并复盘（A21/A22/A30）。</p></div></section><section id="scene"><h2><span class="num">02</span>情境描述与教学目标</h2><p><b>情境描述</b>（课标原文）：服务上线 3 周，看板告警：准确率下降、输入分布偏移、时延上升。业务方仅反馈"判得不准"，无真值标签，人工抽检滞后 2 天。需判漂移类型、定处置（观察／补标重训／灰度切回／全量回滚），执行后出根因复盘与补标需求。约束：先恢复业务再溯因；回滚须二级审批；时限按企业预案（迁移参考值 15min，须企业确认）。</p><p><b>已知条件</b>：告警工单、监控截图、训练基线分布、应急预案、Q1 交付的基线实测值。</p><p><b>交付物</b>（课标原文）：B-06 漂移分析表、B-07 回滚记录（含授权签字与恢复用时）、B-08 事件复盘报告、B-09 补标需求单。</p><p><b>评价要点</b>（课标原文）：专业维看漂移类型判定与代理指标合理性；方法维看决策树使用与代价评估；社会维看二级审批与交接班记录；发展维看是否把事件转成可复用预案修订。</p><h3>六步总表（课标原文·教师／学生活动与学时）</h3><div class="tablewrap"><table><thead><tr><th style="width:80px">步骤</th><th>教师活动</th><th>学生活动</th><th class="c" style="width:56px">学时</th><th style="width:190px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td>发告警工单、监控截图、训练基线分布、应急预案</td><td>读看板与预案，区分"现象"与"结论"，划出 4 类代理指标；标出"无真值"缺口</td><td class="c">5</td><td>告警工单信息栏</td></tr><tr><td class="c">② 计划</td><td>给漂移分析模板与决策树</td><td>写比对方案（PSI/KL、缺失率、长度与亮度分布）、抽检方案、回滚与切流步骤、恢复时限倒排</td><td class="c">5</td><td>研判与处置计划表</td></tr><tr><td class="c">③ 决策</td><td>故意不给结论，追问"凭什么说这是漂移不是退化""判断错了代价多大"；回滚授权二级签批</td><td>给 2 套处置方案与取舍，写"触发回滚的三条硬条件"，答质疑后签批</td><td class="c">6</td><td>决策记录（二级签批）</td></tr><tr><td class="c">④ 实施</td><td>值班教练，只提示"先保业务"；监督切流双人操作</td><td>比对线上与基线出漂移分析表→代理指标（置信度分布+人工抽检 100 条）→灰度切回→必要时全量回滚→记录恢复用时→根因定位→复盘与补标单</td><td class="c">16</td><td>漂移分析表+回滚记录+复盘报告+补标单</td></tr><tr><td class="c">⑤ 检查</td><td>抽查 20%，核"恢复用时"是否按预案口径计</td><td>复核切流后指标回升；核对回滚后版本号与备份一致；互检复盘证据链</td><td class="c">5</td><td>检查表+版本核对表</td></tr><tr><td class="c">⑥ 评价</td><td>组织事件复盘会（时间线+决策点+代价），按 Rubric 打分</td><td>陈述时间线与每个决策点依据，自评互评，写改进条与案例卡</td><td class="c">3</td><td>评分表+复盘记录+案例卡</td></tr><tr><td class="c"><b>合计</b></td><td colspan="2">六步加平 40＝情境学时 ✅；实施 实施 16h 占 40.0%（≤50%）</td><td class="c"><b>40</b></td><td>—</td></tr></tbody></table></div><p class="small" style="color:var(--ink-3)">原子：A21、A22（首次教学）；A30（回滚授权，本课巩固）。</p><h3>教学目标（PGSD-KSA 分层口径）</h3><div class="tablewrap"><table><thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:150px">达标线</th></tr></thead><tbody><tr><td class="c">P 专业能力</td><td>能判漂移类型并选对处置动作（观察/补标重训/灰度切回/全量回滚），走二级审批并记录恢复用时</td><td>LF4-Q2-A21/A22</td><td>漂移类型判定＋处置正确</td></tr><tr><td class="c">G 方法能力</td><td>漂移判定用代理指标有依据，处置选择走决策树并评估代价</td><td>LF4-Q2-A21</td><td>漂移分析表＋代价评估</td></tr><tr><td class="c">S 社会能力</td><td>先恢复后溯因、回滚二级审批、交接班记录齐全</td><td>LF4-Q2-A30</td><td>二级审批＋交接记录</td></tr><tr><td class="c">D 发展能力</td><td>把事件转成可复用预案修订，说出对监控体系的改进</td><td>LF4-Q2-A22</td><td>≥1 条预案修订</td></tr></tbody></table></div></section><section id="grid"><h2><span class="num">03</span>6×4 网格教学活动表</h2><p>行＝六步，列＝四层。每格写"这一层在这一步做什么、教师给什么支持"。四层红线要求完全相同。</p><div class="tablewrap"><table class="grid-table"><thead><tr><th>六步</th><th>A 领跑型（20%）</th><th>B 主力型（50%）</th><th>C 跟进型（20%）</th><th>D 兜底型（10%）</th></tr></thead><tbody><tr><td>① 资讯<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>独立读看板，预判"无真值"对判定的影响</td><td>按引导文读看板、划 4 类代理指标、标"无真值"缺口</td><td>用填空式信息栏逐项勾代理指标</td><td>教师带读"现象≠结论"一条</td></tr><tr><td>② 计划<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>自定比对方案与恢复时限倒排，做"判断错了代价"预案</td><td>按模板写比对方案、抽检方案、回滚步骤、时限倒排</td><td>从给定 2 套处置方案中选 1 套并写理由</td><td>用"决策树卡片"贴出四类处置</td></tr><tr><td>③ 决策<br><span style="font-weight:400;color:#6b7c93">6 学时</span></td><td>讲 2 套方案取舍与代价，答质疑后签批</td><td>组内讲方案、写"触发回滚三条硬条件"、答质疑</td><td>教师逐组审并二级签批；取舍给 2 选项</td><td>教师一对一确认先保业务还是先排查</td></tr><tr><td>④ 实施<br><span style="font-weight:400;color:#6b7c93">16 学时</span></td><td>独立完成比对→代理指标→切回/回滚→复盘，指导 C/D 层</td><td>按方案比对、抽检、灰度切回、必要时回滚、复盘</td><td>在 B 层帮扶下完成比对分析，切流由 B 层操作</td><td>在陪同下做监控记录与交接，不独立切流</td></tr><tr><td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td><td>交叉复核复盘证据链并签字</td><td>自检清单逐项勾、互检版本号与备份一致</td><td>用打勾式检查卡逐项过</td><td>教师带着做 3 项核心检查并复述</td></tr><tr><td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">3 学时</span></td><td>复盘会陈述时间线与决策点，提交案例卡</td><td>复盘陈述、自评互评、写改进条</td><td>教师点评为主，复述"本次决策点对错在哪"</td><td>口头复述"今天学了什么+一条红线"</td></tr></tbody></table></div></section><section id="time"><h2><span class="num">04</span>40 学时时间分配</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:110px">步骤</th><th class="c" style="width:80px">时长</th><th>关键动作</th><th style="width:230px">产出</th></tr></thead><tbody><tr><td class="c">① 资讯</td><td class="c">5 学时</td><td>发告警工单+监控截图+基线分布+应急预案；区分现象与结论</td><td>告警工单信息栏</td></tr><tr><td class="c">② 计划</td><td class="c">5 学时</td><td>比对方案+抽检方案+回滚步骤+恢复时限倒排</td><td>研判与处置计划表</td></tr><tr><td class="c">③ 决策</td><td class="c">6 学时</td><td>追问归因；回滚授权二级签批；写触发回滚三条硬条件</td><td>决策记录</td></tr><tr><td class="c">④ 实施</td><td class="c">16 学时</td><td>比对出漂移分析表→代理指标→灰度切回→必要时全量回滚→复盘</td><td>漂移分析表+回滚记录+复盘+补标单</td></tr><tr><td class="c">⑤ 检查</td><td class="c">5 学时</td><td>抽查 20%；核恢复用时口径；核对版本号与备份</td><td>检查表+版本核对表</td></tr><tr><td class="c">⑥ 评价</td><td class="c">3 学时</td><td>复盘会（时间线+决策点+代价）；Rubric 打分</td><td>评分表+复盘记录+案例卡</td></tr><tr><td class="c"><b>合计</b></td><td class="c"><b>40 学时</b></td><td colspan="2">5+5+6+16+5+3 = 40</td></tr></tbody></table></div><div class="card ok"><span class="label">时间弹性方案</span><p style="margin:4px 0;">可压⑥评价 1h；<b>④实施中的切流双人与⑤检查不得压</b>。回滚一律走二级审批，擅自操作即红线；恢复时限倒排先算清再动手。</p></div></section><section id="order"><h2><span class="num">05</span>任务工单（学生版·八栏）</h2><div class="order"><div class="row"><div class="k">1 任务名称与编号</div><div class="v">线上准确率下降研判与回滚 · 编号 LF4-Q2-A21/A22/A30｜工单号 T-DP-2027-0115</div></div><div class="row"><div class="k">2 情境描述</div><div class="v">服务上线 3 周，准确率下降、输入分布偏移、时延上升；业务方仅反馈"判得不准"，无真值标签，人工抽检滞后 2 天。需判漂移类型、定处置、执行回滚并复盘。</div></div><div class="row"><div class="k">3 交付要求</div><div class="v"><ol><li>B-06 漂移分析表（PSI/KL、缺失率、分布比对）</li><li>B-07 回滚记录（授权签字＋恢复用时）</li><li>B-08 事件复盘报告（时间线＋决策点＋代价）</li><li>B-09 补标需求单</li></ol><p style="margin:6px 0 0">合格标准：漂移类型判定有依据；处置正确；二级审批齐全；恢复用时按预案口径计。</p></div></div><div class="row"><div class="k">4 已知条件</div><div class="v">告警工单、监控截图、训练基线分布、应急预案、Q1 基线实测值、监控看板与沙箱账号。</div></div><div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v"><ol><li>无审批即执行回滚或切流 → 本情境 0 分＋重做。</li><li>篡改看板数据或隐瞒恢复用时 → 课程 0 分＋重修。</li><li>把线上真实业务数据导出到个人设备 → 本情境 0 分＋上报。</li><li>未留回滚前版本号与备份 → 重做。</li><li>无真值时直接宣称"模型退化"而不做代理指标验证 → 研判结论不计分。</li></ol></div></div><div class="row"><div class="k">6 工作过程记录</div><div class="v"><ol><li>资讯：告警的"现象"与"结论"分别是什么；4 类代理指标……</li><li>计划：比对方案；恢复时限倒排；回滚三步……</li><li>决策：触发回滚的三条硬条件；二级审批理由……</li><li>实施：漂移分析结论；代理指标；切回/回滚动作；恢复用时……</li><li>检查：切流后指标回升；版本号与备份一致吗……</li><li>评价：时间线；每个决策点依据；改进项……</li></ol></div></div><div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全勾并签字后方可交复盘会。</div></div><div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 复盘结论：通过/补答 ｜ 签字：学生 ______ 评审人 ______</div></div></div></section><section id="guide"><h2><span class="num">06</span>引导文六问</h2><p>学生自己找答案，教师只回答"往哪找"，不直接给结论。</p><ol class="q6"><li><b>资讯</b>：看板告警是"现象"还是"结论"？"无真值标签"这个缺口对你判漂移意味着什么？</li><li><b>计划</b>：PSI/KL、缺失率、长度与亮度分布，你各用来判什么？恢复时限怎么倒排？</li><li><b>决策</b>："凭什么说这是漂移不是模型退化？""判断错了代价多大？"——你的证据和答案？</li><li><b>实施</b>：代理指标（置信度分布＋人工抽检 100 条）得出了什么？先恢复业务还是先排查？恢复用时多少？</li><li><b>检查</b>：切流后指标回升了吗？回滚后版本号和备份一致吗？复盘证据链完整吗？</li><li><b>评价</b>：这次事件最该沉淀的一条预案修订是什么？</li></ol></section><section id="check"><h2><span class="num">07</span>检查表（8 项）</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead><tbody><tr><td class="c">1</td><td>现象/结论区分</td><td>告警按"现象"与"结论"分列，不混写</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">2</td><td>代理指标</td><td>无真值时用代理指标验证，未直接宣称退化</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">3</td><td>漂移类型</td><td>漂移类型判定有依据（PSI/KL/分布比对）</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">4</td><td>处置正确</td><td>处置动作与漂移类型匹配，走决策树</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">5</td><td>二级审批</td><td>回滚/切流二级审批齐全，无擅自操作</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">6</td><td>恢复用时</td><td>恢复用时按预案口径计，无隐瞒</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">7</td><td>版本核对</td><td>回滚后版本号与备份一致</td><td class="c">□合格 □不合格</td></tr><tr><td class="c">8</td><td>复盘证据链</td><td>时间线+决策点+代价完整，可追溯</td><td class="c">□合格 □不合格</td></tr></tbody></table></div></section><section id="rubric"><h2><span class="num">08</span>Rubric 评分表</h2><div class="tablewrap"><table><thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead><tbody><tr><td class="c">专业能力</td><td class="c">40%</td><td>漂移类型判定准确、处置正确、恢复用时达标且可追溯</td><td>漂移判定有依据、处置合规（达标）</td><td>判定部分无依据，整改后复验</td><td>擅自回滚，或隐瞒恢复用时</td><td class="c"></td></tr><tr><td class="c">方法能力</td><td class="c">25%</td><td>代理指标选择有依据、决策树使用正确、代价评估可复算</td><td>判定有依据，代价评估记录齐全</td><td>依据缺失，需提示才补</td><td>照抄模板无依据</td><td class="c"></td></tr><tr><td class="c">社会能力</td><td class="c">20%</td><td>先恢复后溯因、二级审批齐全、交接班记录完整</td><td>审批齐全、交接记录</td><td>需提醒才审批</td><td>跳过审批或隐瞒</td><td class="c"></td></tr><tr><td class="c">发展能力</td><td class="c">15%</td><td>事件转成被采纳的预案修订并说明对监控的改进</td><td>改进项具体可执行</td><td>改进项笼统</td><td>无预案修订或抄袭</td><td class="c"></td></tr><tr><td class="c"><b>合计</b></td><td class="c">100%</td><td colspan="4">总分 = 四维加权；<b>情境达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td><td class="c"></td></tr></tbody></table></div></section><section id="err"><h2><span class="num">09</span>典型错误案例卡</h2><details open><summary>ERR-LF4-004：擅自回滚跳过审批——事故升级为合规问题</summary><div class="body"><p><b>现象</b>：某组看板告警后未走二级审批直接全量回滚，恢复虽快但操作不可追溯，被认定违规。</p><p><b>错误做法</b>：觉得"先回滚总是对的"，跳过审批流程。</p><p><b>真实原因</b>：回滚是变更操作，必须二级审批留痕；擅自操作＝红线。</p><p><b>纠正</b>：纠正：回滚一律走二级审批；检查表第 5 项；讲评"快≠对"。</p><p><b>关联原子</b>：LF4-Q2-A30（回滚授权）</p></div></details><details open><summary>ERR-LF4-005：无真值直接宣称"模型退化"</summary><div class="body"><p><b>现象</b>：某组只看准确率下降就下结论"模型退化"，未做代理指标验证，补标方向全错。</p><p><b>错误做法</b>：把准确率下降直接归因模型，跳过代理指标。</p><p><b>真实原因</b>：无真值时"模型退化"只是假设，须用代理指标验证。</p><p><b>纠正</b>：纠正：代理指标（置信度分布+人工抽检）先行；检查表第 2 项。</p><p><b>关联原子</b>：LF4-Q2-A21（漂移判定）</p></div></details><details open><summary>ERR-LF4-006：先排查后回滚——业务长时间受损</summary><div class="body"><p><b>现象</b>：某组告警后先花 2h 排查根因再回滚，业务持续受损超时限。</p><p><b>错误做法</b>：把"先恢复后溯因"的纪律忘了，先求根因。</p><p><b>真实原因</b>：先保业务：先回滚恢复，再离线溯因复盘。</p><p><b>纠正</b>：纠正：恢复时限倒排先行；检查表第 6 项；讲评"先恢复后溯因"。</p><p><b>关联原子</b>：LF4-Q2-A22（回滚与复盘）</p></div></details></section><section id="safe"><h2><span class="num">10</span>安全提示卡（D 类红线·5 条）</h2><div class="card warn"><span class="label">红线即一票否决，四层要求完全相同</span><div class="tablewrap" style="margin:10px 0 0;background:#fff"><table><thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:130px">检查人/方式</th></tr></thead><tbody><tr><td class="c">1</td><td>无审批即执行回滚或切流</td><td>本情境 0 分＋重做</td><td>审批记录</td></tr><tr><td class="c">2</td><td>篡改看板数据或隐瞒恢复用时</td><td>课程 0 分＋重修</td><td>日志比对</td></tr><tr><td class="c">3</td><td>线上真实业务数据导出个人设备</td><td>本情境 0 分＋上报</td><td>出口日志</td></tr><tr><td class="c">4</td><td>未留回滚前版本号与备份</td><td>重做</td><td>版本核对</td></tr><tr><td class="c">5</td><td>无真值直接宣称"模型退化"</td><td>研判结论不计分</td><td>代理指标核验</td></tr></tbody></table></div></div><p style="color:#6b7c93;font-size:13px;margin-top:8px">Q2 开课前签《值班与数据承诺》；回滚/切流一律双人操作＋二级审批；线上真实数据不出实训室；复盘会全程留痕。</p></section><section id="notes"><h2><span class="num">11</span>教师备课备注</h2><details open><summary>高频错判 Top3 与处置</summary><div class="body"><ol><li><b>先排查后回滚</b>（最高发）。纠法——"先恢复后溯因"写在黑板；ERR-LF4-006。</li><li><b>无真值直接归因模型</b>。纠法——代理指标先行；ERR-LF4-005。</li><li><b>擅自回滚</b>。纠法——二级审批流程图贴在工位；ERR-LF4-004。</li></ol></div></details><details open><summary>答疑口径：只给"往哪找"，不给结论</summary><div class="body"><ul><li>问"这是不是漂移"——答"你的代理指标和比对结果是什么"。</li><li>问"要不要回滚"——答"触发回滚的三条硬条件满足了没有、审批走了没"。</li><li>问"恢复用时怎么算"——答"预案口径是什么、你按什么计的"。</li></ul></div></details><details open><summary>分层调整建议</summary><div class="body"><ul><li><b>A 层加做</b>：补 1 条监控告警阈值建议；担任"复盘第一陈述人"。</li><li><b>B 层标准</b>：比对→代理指标→切回/回滚→复盘全流程独立。</li><li><b>C 层减量</b>：比对分析独立，切流由 B 层操作。</li><li><b>D 层减动作不减要求</b>：只做监控记录与交接，不独立切流；红线五条相同。</li></ul></div></details><details open><summary>设备与耗材准备</summary><div class="body"><ul><li>监控看板与沙箱账号按组分配；告警工单、监控截图、基线分布、应急预案打印件各 32 份。</li><li>决策树图、二级审批单、恢复时限倒排表模板各 1 套。</li></ul></div></details><details open><summary>企业介入与衔接</summary><div class="body"><p>企业 MLOps 工程师远程参与③决策步二级签批与⑥评价步复盘评审各 2h。Q2 沉淀的预案修订是 Q3 质量门配置的输入之一（漂移应对写入质量门触发条件）。</p></div></details></section>
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包所属课程标准 112h/7crh，情境 LF4-Q2 共 40h（六步 5+5+6+16+5+3），本包为情境级授课包，六步学时为情境总账；若拆为单次课按课标⑦.4 弹性条款执行。</p>
+      <p>② 能力原子编号按课标④.2 绑定；本包不训练、不考核超出情境边界的能力（如定级裁定权、架构定稿权、越权承诺）。</p>
+      <p>③ 资产名称、工单号、验收线数值均为教学虚构载体，不对应任何真实企业；模块与仿真内数据全部标注"教学样例"。</p>
+      <p>④ 本页交互仅用锚点与 CSS（:target、details），无脚本、无外部依赖，可离线打开与打印。</p>
+    </section>
+  </main>
+</div>
+<footer>
+  LF4 AI 数据服务部署与运维 · 教师授课包 V1.0 ｜ 承载 LF4-Q2 研判线上准确率下降并执行回滚 ｜ 编制：贺游学 ｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF2-Q2 数据质量异常根因定位与治理 · 教师授课包 V1.0</title>
+<style>
+  :root{
+    --blue:#346ddb; --blue-dark:#20489f; --blue-soft:#eaf1fd;
+    --ink:#1f2d3d; --ink-2:#425466; --ink-3:#6b7c93;
+    --line:#e3eaf2; --bg:#ffffff; --bg-soft:#f7f9fc;
+    --warn:#c2410c; --warn-bg:#fff7ed; --ok:#0f766e; --ok-bg:#ecfdf5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- top version bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; height:54px; z-index:50;
+    background:linear-gradient(90deg,var(--blue-dark),var(--blue));
+    color:#fff; display:flex; align-items:center; gap:14px; padding:0 22px;
+    box-shadow:0 1px 0 rgba(0,0,0,.08), 0 2px 10px rgba(32,72,159,.18);
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .topbar .brand{font-weight:700; font-size:14px; letter-spacing:.5px;}
+  .topbar .meta{opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .topbar .spacer{flex:1;}
+  .topbar .tag{
+    border:1px solid rgba(255,255,255,.55); border-radius:999px;
+    padding:2px 10px; font-size:12px; white-space:nowrap;
+  }
+  /* ---------- layout ---------- */
+  .layout{display:flex; padding-top:54px; min-height:100vh;}
+  .toc{
+    position:fixed; top:54px; bottom:0; left:0; width:264px; overflow-y:auto;
+    background:var(--bg-soft); border-right:1px solid var(--line); padding:22px 0 40px;
+  }
+  .toc .toc-title{
+    font-size:11.5px; letter-spacing:1.6px; color:var(--ink-3);
+    padding:0 22px 10px; text-transform:uppercase;
+  }
+  .toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  .toc li{counter-increment:toc;}
+  .toc a{
+    display:block; padding:7px 22px 7px 22px; color:var(--ink-2);
+    text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  }
+  .toc a::before{
+    content:counter(toc) ". "; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .toc a:hover{background:var(--blue-soft); color:var(--blue-dark);}
+  .toc .sub a{padding-left:38px; font-size:12.8px; color:var(--ink-3);}
+  .toc .sub a::before{content:"— ";}
+  .toc .divider{height:1px; background:var(--line); margin:14px 22px;}
+  main{margin-left:264px; padding:38px 56px 90px; max-width:1040px;}
+  /* ---------- typography ---------- */
+  h1{font-size:27px; line-height:1.45; margin:0 0 6px; letter-spacing:.3px;}
+  .subtitle{color:var(--ink-3); font-size:13.5px; margin-bottom:26px;}
+  h2{
+    font-size:20px; margin:52px 0 14px; padding-top:10px; letter-spacing:.3px;
+    border-top:1px solid var(--line);
+  }
+  h2 .num{
+    display:inline-block; min-width:26px; color:var(--blue); font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  h3{font-size:15.5px; margin:26px 0 10px; color:var(--blue-dark);}
+  p{margin:10px 0;}
+  section:target h2{color:var(--blue);}
+  section:target h2 .num{background:var(--blue); color:#fff; border-radius:4px; padding:0 6px;}
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:13px; line-height:1.65; background:#fff;}
+  th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left;}
+  th:last-child,td:last-child{border-right:0;}
+  tr:last-child td{border-bottom:0;}
+  thead th{background:var(--bg-soft); color:var(--ink); font-weight:600; white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fcfdff;}
+  td.c,th.c{text-align:center;}
+  .grid-table{table-layout:fixed; min-width:900px;}
+  .grid-table th:first-child,.grid-table td:first-child{width:112px;}
+  .grid-table td{font-size:12.5px;}
+  .grid-table td:first-child{background:var(--bg-soft); font-weight:600; color:var(--blue-dark);}
+  /* ---------- cards ---------- */
+  .card{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    border-radius:6px; padding:14px 18px; margin:16px 0; background:#fff;
+  }
+  .card.warn{border-left-color:var(--warn); background:var(--warn-bg);}
+  .card.ok{border-left-color:var(--ok); background:var(--ok-bg);}
+  .card .label{
+    font-size:11.5px; letter-spacing:1.2px; color:var(--ink-3);
+    display:block; margin-bottom:6px; text-transform:uppercase;
+  }
+  .kv{display:grid; grid-template-columns:repeat(2,1fr); gap:0 26px; margin:6px 0;}
+  .kv div{border-bottom:1px dashed var(--line); padding:6px 0; font-size:13.5px;}
+  .kv b{color:var(--ink-3); font-weight:500; display:inline-block; min-width:74px;}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 9px; border-radius:999px;
+    background:var(--blue-soft); color:var(--blue-dark); margin-right:6px; border:1px solid #d7e4fb;
+  }
+  .pill.warn{background:var(--warn-bg); color:var(--warn); border-color:#fed7aa;}
+  .pill.ok{background:var(--ok-bg); color:var(--ok); border-color:#bbf7d0;}
+  .order{
+    border:1px solid var(--line); border-radius:6px; background:var(--bg-soft);
+    padding:0; margin:16px 0; overflow:hidden;
+  }
+  .order .row{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+  .order .row:last-child{border-bottom:0;}
+  .order .k{background:#fff; padding:11px 14px; font-weight:600; font-size:13px; color:var(--blue-dark); border-right:1px solid var(--line);}
+  .order .v{padding:11px 16px; font-size:13.3px;}
+  .order .v ol,.order .v ul{margin:4px 0; padding-left:20px;}
+  details{border:1px solid var(--line); border-radius:6px; margin:12px 0; background:#fff;}
+  details[open]{background:#fcfdff;}
+  summary{
+    cursor:pointer; padding:11px 16px; font-size:13.5px; font-weight:600;
+    color:var(--blue-dark); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"▸ "; color:var(--blue);}
+  details[open] summary::before{content:"▾ ";}
+  details .body{padding:2px 18px 16px; font-size:13.3px; border-top:1px solid var(--line);}
+  .q6{counter-reset:q;}
+  .q6 li{margin:9px 0;}
+  .q6 li b{color:var(--blue-dark);}
+  footer{margin-left:264px; padding:26px 56px 60px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:900px){
+    .toc{display:none;}
+    main,footer{margin-left:0; padding-left:20px; padding-right:20px;}
+    .kv{grid-template-columns:1fr;}
+    .order .row{grid-template-columns:1fr;}
+    .order .k{border-right:0; border-bottom:1px solid var(--line);}
+    .topbar .meta{display:none;}
+  }
+  @media print{
+    .toc,.topbar{display:none;}
+    main,footer{margin:0; max-width:none; padding:0;}
+    details{border:0;} details .body{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">LF2 数据治理与质量管控</span>
+  <span class="meta">教师授课包 · V1.0 · GitBook 风 · 承载 LF2-Q2 数据质量异常根因定位与治理（40h·L3·任务 2.2）· 生成于 2026-10-25 · D 类 3 条</span>
+  <span class="spacer"></span>
+  <span class="tag">人工智能数据工程技术 510217</span>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#info">情境信息</a></li>
+      <li><a href="#scene">情境描述与教学目标</a></li>
+      <li><a href="#grid">六步 × 四层网格表</a></li>
+      <li><a href="#time">六步学时分配（40h）</a></li>
+      <li><a href="#order">任务工单（八栏）</a></li>
+      <li><a href="#guide">引导文六问</a></li>
+      <li><a href="#check">检查表（8 项）</a></li>
+      <li><a href="#rubric">Rubric 评分表</a></li>
+      <li><a href="#err">典型错误案例卡</a></li>
+      <li><a href="#safe">安全提示卡（D 类红线）</a></li>
+      <li><a href="#notes">教师备课备注</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol class="sub">
+      <li><a href="#assume">口径与假设说明</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <h1>数据质量异常根因定位与治理 · 教师授课包</h1>
+    <div class="subtitle">LF2 数据治理与质量管控 ｜ 情境 LF2-Q2 ｜ 能力等级 L3 ｜ 40h / 2.5cr ｜ 对应任务 2.2 ｜ 六步学时 5+4+5+15+6+5＝40</div>
+
+    <!-- 1 -->
+    <section id="info">
+      <h2><span class="num">01</span>情境信息</h2>
+      <div class="kv">
+        <div><b>课程</b>LF2 数据治理与质量管控（112h/7cr，过程性 70%＋终结性 30%）</div>
+        <div><b>情境</b>LF2-Q2 数据质量异常根因定位与治理（40h/2.5cr·S3·L3）</div>
+        <div><b>对应任务</b>Table1 2.2 数据质量异常根因定位与治理</div>
+        <div><b>绑定原子</b>A09、A10（均首次教学）；A08（巩固：治理动作仍须留痕）</div>
+        <div><b>授课对象</b>2026 级 32 人 · 16 工位（2 人 1 台）</div>
+        <div><b>场所</b>监控看板＋会议室（开三方周会模拟）；测试环境只读样本库</div>
+        <div><b>六步学时</b>资讯 5 ｜ 计划 4 ｜ 决策 5 ｜ 实施 15 ｜ 检查 6 ｜ 评价 5</div>
+        <div><b>达标线</b>交付包一次性通过率 ≥80%；定位准确率 ≥80%</div>
+        <div><b>本次交付</b>T6 问题界定书、T7 分段比对表、T8 治理方案与影响评估、排故报告、规则补丁</div>
+        <div><b>考核落点</b>过程性 25%；终结性 30% 中"Q2 排故报告答辩 15%"以本情境为底稿</div>
+      </div>
+      <div class="card">
+        <span class="label">本情境的能力落点</span>
+        <p style="margin:4px 0;">学生从"会把数据洗干净"走到"洗不干净时找得到断点"：能沿采集—标注—清洗—入湖分段比对分布并定位断点，定位准确率 ≥80%（G6／A09）；能在日志缺失下用抽样反推根因，形成的假设经复现验证（G7／A10）；能产出含返工量估算与交付影响的治理方案，并推动三方周会落地（G8／A10）；能给出 2 套治理路径（回补／隔离）并说明代价，留回退方案（G9／A10）。<b>L3 只在本情境成立</b>——判据是"日志缺失、无真值反馈时的根因判断"。</p>
+      </div>
+      <div class="card warn">
+        <span class="label">本情境第一纪律（写进 Q2① 的原话）</span>
+        <p style="margin:4px 0;"><b>先记现象，后调日志。</b>课标③.4：依〔B｜460310｜§E-A04 王建国〕原话改序，池条目无此认知顺序。资讯步教师<b>只给现象描述与看板，不提供日志</b>——这是故意设置的认知约束，不是遗漏。检查方式：界定书提交时间 vs 操作日志。</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="scene">
+      <h2><span class="num">02</span>情境描述与教学目标</h2>
+      <p><b>情境描述（课标原文）</b>：Q1 交付后两周，算法组反馈"模型 mAP 下降 8pp"，只说"数据不对"，<b>未给具体字段</b>；上游采集端<b>无埋点、清洗日志只保留 3 天</b>已过期，标注组口径同期改过一版，交付期限剩 5 天。约束：不得停业务、返工须先估人天、改动上游须走审批。已知：监控看板、版本记录、血缘图（部分缺失）、抽样脚本、验收口径。</p>
+      <p><b>原子</b>：A09、A10（均首次教学）；A08（巩固：治理动作仍须留痕）。<b>交付物</b>：T6 问题界定书、T7 分段比对表、T8 治理方案与影响评估、排故报告、规则补丁（附变更记录）。</p>
+
+      <h3>教学目标（PGSD-KSA 分层口径）</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th style="width:88px">维度</th><th>目标（行为动词开头）</th><th style="width:150px">绑定原子</th><th style="width:110px">达标线</th></tr></thead>
+          <tbody>
+            <tr><td class="c">P 职业能力</td><td>能沿采集—标注—清洗—入湖分段比对分布并定位断点</td><td>LF2-Q2-A09（G6）</td><td>定位准确率 ≥80%</td></tr>
+            <tr><td class="c">G 通用能力</td><td>能在日志缺失下用抽样反推根因，形成的假设经复现验证</td><td>LF2-Q2-A10（G7）</td><td>假设有验证记录</td></tr>
+            <tr><td class="c">S 社会能力</td><td>能产出含返工量估算与交付影响的治理方案，并推动三方周会落地</td><td>LF2-Q2-A10（G8）</td><td>周会有责任人与时限</td></tr>
+            <tr><td class="c">D 发展能力</td><td>能给出 2 套治理路径（回补／隔离）并说明代价，留回退方案</td><td>LF2-Q2-A10（G9）</td><td>2 套路径＋回退</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="color:#6b7c93">COMET K3（过程能力）：能在日志缺失、无真值反馈时定根因并给出可落地治理方案，学生达成比例 ≥50%；K1（名义能力）：能说出四类质量问题、三项质量指标、四条本课红线，100%。</p>
+    </section>
+
+    <!-- 3 -->
+    <section id="grid">
+      <h2><span class="num">03</span>六步 × 四层网格教学活动表</h2>
+      <p>行＝六步（括号内为该步学时，合计 40h），列＝四层（A 领跑 20%／B 主力 50%／C 跟进 20%／D 兜底 10%）。每格写"这一层学生在这一步做什么、教师给什么支持"。<b>四层红线要求完全相同</b>——D 层减动作不减要求。</p>
+      <div class="tablewrap">
+        <table class="grid-table">
+          <thead>
+            <tr>
+              <th>六步</th>
+              <th>A 领跑型（20%）</th>
+              <th>B 主力型（50%）</th>
+              <th>C 跟进型（20%）</th>
+              <th>D 兜底型（10%）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>① 资讯<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td>
+              <td>独立读监控看板与版本记录，写出"我预判的 3 个可疑段"及理由；主动追问业务侧"8pp 和谁比出来的"（可比对象）</td>
+              <td>按引导文记录现象四要素（时间、范围、幅度、可比对象），划出已知／未知，完成 T6 问题界定书</td>
+              <td>用填空式界定书模板（已给四要素提示），在 B 层帮扶下完成；不确定处圈出待问</td>
+              <td>教师用看板口头讲解"什么是现象"，同伴领读四要素，D 层复述一遍后口述记录，教师代记</td>
+            </tr>
+            <tr>
+              <td>② 计划<br><span style="font-weight:400;color:#6b7c93">4 学时</span></td>
+              <td>自定四段优先级与抽样方案（各段样本量、维度、顺序），做"哪段最可能无日志"的风险预判</td>
+              <td>按模板定比对维度（分布、缺失率、长度、版本）、抽样方案与优先级；强制填"若某段无日志怎么办"</td>
+              <td>从 2 个给定分段方案（先查标注段／先查采集段）中选 1 个，写出选择理由</td>
+              <td>使用"四段步骤卡"（采集—标注—清洗—入湖按序排列），教师确认顺序后贴工位挡板</td>
+            </tr>
+            <tr>
+              <td>③ 决策<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td>
+              <td>上台讲假设与验证路径，接受教师（扮算法组）质疑"凭什么说是标注段"；给出 2 套定位路径并当场修订</td>
+              <td>组内讲方案，接受教师抽评；把"若某段无日志怎么办"的答案写成一句话规则</td>
+              <td>教师逐组审核方案并签字；2 套路径由教师给出选项供选，C 层讲出选择理由</td>
+              <td>教师一对一确认：先查哪段、抽多少条、什么时候举手、找谁复核，确认后放行</td>
+            </tr>
+            <tr>
+              <td>④ 实施<br><span style="font-weight:400;color:#6b7c93">15 学时</span></td>
+              <td>独立完成四段比对＋抽样反推＋复现验证＋返工量估算；指导同组 C／D 层；假设验证记录编号管理</td>
+              <td>独立完成：分段比对分布→锁定断点→抽样反推→复现验证→估返工量→定治理措施→推动落地复测</td>
+              <td>在 B 层帮扶下完成 2 个段的比对与抽样（先做标注段），断点结论由 B 层复核后写入</td>
+              <td>在 B 层以上陪同下做辅助动作（跑抽样脚本、登记样本量、抄录版本记录），不独立下断点结论</td>
+            </tr>
+            <tr>
+              <td>⑤ 检查<br><span style="font-weight:400;color:#6b7c93">6 学时</span></td>
+              <td>设计交叉复现检查项（补 2 条），复现他人断点并签字；核对影响评估与回退方案</td>
+              <td>交叉复现、核对影响评估、查方案有无回退；逐项打勾后交复核人</td>
+              <td>用打勾式检查卡逐项过，不会的项举手由 B 层带做</td>
+              <td>教师带着做 3 项核心检查（界定书是否先于日志、断点是否可复现、方案有无回退），口头复述结果</td>
+            </tr>
+            <tr>
+              <td>⑥ 评价<br><span style="font-weight:400;color:#6b7c93">5 学时</span></td>
+              <td>自评＋互评＋上台讲"结论是怎么推出来的"，提出 1 条规则补丁建议</td>
+              <td>自评＋接受互评，写 1 条改进项，提交排故报告</td>
+              <td>以教师点评为主，复述"我这次定位断点的依据是什么"</td>
+              <td>口头复述"今天学会了什么＋一条红线"，教师在评价栏签字确认</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="color:#6b7c93">六步学时与课标⑥.2 一致：Q2＝5／4／5／15／6／5，合计 40；实施占比 37.5%（＜50%）；<b>检查步 6h 为三情境最高</b>——根因结论须"可复现"才成立，复现本身占学时。</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="time">
+      <h2><span class="num">04</span>六步学时分配（40h）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:92px">步骤</th><th style="width:250px">教师活动</th><th>学生活动</th><th class="c" style="width:64px">学时</th><th style="width:190px">产出</th></tr></thead>
+          <tbody>
+            <tr><td class="c">① 资讯</td><td>只给现象描述与看板，<b>不提供日志</b>；要求先写现象再动工具</td><td>记录现象（时间、范围、幅度、可比对象），划出已知／未知</td><td class="c">5</td><td>问题界定书（现象先于日志）</td></tr>
+            <tr><td class="c">② 计划</td><td>给分段框架（采集—标注—清洗—入湖），要求写"若某段无日志怎么办"</td><td>定比对维度（分布、缺失率、长度、版本）、定抽样方案与优先级</td><td class="c">4</td><td>分段比对计划</td></tr>
+            <tr><td class="c">③ 决策</td><td>扮演算法组与业务方提反对意见；质疑"凭什么说是标注段"；签字放行</td><td>讲假设与验证路径、给 2 套定位路径、被质疑、修订</td><td class="c">5</td><td>决策记录（签字）</td></tr>
+            <tr><td class="c">④ 实施</td><td>巡视，只纠"未记现象直接改配置"，不代判</td><td>分段比对分布→锁定断点→抽样反推→复现验证→估返工量→定治理措施→推动落地复测</td><td class="c">15</td><td>分段比对表＋根因假设验证＋治理方案</td></tr>
+            <tr><td class="c">⑤ 检查</td><td>组织交叉复现：他人按记录能否复现同一断点</td><td>交叉复现、核对影响评估、查方案有无回退</td><td class="c">6</td><td>复现记录＋复核意见</td></tr>
+            <tr><td class="c">⑥ 评价</td><td>按 Rubric 打分，讲评"结论对但推不出""改了表象没改规则"两类</td><td>自评、互评、写改进项、提交排故报告</td><td class="c">5</td><td>排故报告＋规则补丁＋评分表</td></tr>
+            <tr><td class="c"><b>合计</b></td><td colspan="2">5+4+5+15+6+5＝40h；实施占比 37.5%</td><td class="c"><b>40</b></td><td>交付物 5 项见工单</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card ok">
+        <span class="label">学时弹性与不可压缩项</span>
+        <p style="margin:4px 0;">平台故障可压 Q1⑤⑥、Q3⑥ 各 1h；<b>Q2 决策步（5h）不得压</b>——压了 L3 判据就不成立（⑦.4）。企业介入：Q2 决策步企业数据治理工程师到场 ≥2 学时，Q2 评价讲评 2h（⑦.2／⑦.4）。</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="order">
+      <h2><span class="num">05</span>任务工单（学生版·八栏）</h2>
+      <div class="order">
+        <div class="row"><div class="k">1 任务名称与编号</div><div class="v">数据质量异常根因定位与治理 ｜ 工单号 LF2-Q2-GZ-0915（教学样例）｜ 对应任务 2.2 ｜ 绑定原子 LF2-Q2-A09 / A10，A08 巩固</div></div>
+        <div class="row"><div class="k">2 情境描述</div><div class="v">Q1 交付后两周，算法组反馈"模型 mAP 下降 8pp"，只说"数据不对"，未给具体字段；上游采集端无埋点、清洗日志只保留 3 天已过期，标注组口径同期改过一版（v2.0→v2.1），交付期限剩 5 天。你是这批数据的治理主责人，1 人主责，与采集／标注／算法三方周会推进。</div></div>
+        <div class="row"><div class="k">3 交付要求</div><div class="v">
+          <ol>
+            <li>T6 问题界定书（时间、范围、幅度、可比对象＋已知／未知）</li>
+            <li>T7 分段比对表（采集—标注—清洗—入湖，四维度）</li>
+            <li>T8 治理方案与影响评估（返工量／交付影响／2 套路径／回退）</li>
+            <li>排故报告（含根因假设验证与复现记录）</li>
+            <li>规则补丁（附变更记录）</li>
+          </ol>
+          <p style="margin:6px 0 0">合格标准：定位准确率 ≥80%；偏差段可复现；方案含回退；治理动作变更可回溯 100%。</p>
+        </div></div>
+        <div class="row"><div class="k">4 已知条件</div><div class="v">监控看板、版本记录、血缘图（部分缺失）、抽样脚本、验收口径。<b>不提供</b>：清洗日志（已过期）、采集端埋点（不存在）、具体问题字段（算法组未给）。</div></div>
+        <div class="row"><div class="k">5 安全提示（D 类红线）</div><div class="v">
+          <ol>
+            <li>未写现象界定书即调日志或改配置 → 本情境 0 分＋重做界定（检查：界定书提交时间 vs 操作日志）。</li>
+            <li>未经审批连接或改动生产环境（含"临时只读"）→ 一票否决（检查：环境连接日志＋账号审计）。</li>
+            <li>只改数据不改规则（同类问题必然复发）→ 专业维记 1 分（检查：变更记录 vs 规则库版本比对）。</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">6 工作过程记录</div><div class="v">
+          <ol>
+            <li>资讯：算法组给了什么、没给什么；我的已知／未知清单前三条是……</li>
+            <li>计划：四段优先级与顺序；各段样本量与维度；"若某段无日志怎么办"我写的是……</li>
+            <li>决策：我的假设与证伪路径；2 套定位路径的代价差；被质疑时我的第一句答的是……</li>
+            <li>实施：现在比到哪一段；与计划差多少；AI 线索我自己复现了吗（样本量多少）</li>
+            <li>检查：他人按我的记录复现到同一断点了吗；影响评估与回退点在哪</li>
+            <li>评价：这次结论对是因为方法对还是运气好；我的规则补丁是……</li>
+          </ol>
+        </div></div>
+        <div class="row"><div class="k">7 自检清单</div><div class="v">见第 07 节 8 项检查表；自检全部打勾并签字后，方可交复核人交叉复现。</div></div>
+        <div class="row"><div class="k">8 评价栏</div><div class="v">自评 ____ ｜ 互评 ____ ｜ 师评 ____ ｜ 交叉复现结论：可复现 / 不可复现 ｜ 三方周会纪要编号 ____ ｜ 签字：学生 ______ 复核人 ______ 教师 ______</div></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="guide">
+      <h2><span class="num">06</span>引导文六问</h2>
+      <p>学生自己找答案，教师只回答"往哪找"，不直接给判定结论。</p>
+      <ol class="q6">
+        <li><b>资讯</b>：算法组到底给了什么、没给什么？"mAP 下降 8pp"里的 8pp 是和谁比出来的？你的已知／未知清单上前三条是什么？</li>
+        <li><b>计划</b>：四段里你打算先查哪段、为什么？每段抽多少条、按哪四个维度比？"若某段无日志怎么办"这一栏，你写的是什么？</li>
+        <li><b>决策</b>：你的假设是什么、拿什么证伪？2 套定位路径的代价差在哪？如果算法组问"凭什么不是采集段"，你的第一句答什么？</li>
+        <li><b>实施</b>：现在比到哪一段了？和计划差多少？AI 提示的那条线索，你自己复现了吗，样本量多少？返工量估的是几天、依据是什么？</li>
+        <li><b>检查</b>：别人按你的记录，能一步步复现到同一个断点吗？影响评估里返工量估的是几天、依据是什么？方案的回退点在哪？</li>
+        <li><b>评价</b>：这次结论对，是因为方法对，还是运气好？踩的坑能不能写成一条规则补丁？下次再遇到日志缺失，你第一件事做什么？</li>
+      </ol>
+    </section>
+
+    <!-- 7 -->
+    <section id="check">
+      <h2><span class="num">07</span>检查表（8 项）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:44px">序</th><th>检查项</th><th style="width:250px">合格标准</th><th class="c" style="width:76px">实测/结论</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1</td><td>现象先于日志</td><td>T6 四要素齐全，提交时间早于任何工具操作（界定书提交时间 vs 操作日志）</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">2</td><td>假设有证伪路径</td><td>每个假设写明"怎么证明它错"，无裸结论</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">3</td><td>分段比对四维度</td><td>分布、缺失率、长度、版本全覆盖，四段无跳过</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">4</td><td>抽样反推有据</td><td>样本量、抽样方法、结论三者对应；定位准确率 ≥80%</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">5</td><td>断点可复现</td><td>他人按记录能复现同一断点（交叉复现签字）</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">6</td><td>治理方案三要素</td><td>返工量估算＋交付影响＋回退方案，缺一即退回</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">7</td><td>两套路径与代价</td><td>回补／隔离两套路径均说明代价，无单路径方案</td><td class="c">□合格 □不合格</td></tr>
+            <tr><td class="c">8</td><td>规则补丁与留痕</td><td>补丁进规则库；治理动作变更可回溯 100%、无日志变更 0 条（A08 巩固）</td><td class="c">□合格 □不合格</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="rubric">
+      <h2><span class="num">08</span>Rubric 评分表（四维四档）</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="c" style="width:86px">维度</th><th class="c" style="width:62px">权重</th><th>4 分</th><th>3 分</th><th>2 分</th><th>1 分</th><th class="c" style="width:56px">得分</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="c">专业能力</td><td class="c">40%</td>
+              <td>一次性通过 ≥95%，指标偏差 &lt;0.5%，零返工</td>
+              <td>一次性通过 <b>80—94%（达标）</b>，偏差 ≤1%</td>
+              <td>通过 70—79%，偏差 1—3%，返工后复验</td>
+              <td>通过 &lt;70%，或偏差 &gt;3%，或整批重洗</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">方法能力</td><td class="c">25%<br>（含 AI 规范性 7%）</td>
+              <td>处置规则/定位路径可复现＋2 套备选与回退，工时偏差 &lt;10%</td>
+              <td>含备选，偏差 &lt;20%</td>
+              <td>单方案无备选，偏差 &lt;35%</td>
+              <td>无计划或照抄模板</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">社会能力</td><td class="c">20%</td>
+              <td>变更日志零缺漏＋主动上报 ≥2 次（含他人违规）＋周会形成责任人时限</td>
+              <td>日志完整、配合协作、无缺项</td>
+              <td>需提醒补记，协作被动</td>
+              <td>代签／漏记，或知情不报</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c">发展能力</td><td class="c">15%</td>
+              <td>提出防复发规则补丁并被采纳，能说明对下游指标的影响</td>
+              <td>改进项具体可执行（有时间、有做法）</td>
+              <td>改进项笼统（"下次注意"）</td>
+              <td>无改进项或反思抄袭</td>
+              <td class="c"></td>
+            </tr>
+            <tr>
+              <td class="c"><b>合计</b></td><td class="c">100%</td>
+              <td colspan="4">总分 = 四维加权；<b>课程达标线 ≥80 分</b>；任一 D 类红线违反，本情境 0 分并重做</td>
+              <td class="c"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <span class="label">Q2 评价要点（课标原文）</span>
+        <p style="margin:4px 0;">专业维看定位准确率与偏差段可复现；方法维看是否先界定后动手、有无 2 套路径；社会维看周会有无责任人与时限；发展维看留下的是防复发规则还是一次性修补。</p>
+      </div>
+      <div class="card warn">
+        <span class="label">两个口径提醒</span>
+        <p style="margin:4px 0;">① <b>本课不用 Kappa</b>（⑧.2.2）：Kappa 仅用于 LF1-Q3 标注一致性裁定；若 Q2 借用 Kappa 判标注段污染，只作辅助线索、不进评分——本课判据是"指标偏差、定位准确率、漏检率"这组可复算比率。<b>红线管"能不能交"，Rubric 管"这段过程值几分"，二者不互相折算。</b></p>
+        <p style="margin:4px 0;">② AI 使用规范性 7% 从方法维内切分，不额外加分（⑧.2.1）：未交 T11 或存在 AI 代写／未复现即引用 AI 结论 → 扣满 7 分并转⑧.4 复核。<b>Q2 的 AI 提示只能当"线索"不能当"结论"</b>（⑦.3）。</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="err">
+      <h2><span class="num">09</span>典型错误案例卡（3 张）</h2>
+      <details open>
+        <summary>ERR-LF2-001：未写界定书直接翻日志，定位错段，返工两轮（红线①）</summary>
+        <div class="body">
+          <p><b>现象</b>：一组接到"mAP 下降 8pp"的反馈后，立刻打开血缘图与日志翻查，2 小时后认定"采集段时间戳跳变"，按此出治理方案；算法组复核时问"8pp 和哪个批次比出来的"，全组答不出。</p>
+          <p><b>错误做法</b>：把"没给日志"当障碍，把"先看看"当起点；界定书是交方案时补的——提交时间晚于操作日志，红线①当场触发，本情境 0 分＋重做界定。</p>
+          <p><b>真实原因</b>：手比脑快。没写现象四要素，"范围与幅度"就没有锚点，看什么像什么都是线索；采集段时间戳跳变是已知噪声，与 8pp 无可比关系。</p>
+          <p><b>排查路径</b>：① 补写界定书（时间／范围／幅度／可比对象）→ ② 按四段框架定优先级 → ③ 分段比对四维度 → ④ 标注段 v2.1 前后长度分布断点浮出 → ⑤ 抽样 200 条复现成立。</p>
+          <p><b>预防措施</b>：开表先查两样东西——界定书提交时间 vs 操作日志时间戳；计划表"若某段无日志怎么办"栏是否非空。</p>
+          <p><b>关联原子</b>：LF2-Q2-A09（分段比对定位断点）；红线①（Q2）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF2-002："临时只读"连生产库，被账号审计发现（红线②）</summary>
+        <div class="body">
+          <p><b>现象</b>：实施步比对到一半，一名学生认为"测试环境样本不全，生产库数据最准"，用自己的学号权限"临时只读"连了生产库 4 分钟，只为核对一条原始记录。</p>
+          <p><b>错误做法</b>：心存"只读不写就没事"。环境连接日志＋账号审计当场记录——红线②：未经审批连接或改动生产环境（含"临时只读"）→ 一票否决。</p>
+          <p><b>真实原因</b>：不知道合规入口一直存在——测试环境账号按组分配、只读样本库全班共用（⑦.4）；也不知道"临时"二字在审计里等于"未审批"。</p>
+          <p><b>纠正</b>：连线需求一律走审批；确需生产侧数据的，由教师向数据 Owner 申请快照进测试环境。生产库账号一律不下发（⑨.2）。</p>
+          <p><b>关联原子</b>：LF2-Q2-A10（治理方案与推动落地）；红线②（Q2）</p>
+        </div>
+      </details>
+      <details>
+        <summary>ERR-LF2-003：只改数据不改规则，同类问题三周后复发（红线③）</summary>
+        <div class="body">
+          <p><b>现象</b>：某组定位到"标注段 v2.1 口径将长序列截断至 512"，治理方案是"把这 8% 样本重新生成覆盖"，5 天内交付，复测 mAP 恢复。三周后同一数据集再掉 6pp——同一种截断，新一批数据又来了。</p>
+          <p><b>错误做法</b>：把治理当"救火"：改数据不改规则。红线③：只改数据不改规则（同类问题必然复发）→ 专业维记 1 分。</p>
+          <p><b>真实原因</b>：分不清"技术上能修"与"业务上划得来"是两回事，更分不清"修补"与"治理"的差别——没给标注-清洗段加长度校验规则，规则库版本没动，下一批照样漏。</p>
+          <p><b>纠正</b>：方案评审必问一句"规则补丁在哪"；补丁进规则库并附变更记录（A08 巩固：治理动作仍须留痕，变更可回溯 100%）。</p>
+          <p><b>关联原子</b>：LF2-Q2-A10（治理方案）；A08（巩固）；红线③（Q2）</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 10 -->
+    <section id="safe">
+      <h2><span class="num">10</span>安全提示卡（D 类红线·3 条）</h2>
+      <div class="card warn">
+        <span class="label">红线即一票否决，四层要求完全相同</span>
+        <div class="tablewrap" style="margin:10px 0 0;background:#fff">
+          <table>
+            <thead><tr><th class="c" style="width:44px">序</th><th>红线条目（可检查动作）</th><th style="width:200px">后果</th><th style="width:150px">检查人/方式</th></tr></thead>
+            <tbody>
+              <tr><td class="c">1</td><td>未写现象界定书即调日志或改上游配置</td><td>本情境 0 分＋重做界定</td><td>界定书提交时间 vs 操作日志</td></tr>
+              <tr><td class="c">2</td><td>连接或改动生产环境（含"临时只读"）</td><td>一票否决</td><td>环境连接日志＋账号审计</td></tr>
+              <tr><td class="c">3</td><td>只改数据不改规则（同类问题必然复发）</td><td>专业维记 1 分</td><td>变更记录 vs 规则库版本比对</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="color:#6b7c93;font-size:13px;margin-top:8px">另注意全课红线（⑩.1）：把数据集或配置导出到个人设备／外网 → 课程 0 分（出口日志＋USB 白名单）。课前 3 分钟由当班安全员复述红线 1 条，答不出全组延迟进入实施步（⑩.3）；违规按"停线—记录—复盘—复训"四步处理。</p>
+    </section>
+
+    <!-- 11 -->
+    <section id="notes">
+      <h2><span class="num">11</span>教师备课备注</h2>
+      <details open>
+        <summary>高频错判预判 Top3（按发生概率排序）与纠法</summary>
+        <div class="body">
+          <ol>
+            <li><b>手比脑快——跳过现象直接翻日志</b>：这是本情境第一杀手，且"效率高"的样子最具迷惑性。纠法——开表先查两样东西：界定书提交时间 vs 操作日志时间戳；计划表"若某段无日志怎么办"栏是否非空。红线①触发即本关清零，不给"下不为例"。</li>
+            <li><b>把 AI 线索当结论</b>：平台 AI 提示"疑似标注段"后，学生直接抄进报告。纠法——抽问一句："这条断点你自己复现了吗，样本量多少？"答不出即按⑦.3 打回；AI 规范性 7% 单列扣分口（⑧.2.1）。</li>
+            <li><b>治理只改数据不改规则</b>：方案漂亮、交付及时，三周后复发。纠法——方案评审必问"规则补丁在哪"；补丁是否进规则库、是否附变更记录，列为检查表第 8 项。</li>
+          </ol>
+        </div>
+      </details>
+      <details>
+        <summary>答疑口径：只指条文，不判标签</summary>
+        <div class="body">
+          <p>学生问"这段算不算污染／这个字段是不是根因"，统一口径：<b>只答"去查哪一条、第几款"，不代判</b>。例——"先回 Q2② 看比哪四个维度；S2 说了日志缺失怎么抽；G6 给了定位准确率的线。"教师代判的根因，学生复现那一步就穿帮（Q2④ 教师活动"不代判"）。</p>
+        </div>
+      </details>
+      <details>
+        <summary>分层调整建议（本情境）</summary>
+        <div class="body">
+          <ul>
+            <li><b>A 层加做</b>：补 2 条交叉复现检查项并说明理由；担任组内"假设第一质疑人"；把 2 套定位路径的代价差写成 1 页对照表。</li>
+            <li><b>B 层标准</b>：四段全比对＋抽样反推＋复现验证＋返工量估算＋2 套治理路径，自检＋互检闭环。</li>
+            <li><b>C 层减量</b>：先做标注段与清洗段 2 个段的比对与抽样，断点结论由 B 层复核后写入。</li>
+            <li><b>D 层减动作不减要求</b>：只做辅助动作（跑抽样脚本、登记样本量、抄录版本记录），不独立下断点结论；<b>红线 3 条对其完全相同</b>。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>设备与材料准备清单</summary>
+        <div class="body">
+          <ul>
+            <li>监控看板 1 屏＋1 投影（可分组登录）；数据平台测试环境 2 套（16 人/套，含元数据与血缘模块——<b>血缘模块是否含在授权内待确认</b>，缺它时用版本记录替代并在计划步说明）。</li>
+            <li>只读合规样本库（全班共用，含 1 套故意缺陷数据）；测试环境账号按组分配，<b>生产库账号一律不下发</b>。</li>
+            <li>打印件：T6／T7／T8 模板每生一套、工单 32 份、检查表 32 份、Rubric 32 份、四段步骤卡 16 套（D 层用）。</li>
+            <li>企业资源：Q2 决策步企业数据治理工程师到场 ≥2 学时，提前 1 周确认质疑脚本（"凭什么说是标注段"）。</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>下次课衔接</summary>
+        <div class="body">
+          <p>本情境结束收齐改进项与规则补丁，下次课开头 5 分钟逐条核对"上次写的改进项做到了没有"；被采纳的规则补丁同步进规则库并登记版本；接着进入 <b>LF2-Q3 数据分类分级与脱敏配置执行</b>（36h·L2·任务 2.3）——同一份数据集要在测试环境开放给算法组试用，法务已给既定分类分级清单，学生只负责"照单标注、按级配置、抽查复核"，<b>定级争议一律退回法务</b>。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="assume">
+      <h2><span class="num">附</span>口径与假设说明</h2>
+      <p>① 本授课包依据《LF2 数据治理与质量管控》课程标准 V1.0（2026-10-24）⑥.3「Q2」小节编制：情境描述、六步表（教师／学生活动、学时、产出）、原子、D 类红线、交付物、评价要点<b>均与课标逐字一致，未改编任何数字</b>；六步学时 5／4／5／15／6／5＝40，实施占比 37.5%。</p>
+      <p>② 能力原子编号 A09／A10（首次教学）、A08（巩固）按课标④.2 绑定：A09→G6、A10→G7/G8/G9；若清单口径调整，只需替换编号与名称，不改变本包的活动设计。</p>
+      <p>③ 工单号 DS-2026-0915、批次口径版本 v2.0→v2.1、AI 提示置信度等均为教学虚构载体，数据一律标注"教学样例"，不对应任何真实企业；平台与工具型号以院校采购清单为准，未确认处标"待确认"。</p>
+      <p>④ 达标线口径：交付包一次性通过率 ≥80%（与 Table1 一致，≥95% 仅作 Rubric 4 分档优秀线）；COMET K2 的 85% 指"达到功能能力的学生比例"，二者不可混用（附录 D）。本课不使用 Kappa（⑧.2.2）。</p>
+      <p>⑤ 本页交互仅用锚点与 CSS（<code>:target</code>、<code>details</code>），<b>无脚本、无外部依赖</b>，可离线打开与打印；配套学生互动模块见《LF2-Q2_数据质量异常根因定位与治理_学生互动学习模块_正式版.html》。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  LF2 数据治理与质量管控 · 教师授课包 V1.0 ｜ 承载 LF2-Q2 数据质量异常根因定位与治理（40h/2.5cr·S3·L3·任务 2.2）｜ 依据课程标准 V1.0（2026-10-24）｜ 生成于 2026-10-25 ｜ 人工智能数据工程技术专业（510217）
+</footer>
+
+</body>
+</html>

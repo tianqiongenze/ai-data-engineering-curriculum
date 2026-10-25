@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF2-Q3 数据分类分级与脱敏配置执行 · 学生互动学习模块</title>
+<style>
+/* ========== 主题变量（与 LF1-Q2 金标准同一体系） ========== */
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1a2b3c; --ink2:#5a6b7c;
+  --brand:#0e7c66; --brand2:#0b5f4e; --brand-soft:#e3f2ee;
+  --warn:#b3541e; --warn-soft:#fdeee2; --ok:#1e7d3c; --ok-soft:#e6f4ea;
+  --bad:#b3261e; --bad-soft:#fdecea; --line:#d8e2ea; --gold:#b8860b;
+  --shadow:0 2px 10px rgba(14,60,80,.08); --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.75;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* ========== ① 顶部条 ========== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#0e7c66,#0b5f4e);
+  color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+  font-size:14px;box-shadow:var(--shadow)}
+.topbar b{font-size:15px}
+.topbar .chip{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 12px;white-space:nowrap}
+.topbar .spacer{flex:1}
+.progress-mini{background:rgba(255,255,255,.2);border-radius:20px;height:8px;width:130px;overflow:hidden}
+.progress-mini i{display:block;height:100%;background:#ffd54d;width:0;transition:width .4s}
+
+/* ========== 通用卡片/区块 ========== */
+section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 28px;margin:22px 0}
+h2.sec{font-size:21px;border-left:6px solid var(--brand);padding-left:12px;margin-bottom:14px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0}
+.small{font-size:13.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font-size:15px;padding:9px 22px;border-radius:10px;
+  transition:.2s;font-family:inherit}
+.btn:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn:disabled{background:#b8c4ce;cursor:not-allowed;transform:none}
+.btn.warn{background:var(--warn)}
+.btn.warn:hover{background:#8f4115}
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand2);
+  border-radius:6px;padding:1px 10px;font-size:13px;margin:2px 4px 2px 0}
+.feedback{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px;display:none}
+.feedback.show{display:block;animation:pop .3s}
+.feedback.good{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.feedback.bad{background:var(--bad-soft);border-left:5px solid var(--bad)}
+.feedback.info{background:var(--warn-soft);border-left:5px solid var(--warn)}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ========== ② 情境引入 ========== */
+.story{background:linear-gradient(135deg,#f0f7f5,#e8f0f6);border-radius:12px;
+  padding:18px 20px;border:1px dashed var(--brand);margin:12px 0}
+.mission{border:2px solid var(--brand);border-radius:12px;padding:16px 20px;margin:14px 0;background:#fff}
+.mission h3{color:var(--brand2);margin-top:0}
+.constraints li{margin:6px 0 6px 22px}
+
+/* ========== ③ 知识预习：翻卡 ========== */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.flip{perspective:900px;height:130px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px;text-align:center}
+.flip-f{background:var(--brand);color:#fff;font-weight:600;font-size:16px}
+.flip-f small{font-weight:400;font-size:12px;opacity:.85;margin-top:4px}
+.flip-b{background:#fff;border:2px solid var(--brand);color:var(--ink);transform:rotateY(180deg);font-size:14px}
+.spec-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+.spec-table th,.spec-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.spec-table th{background:var(--brand-soft)}
+.spec-table tr:hover td{background:#fafdfc}
+
+/* ========== ④ 六步闯关 ========== */
+.level{border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.level-head{display:flex;align-items:center;gap:12px;background:#eef3f7;padding:12px 16px;cursor:pointer;user-select:none}
+.level-head .no{background:var(--brand);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.level-head .tt{font-weight:700;flex:1}
+.level-head .stars{color:#c9d4dd;font-size:18px;letter-spacing:2px}
+.level-head .stars b{color:var(--gold)}
+.level.locked .level-head{opacity:.55;cursor:not-allowed}
+.level-body{display:none;padding:16px 20px;border-top:1px solid var(--line)}
+.level.open .level-body{display:block}
+.quiz-q{margin:14px 0}
+.quiz-q .q{font-weight:600;margin-bottom:8px}
+.opts{display:grid;gap:8px}
+.opt{border:2px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:#fff;
+  font-size:15px;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.opt:hover{border-color:var(--brand)}
+.opt.picked{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.drag-list{list-style:none;display:grid;gap:8px}
+.drag-list li{border:2px solid var(--line);border-radius:10px;padding:9px 14px;background:#fff;cursor:grab}
+.drag-list li.dragging{opacity:.4}
+.drag-list li.over{border-color:var(--brand);border-style:dashed}
+.fillin{border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;width:100%;
+  font-family:inherit;margin:6px 0}
+.fillin:focus{border-color:var(--brand);outline:none}
+
+/* ========== ⑤ 仿真实训 ========== */
+.sim{background:#0f1e2a;color:#e8f0f6;border-radius:14px;padding:20px;margin:14px 0}
+.sim h3{color:#7fd6c0;margin-top:0}
+.sim select{background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63;border-radius:8px;
+  padding:8px 10px;font-size:14px;font-family:inherit}
+.sim .btn.ghost{background:#1d3450;color:#7fd6c0;border-color:#2c4a63}
+.sample-card{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.sample-card .sid{color:#7fd6c0;font-size:13px;font-weight:700}
+.sample-card .scene{font-size:15.5px;margin:6px 0}
+.sample-card .ai{background:#1d3450;border-left:4px solid #e0a437;padding:8px 12px;border-radius:6px;
+  font-size:14px;margin-top:8px;color:#f0d9a8}
+.sim-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sim-controls label{font-size:13.5px;color:#9fb8c9;display:block;margin-bottom:4px}
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}
+.asset-card{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:10px 12px;font-size:13.5px}
+.asset-card b{color:#7fd6c0;display:block;font-size:14.5px}
+.list-panel{background:#0a141d;border:1px dashed #2c4a63;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13.5px}
+.list-panel table{width:100%;border-collapse:collapse;font-size:13px}
+.list-panel th,.list-panel td{border:1px solid #2c4a63;padding:6px 8px;text-align:left;vertical-align:top}
+.list-panel th{background:#1d3450;color:#9fb8c9}
+.field-row{display:grid;grid-template-columns:1.5fr 1fr 1.3fr auto;gap:8px;align-items:center;
+  background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:10px 12px;margin:8px 0}
+.field-row .fname{font-size:14.5px;font-weight:600}
+.field-row .fname small{display:block;font-weight:400;color:#9fb8c9;font-size:12.5px}
+.field-row .fbwrap{grid-column:1/-1}
+.field-row.ok{border-color:#1e7d3c}
+.pt-line{font-size:12.5px;color:#f0d9a8;grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.meter{background:#0a141d;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14.5px}
+.meter b{color:#ffd54d;font-size:18px}
+.sim-log{background:#0a141d;border-radius:10px;padding:12px 16px;font-size:13.5px;max-height:200px;overflow-y:auto;margin-top:10px}
+.sim-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.review{background:#0a141d;border:1px solid #2c4a63;border-radius:10px;padding:14px 18px;margin:10px 0;display:none}
+.review.on{display:block}
+.review h4{color:#7fd6c0;margin:6px 0}
+.review ol,.review ul{padding-left:22px;font-size:14px}
+.trap-btns{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.boom{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);z-index:999;
+  align-items:center;justify-content:center;padding:20px}
+.boom.on{display:flex}
+.boom-card{background:#1c1214;border:3px solid var(--bad);border-radius:16px;max-width:560px;
+  padding:30px;text-align:center;color:#ffd9d6}
+.boom-card h2{color:#ff6b60;font-size:26px;margin-bottom:10px}
+.boom-card .rule{background:#2a1618;border-radius:10px;padding:12px;margin:14px 0;text-align:left;font-size:14.5px}
+
+/* ========== ⑥ 检测 ========== */
+.quiz-score{display:flex;gap:18px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.score-ring{width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--brand) 0%,#e3eaf0 0);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--ink)}
+.score-ring i{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal}
+.locked-box{background:var(--warn-soft);border-left:5px solid var(--warn);border-radius:10px;
+  padding:14px 18px;margin:12px 0;display:none}
+.locked-box.on{display:block}
+
+/* ========== ⑦ 成就 ========== */
+.badges{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.badge{width:104px;text-align:center;opacity:.28;filter:grayscale(1);transition:.3s}
+.badge.got{opacity:1;filter:none}
+.badge .ico{width:76px;height:76px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:34px;background:linear-gradient(135deg,#ffd54d,#ffb300);
+  box-shadow:0 3px 10px rgba(255,179,0,.35)}
+.badge .nm{font-size:13.5px;font-weight:600}
+.checklist{list-style:none;margin:12px 0}
+.checklist li{padding:8px 12px;border:1px dashed var(--line);border-radius:8px;margin:6px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+.checklist li.done{background:var(--ok-soft);border-color:var(--ok);text-decoration:line-through}
+.checklist li::before{content:"☐";font-size:18px}
+.checklist li.done::before{content:"☑";color:var(--ok)}
+
+/* ========== 响应式/打印 ========== */
+@media(max-width:720px){
+  .sim-controls{grid-template-columns:1fr}
+  .field-row{grid-template-columns:1fr}
+  section{padding:18px 16px}
+  .topbar{font-size:12.5px}
+}
+@media print{
+  .topbar,.btn,.sim-controls,.boom,.trap-btns{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .level-body{display:block!important}
+  .feedback{display:block!important}
+  .review{display:block!important}
+  .opt.right,.opt.wrong{outline:1px solid #999}
+  .badge{opacity:1;filter:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ ① 顶部条 ═══════════ -->
+<div class="topbar">
+  <b>LF2-Q3 数据分类分级与脱敏配置执行</b>
+  <span class="chip">学习情境 · 36h</span>
+  <span class="chip">任务等级 L2</span>
+  <span class="chip">达标线 80%</span>
+  <span class="chip">数据治理与质量管控（LF2）</span>
+  <span class="spacer"></span>
+  <span id="progressTxt">进度 0%</span>
+  <div class="progress-mini"><i id="progressBar"></i></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ ② 情境引入 ═══════════ -->
+<section id="s2">
+  <h2 class="sec">② 情境引入：这批数据要开放给算法组试用</h2>
+  <div class="story">
+    <p>智能客服语料数据集（<b>通话转写 8000 条＋工单文本 2 万条＋坐席工牌照 300 张</b>）需在测试环境开放给算法组试用。
+    企业法务已给<b>既定分类分级清单</b>与敏感字段规则库；本课只负责<b>"照单标注、按级配置、抽查复核"</b>，
+    <b>定级争议一律退回法务</b>。</p>
+    <p>组长只说了一句：<b>"级别你一个都不许定——你只照单执行。配完之后质量岗要抽查 10%。"</b></p>
+  </div>
+  <div class="mission">
+    <h3>你的任务</h3>
+    <p>对这批资产逐字段<b>照单标注级别</b>、按敏感字段规则库<b>匹配脱敏策略</b>（掩码／泛化／假名化）、完成配置并通过抽查复核，交付合规的脱敏数据集。</p>
+    <h3>硬约束（违反任何一条，后果见"红线炸号"）</h3>
+    <ul class="constraints">
+      <li>不得使用<b>真实个人信息</b>生成新样本</li>
+      <li>脱敏后<b>可用性下降 ≤3pp</b></li>
+      <li>质量岗<b>抽查 10%</b>，脱敏不彻底即视为未脱敏</li>
+      <li><b>只执行、不定级</b>——清单外字段登记上报，不自行判级</li>
+    </ul>
+    <p class="small">已知条件：资产清单、既定分类分级清单、敏感字段规则库、脱敏规范、测试环境账号。<b>本模块所有数据均为教学样例（合成数据，已标生成参数），不含任何真实个人信息。</b></p>
+  </div>
+  <button class="btn" onclick="go('s3')">开始预习 →</button>
+</section>
+
+<!-- ═══════════ ③ 知识预习 ═══════════ -->
+<section id="s3">
+  <h2 class="sec">③ 知识预习：先把清单和策略搞清楚</h2>
+  <p>点击卡片翻转查看定义。看不懂的条文先标记，带着问题进关。</p>
+  <div class="flipgrid">
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">数据分类分级<small>classification &amp; grading</small></div>
+      <div class="flip-b">按数据遭破坏后危害的<br>对象与程度划分级别。<br><b>本课只照既定清单执行，<br>定级裁定权在企业法务</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">脱敏<small>de-identification</small></div>
+      <div class="flip-b">对敏感字段做变形处理，<br>使其不能直接识别到个人。<br><b>脱敏不彻底＝未脱敏</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">掩码<small>masking</small></div>
+      <div class="flip-b">把部分字符替换为掩码符。<br>手机号留前 3 后 4。<br><b>位数不足仍可枚举还原</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">泛化<small>generalization</small></div>
+      <div class="flip-b">降低精度／粒度：<br>工号→工号段、金额→区间。<br><b>保留统计用途</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">假名化<small>pseudonymization</small></div>
+      <div class="flip-b">用假名替换真实标识。<br><b>映射表必须隔离保管、<br>与数据分离</b>，否则可还原</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">可用性下降<small>≤3pp</small></div>
+      <div class="flip-b">脱敏后验证集指标<br>比脱敏前下降的幅度。<br><b>下降 ≤3pp 才允许交付</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">抽查复核<small>10% 抽样</small></div>
+      <div class="flip-b">质量岗按 10% 抽查配置，<br>做还原测试。<br><b>任一项可还原即按泄露处理</b></div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="flip-in">
+      <div class="flip-f">照单三动作<small>本课定位</small></div>
+      <div class="flip-b">照单标注 → 按级配置 → 抽查复核。<br><b>清单外字段：登记上报，<br>不自行判级</b></div></div></div>
+  </div>
+  <h3>判定标准速查表（分级清单与规则库摘要·教学样例口径）</h3>
+  <table class="spec-table">
+    <tr><th>级别</th><th>清单口径</th><th>默认策略</th><th>典型字段（样例）</th></tr>
+    <tr><td>L1 一般</td><td>不涉及个人信息</td><td>不脱敏</td><td>工单问题描述</td></tr>
+    <tr><td>L2 重要</td><td>内部使用，泄露有损</td><td>泛化</td><td>坐席工号、通话转写正文</td></tr>
+    <tr><td>L3 敏感</td><td>含个人信息，泄露严重</td><td>掩码／假名化（按规则库条目）</td><td>姓名、手机号、身份证号</td></tr>
+    <tr><td><b>清单外</b></td><td>法务清单未覆盖</td><td><b>登记上报，不自行定级</b></td><td>客户情绪标签</td></tr>
+  </table>
+  <p class="small">引用规范：《个人信息保护法》《数据安全法》、GB/T 35273-2020《个人信息安全规范》、GB/T 37964-2019《个人信息去标识化指南》、GB/T 38667-2020《大数据 分类指南》。记不清时随时回到本表——仿真里可没有这张表。</p>
+  <button class="btn" onclick="go('s4')">进入六步闯关 →</button>
+</section>
+
+<!-- ═══════════ ④ 六步闯关 ═══════════ -->
+<section id="s4">
+  <h2 class="sec">④ 六步闯关：按真实工作流程练</h2>
+  <p class="small">关卡按顺序解锁，与课标六步一一对应（资讯5／计划4／决策4／实施13／检查5／评价5，共 36 学时）。答错会告诉你是哪一条规定没说清——回去翻速查表，比背答案有用。</p>
+
+  <!-- 第①关 资讯（5 学时） -->
+  <div class="level" id="lv1">
+    <div class="level-head" onclick="toggleLevel('lv1')">
+      <span class="no">1</span><span class="tt">① 资讯 · 逐字段读清单（5 学时）</span><span class="stars" id="st1">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：组长发来资产清单、既定分类分级清单和脱敏规范，只强调一句：<b>"清单外字段不自行定级。"</b>先把资产和清单对清楚。</p>
+      <div class="quiz-q" data-q="l1q1">
+        <div class="q">1. 逐字段读清单时，发现"客户情绪标签"这个字段分级清单里没有。正确做法是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q1','A')">A. 看样子不敏感，自行定 L1</button>
+          <button class="opt" onclick="pick(this,'l1q1','B')">B. 登记为清单外字段、上报法务核定，不自行判级</button>
+          <button class="opt" onclick="pick(this,'l1q1','C')">C. 跳过不标，当它不存在</button>
+          <button class="opt" onclick="pick(this,'l1q1','D')">D. 自己在清单上补一行</button>
+        </div>
+        <div class="feedback" id="fb-l1q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q2">
+        <div class="q">2. 本课 Q3 所说的"照单标注"，准确含义是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q2','A')">A. 对照既定分类分级清单逐字段标注级别，级别裁定权不在我</button>
+          <button class="opt" onclick="pick(this,'l1q2','B')">B. 按自己的理解给字段定级</button>
+          <button class="opt" onclick="pick(this,'l1q2','C')">C. 只标敏感字段，其他不管</button>
+          <button class="opt" onclick="pick(this,'l1q2','D')">D. 等算法组说要哪些字段再标</button>
+        </div>
+        <div class="feedback" id="fb-l1q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q3">
+        <div class="q">3. 【复述签字】用一句话向组长复述本课的"照单三动作"。</div>
+        <input class="fillin" id="l1q3" placeholder="例：照单……按级……抽查……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l1q3','照单|标注|配置|抽查','fb-l1q3','复述通过。签字意味着你认账——后面越权就是越权。')">提交复述</button>
+        <div class="feedback" id="fb-l1q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv1','st1',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第②关 计划（4 学时） -->
+  <div class="level locked" id="lv2">
+    <div class="level-head" onclick="toggleLevel('lv2')">
+      <span class="no">2</span><span class="tt">② 计划 · 策略匹配与验证方法（4 学时）</span><span class="stars" id="st2">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：级别标完了，接下来按敏感字段规则库给每个字段选脱敏策略。计划表里有两栏是强制的：<b>"策略选择依据""可用性怎么验"</b>。</p>
+      <div class="quiz-q" data-q="l2q1">
+        <div class="q">1. 客户手机号（清单内·L3），规则库指定策略是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1','A')">A. 泛化（前 7 位改段）</button>
+          <button class="opt" onclick="pick(this,'l2q1','B')">B. 掩码，保留前 3 后 4</button>
+          <button class="opt" onclick="pick(this,'l2q1','C')">C. 不脱敏，算法组要用</button>
+          <button class="opt" onclick="pick(this,'l2q1','D')">D. 直接删除该字段</button>
+        </div>
+        <div class="feedback" id="fb-l2q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q2">
+        <div class="q">2. 坐席工号（清单内·L2）用泛化而不是掩码，主要理由是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q2','A')">A. 泛化操作更简单</button>
+          <button class="opt" onclick="pick(this,'l2q2','B')">B. 工号段仍可做班组级统计，满足算法组分析用途，同时不对个人直接识别</button>
+          <button class="opt" onclick="pick(this,'l2q2','C')">C. 掩码工具还没授权</button>
+          <button class="opt" onclick="pick(this,'l2q2','D')">D. 没有理由，随手选的</button>
+        </div>
+        <div class="feedback" id="fb-l2q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q3">
+        <div class="q">3. 【排序】把可用性验证流程按正确顺序排好（点选后拖拽，或用键盘上下箭头移动）：</div>
+        <ul class="drag-list" id="sortL2">
+          <li draggable="true" data-k="2">在测试集上跑脱敏后数据，记录验证集指标</li>
+          <li draggable="true" data-k="1">按规则库给字段配置脱敏策略</li>
+          <li draggable="true" data-k="4">比对下降幅度与 ≤3pp 门槛，记录验证结果</li>
+          <li draggable="true" data-k="3">与脱敏前基线指标对比，算可用性下降 pp</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL2','fb-l2q3','1234','先配置、再跑数、再对比、最后比对门槛——没有基线指标的验证都是空话。')">检查顺序</button>
+        <div class="feedback" id="fb-l2q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv2','st2',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第③关 决策（4 学时） -->
+  <div class="level locked" id="lv3">
+    <div class="level-head" onclick="toggleLevel('lv3')">
+      <span class="no">3</span><span class="tt">③ 决策 · 讲清你的策略取舍（4 学时）</span><span class="stars" id="st3">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：签字放行前，质检岗逐组问：<b>"这个字段为什么用泛化不用掩码？"</b>——答不上来不许进实施。</p>
+      <div class="quiz-q" data-q="l3q1">
+        <div class="q">1. 被质检岗质疑时，正确的回应方式是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q1','A')">A. "工具里默认就是这个"</button>
+          <button class="opt" onclick="pick(this,'l3q1','B')">B. "规则库 R-05：工号 L2 配泛化；算法组要班组级统计，掩码会把这个用途打掉"</button>
+          <button class="opt" onclick="pick(this,'l3q1','C')">C. "别人也这么配的"</button>
+          <button class="opt" onclick="pick(this,'l3q1','D')">D. "那您说配什么我就配什么"</button>
+        </div>
+        <div class="feedback" id="fb-l3q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q2">
+        <div class="q">2. 算法组试用后反馈"泛化后工号段统计没法用"，正确做法是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q2','A')">A. 自己把工号改回明文，先试用要紧</button>
+          <button class="opt" onclick="pick(this,'l3q2','B')">B. 记录反馈，按规则库与清单退回法务／数据 Owner 裁定，不自行改策略</button>
+          <button class="opt" onclick="pick(this,'l3q2','C')">C. 把泛化粒度调细一点，不让任何人知道</button>
+          <button class="opt" onclick="pick(this,'l3q2','D')">D. 让算法组自己去原库拷</button>
+        </div>
+        <div class="feedback" id="fb-l3q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q3">
+        <div class="q">3. 【一句话】策略取舍最终必须同时对哪两件事负责？</div>
+        <input class="fillin" id="l3q3" placeholder="输入你的答案">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l3q3','合规|安全|还原|可用','fb-l3q3','对。一头是合规（不能还原到个人），一头是可用（下降 ≤3pp）——只保一头都是错配。')">提交</button>
+        <div class="feedback" id="fb-l3q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv3','st3',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第④关 实施（13 学时） -->
+  <div class="level locked" id="lv4">
+    <div class="level-head" onclick="toggleLevel('lv4')">
+      <span class="no">4</span><span class="tt">④ 实施 · 配置、验证、抽查（13 学时）</span><span class="stars" id="st4">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：测试环境账号开通。实施四动作：<b>配置脱敏 → 测试集验证可用性 → 抽查 10% → 登记不合规项</b>。本关两问过后，下方<b>仿真实训区</b>的分级脱敏配置模拟器就是你的工位。</p>
+      <div class="quiz-q" data-q="l4q1">
+        <div class="q">1. 实施四动作的正确顺序是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q1','A')">A. 抽查 10% → 配置 → 验证 → 登记</button>
+          <button class="opt" onclick="pick(this,'l4q1','B')">B. 配置脱敏 → 测试集验证可用性 → 抽查 10% → 登记不合规项</button>
+          <button class="opt" onclick="pick(this,'l4q1','C')">C. 验证 → 配置 → 抽查 → 登记</button>
+          <button class="opt" onclick="pick(this,'l4q1','D')">D. 边配置边抽查，不用验证</button>
+        </div>
+        <div class="feedback" id="fb-l4q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q2">
+        <div class="q">2. 测试样本不够用，有人提议"从真实语料里挑几条改一改当合成样本"。你的态度？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q2','A')">A. 可以，改过了就不算真实数据</button>
+          <button class="opt" onclick="pick(this,'l4q2','B')">B. 不行——构造测试样本只能用合成数据并标注生成参数，挑真实语料"改一改"同样踩红线</button>
+          <button class="opt" onclick="pick(this,'l4q2','C')">C. 只挑一条，量少没事</button>
+          <button class="opt" onclick="pick(this,'l4q2','D')">D. 让算法组自己去原库拷</button>
+        </div>
+        <div class="feedback" id="fb-l4q2"></div>
+      </div>
+      <p class="small">↳ 通过本关两问后，下方<b>仿真实训区</b>的配置模拟器已就绪（界面里还藏着两个"图省事"的按钮——一个是红线，一个是陷阱）。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv4','st4',2)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑤关 检查（5 学时） -->
+  <div class="level locked" id="lv5">
+    <div class="level-head" onclick="toggleLevel('lv5')">
+      <span class="no">5</span><span class="tt">⑤ 检查 · 交叉抽查与退回整改（5 学时）</span><span class="stars" id="st5">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：质量岗来交叉抽查（他人查你的配置）。抽查 10% 中有一条"客户手机号"被还原测试通过——说明掩码位数不足。</p>
+      <div class="quiz-q" data-q="l5q1">
+        <div class="q">1. 按课标，这种情况的定性是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q1','A')">A. 小问题，把位数补上就行，不用记录</button>
+          <button class="opt" onclick="pick(this,'l5q1','B')">B. 脱敏不彻底即视为未脱敏，按泄露处理：课程 0 分＋重新配置</button>
+          <button class="opt" onclick="pick(this,'l5q1','C')">C. 和质检岗商量一下就算了</button>
+          <button class="opt" onclick="pick(this,'l5q1','D')">D. 把抽查记录改好看点</button>
+        </div>
+        <div class="feedback" id="fb-l5q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q2">
+        <div class="q">2. 【排序】把"退回整改闭环"按正确顺序排好：</div>
+        <ul class="drag-list" id="sortL5">
+          <li draggable="true" data-k="3">按清单退回责任人整改，重新配置</li>
+          <li draggable="true" data-k="1">登记不合规项（字段、级别、策略、问题）</li>
+          <li draggable="true" data-k="4">复核人复签，复抽查确认闭环</li>
+          <li draggable="true" data-k="2">复算泄漏项，核对漏检字段</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL5','fb-l5q2','1234','先登记、再复算、退回整改、最后复核签字——复核表零缺签才算闭环。')">检查顺序</button>
+        <div class="feedback" id="fb-l5q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q3">
+        <div class="q">3. 交叉抽查时质检岗说"我信你，复核字我代签了"。你该？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q3','A')">A. 谢谢，效率高</button>
+          <button class="opt" onclick="pick(this,'l5q3','B')">B. 拒绝代签——复核表零缺签，签字＝本人真查过配置</button>
+          <button class="opt" onclick="pick(this,'l5q3','C')">C. 看别人也这么签就算了</button>
+          <button class="opt" onclick="pick(this,'l5q3','D')">D. 让组友代签</button>
+        </div>
+        <div class="feedback" id="fb-l5q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv5','st5',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑥关 评价（5 学时） -->
+  <div class="level locked" id="lv6">
+    <div class="level-head" onclick="toggleLevel('lv6')">
+      <span class="no">6</span><span class="tt">⑥ 评价 · 四维自评（5 学时）</span><span class="stars" id="st6">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：交付完成。教师按 Rubric 打分，讲评"脱敏了但不可用""可用但漏了字段"两类典型错误。轮到你自评。</p>
+      <div class="quiz-q" data-q="l6q1">
+        <div class="q">1. 评价要点里，专业维看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q1','A')">A. 打字快不快</button>
+          <button class="opt" onclick="pick(this,'l6q1','B')">B. 漏检率与可用性下降幅度</button>
+          <button class="opt" onclick="pick(this,'l6q1','C')">C. 和质检岗关系好不好</button>
+          <button class="opt" onclick="pick(this,'l6q1','D')">D. 配置项填了多少</button>
+        </div>
+        <div class="feedback" id="fb-l6q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q2">
+        <div class="q">2. 社会维看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q2','A')">A. 是否按时到课</button>
+          <button class="opt" onclick="pick(this,'l6q2','B')">B. 清单外字段是否老实上报、不合规项是否按清单退回整改并闭环</button>
+          <button class="opt" onclick="pick(this,'l6q2','C')">C. 电脑干不干净</button>
+          <button class="opt" onclick="pick(this,'l6q2','D')">D. 报告页数多不多</button>
+        </div>
+        <div class="feedback" id="fb-l6q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q3">
+        <div class="q">3. 【一句话】发展维要看什么？写一条你这次的真实改进。</div>
+        <input class="fillin" id="l6q3" placeholder="例：可复用的字段识别规则……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l6q3','规则|识别|复用|清单','fb-l6q3','对。发展维看有没有可复用的字段识别规则——一次交付的终点，是下批次的起点。')">提交</button>
+        <div class="feedback" id="fb-l6q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv6','st6',3)">完成本关，领取星星</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑤ 仿真实训 ═══════════ -->
+<section id="s5">
+  <h2 class="sec">⑤ 仿真实训：分级脱敏配置模拟器</h2>
+  <p>这是测试环境工作台的模拟。核心决策点只有一个：<b>照单标级＋脱敏策略匹配</b>——级别你一个都不许定，策略你必须讲得出依据。
+  界面里藏着三个"图省事"的按钮：<b>两个是红线，一个是陷阱</b>。</p>
+  <div class="sim">
+    <h3>🗂 批次：DSM-2026-1107 智能客服语料（教学样例）｜你的工位：数据加工工位 07</h3>
+
+    <div class="asset-grid">
+      <div class="asset-card"><b>资产 A｜通话转写文本</b>8000 条 · 含坐席与客户对话（教学样例·合成）</div>
+      <div class="asset-card"><b>资产 B｜工单文本</b>2 万条 · 含客户联系信息（教学样例·合成）</div>
+      <div class="asset-card"><b>资产 C｜坐席工牌照</b>300 张 · 含人脸（教学样例·合成）</div>
+    </div>
+
+    <div class="list-panel">
+      <div style="color:#7fd6c0;font-weight:700;margin-bottom:6px">📜 既定分类分级清单（法务 V1.0·教学样例）＋敏感字段规则库摘要</div>
+      <table>
+        <tr><th>字段</th><th>级别</th><th>规则库条目</th><th>指定策略</th></tr>
+        <tr><td>客户姓名</td><td>L3</td><td>R-03</td><td>假名化（映射表隔离保管）</td></tr>
+        <tr><td>客户手机号</td><td>L3</td><td>R-01</td><td>掩码（保留前 3 后 4）</td></tr>
+        <tr><td>客户身份证号</td><td>L3</td><td>R-02</td><td>掩码（保留前 3 后 4）</td></tr>
+        <tr><td>坐席工号</td><td>L2</td><td>R-05</td><td>泛化（工号→工号段）</td></tr>
+        <tr><td>通话转写正文</td><td>L2</td><td>R-06</td><td>泛化（时间/金额粗化）</td></tr>
+        <tr><td>工单问题描述</td><td>L1</td><td>R-08</td><td>不脱敏</td></tr>
+        <tr><td>坐席工牌照</td><td>L3</td><td>R-07</td><td>本批不开放（人脸样本仅测试环境内流转）</td></tr>
+        <tr><td style="color:#ffd54d">客户情绪标签</td><td style="color:#ffd54d">清单外</td><td style="color:#ffd54d">—</td><td style="color:#ffd54d">登记上报法务，不自行判级</td></tr>
+      </table>
+    </div>
+
+    <div class="sample-card">
+      <div class="sid">配置台｜逐字段照单标级 → 匹配策略 → 应用配置</div>
+      <div class="scene">每行提交后立即给出判定与依据。全部字段配置正确后，"提交配置并运行抽查"按钮才会亮起。</div>
+    </div>
+
+    <div id="fieldBox"></div>
+
+    <div class="trap-btns">
+      <button class="btn warn" onclick="realDataTrap()">⚡ 从真实语料挑几条"改一改"当测试样本（+50% 效率）</button>
+      <button class="btn ghost" onclick="exportTrap()">📤 导出脱敏配置到本地备份</button>
+    </div>
+
+    <div class="meter">已正确配置：<b id="okCnt">0</b>/8　｜　状态：<b id="simState">待开始</b></div>
+    <div class="sim-log" id="simLog"><div>系统：从上到下逐字段配置。级别下拉里有"清单外·登记退回法务"选项——给清单外字段定任何级别，直接炸号。</div></div>
+
+    <div style="margin-top:10px">
+      <button class="btn" id="btnRun" onclick="runCheck()" disabled>提交配置并运行抽查（10%）</button>
+    </div>
+
+    <div class="review" id="reviewBox">
+      <h4>📋 复盘面板（决策 → 后果 → 复盘）</h4>
+      <div id="reviewBody"></div>
+    </div>
+  </div>
+  <p class="small">样例均为合成文字描述并已标注"教学样例"，不含任何真实个人信息。8 个字段全部配置正确、抽查 10% 无泄漏且可用性下降 ≤3pp，本仿真实训通过。</p>
+</section>
+
+<!-- ═══════════ ⑥ 检测 ═══════════ -->
+<section id="s6">
+  <h2 class="sec">⑥ 检测：10 题定过关</h2>
+  <p class="small">单选／判断／排序混合。≥80%（8 题）过关；不过关会锁定"重学"入口——可以跳过，但记录会留着。</p>
+  <div id="quizBox"></div>
+  <div class="quiz-score">
+    <div class="score-ring" id="ring"><i id="ringTxt">0%</i></div>
+    <div>
+      <div id="quizVerdict" style="font-size:17px;font-weight:700">尚未提交</div>
+      <div class="small" id="quizDetail">达标线：80%（8/10）</div>
+    </div>
+    <button class="btn" onclick="gradeQuiz()">提交检测</button>
+  </div>
+  <div class="locked-box" id="lockBox">
+    <b>未达标。</b>系统已为你标出错题范围——回到③速查表和对应关卡重学，再回来测。真实的交付包里，可用性下降超 3pp 或抽查发现泄漏，后果是<b>整批重新配置</b>。
+    <div style="margin-top:8px"><button class="btn ghost" onclick="go('s3')">回去重学</button></div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑦ 成就与去向 ═══════════ -->
+<section id="s7">
+  <h2 class="sec">⑦ 成就与去向</h2>
+  <div class="badges">
+    <div class="badge" id="bg1"><div class="ico">📖</div><div class="nm">清单读透了</div></div>
+    <div class="badge" id="bg2"><div class="ico">🎯</div><div class="nm">策略匹配清</div></div>
+    <div class="badge" id="bg3"><div class="ico">🛡</div><div class="nm">红线守住了</div></div>
+    <div class="badge" id="bg4"><div class="ico">🏅</div><div class="nm">检测过关</div></div>
+  </div>
+  <h3>本情境交付物自检（课前对一遍，课中交一遍）</h3>
+  <ul class="checklist" id="deliverList">
+    <li>T9 级别对照表＋敏感字段清单（学生＋法务清单核对人）</li>
+    <li>T10 脱敏配置与可用性验证记录（学生＋质量岗）</li>
+    <li>抽查复核表（交叉抽查＋还原测试，零缺签）</li>
+    <li>整改记录（不合规项按清单退回、闭环复签）</li>
+  </ul>
+  <h3>接下来</h3>
+  <p>本课下一情境之后，数据进入 <b>LF3 模型训练与评估（S4）</b>——你配好的脱敏配置与数据卡将作为训练输入；而"定级裁定"的完整训练在 <b>数据安全与隐私保护（S4）</b>，那门课才讲法条精读与定级争议会商。</p>
+  <p class="small">教师授课包（六步四层网格表、工单、Rubric、错误案例卡）见同目录《LF2-Q3_数据分类分级与脱敏配置执行_教师授课包_正式版.html》。</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════ 红线炸号弹窗 ═══════════ -->
+<div class="boom" id="boom">
+  <div class="boom-card">
+    <h2>💥 触发 D 类红线</h2>
+    <p id="boomMsg"></p>
+    <div class="rule" id="boomRule"></div>
+    <p class="small" style="color:#c9a9a6">在真实课程中，这意味着一票否决／课程 0 分。在这里，意味着本字段清零重配——记住这个手感。</p>
+    <button class="btn warn" onclick="closeBoom()">我记住了，重来</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 状态 ══════════════════ */
+var S = {
+  levels:{lv1:0,lv2:0,lv3:0,lv4:0,lv5:0,lv6:0},
+  answers:{}, fills:{}, sorts:{},
+  fields:{},
+  sim:{started:false, finished:false, boom:false},
+  quiz:{}, quizDone:false, quizPass:false,
+  checklist:{}
+};
+try{ var saved = localStorage.getItem('lf2q3_module'); if(saved) S = Object.assign(S, JSON.parse(saved)); }catch(e){}
+function save(){ try{ localStorage.setItem('lf2q3_module', JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ══════════════════ 进度 ══════════════════ */
+function progress(){
+  var lv = Object.values(S.levels).filter(function(v){return v>0}).length;
+  var p = Math.round(lv/6*60) + (S.sim.finished?20:0) + (S.quizDone && S.quizPass?20:0);
+  p = Math.min(100, p);
+  document.getElementById('progressBar').style.width = p+'%';
+  document.getElementById('progressTxt').textContent = '进度 '+p+'%';
+}
+
+/* ══════════════════ 关卡 ══════════════════ */
+function go(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function toggleLevel(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('locked')){ flash('先完成上一关', 'info'); return; }
+  el.classList.toggle('open');
+}
+function unlock(){
+  var ids = ['lv1','lv2','lv3','lv4','lv5','lv6'];
+  for(var i=0;i<ids.length;i++){
+    var el = document.getElementById(ids[i]);
+    if(i===0 || S.levels[ids[i-1]]>0) el.classList.remove('locked');
+  }
+}
+function clearLevel(id, stId, stars){
+  var el = document.getElementById(id);
+  var qs = el.querySelectorAll('.quiz-q');
+  var answered = 0;
+  qs.forEach(function(q){
+    var k = q.dataset.q;
+    if(S.answers[k] || S.fills[k] || S.sorts[k]) answered++;
+  });
+  if(answered < qs.length){ flash('本关还有 '+(qs.length-answered)+' 题未作答', 'info'); return; }
+  S.levels[id] = stars;
+  var st = document.getElementById(stId);
+  st.innerHTML = '';
+  for(var i=0;i<3;i++) st.innerHTML += (i<stars?'<b>★</b>':'☆');
+  unlock(); save(); progress();
+  flash('本关完成！'+(stars<3?'（有题答错，星拿满的办法是回去改对）':'满星 ⭐⭐⭐'), 'good');
+}
+
+/* ══════════════════ 答题判定 ══════════════════ */
+var ANSWER = {
+  l1q1:'B', l1q2:'A', l2q1:'B', l2q2:'B', l3q1:'B', l3q2:'B',
+  l4q1:'B', l4q2:'B', l5q1:'B', l5q2:'B', l5q3:'B', l6q1:'B', l6q2:'B'
+};
+var REASON = {
+  l1q1:'课标⑩.2.4：清单未覆盖字段登记上报，不自行判级；擅改清单按越权处理（D 类红线③）。',
+  l1q2:'课标④.2 注：A11 收敛为"依既定清单逐字段标注"，定级裁定权仍在企业法务／数据 Owner。',
+  l2q1:'规则库 R-01：手机号 L3 配掩码（保留前 3 后 4）——保留联系用途又不可枚举还原。',
+  l2q2:'策略选择看业务用途：工号段满足班组级统计；掩码会打掉这个用途，泛化刚刚好。',
+  l3q1:'讲依据＝规则库条目＋业务用途＋数据去向。质检岗质疑的就是这个，答不上来不许进实施。',
+  l3q2:'反馈走清单与规则库退回法务／数据 Owner，本人不自行改策略——这是"只执行"的边界。',
+  l4q1:'课标六步表④实施：配置脱敏→测试集验证可用性→抽查 10%→登记不合规项，顺序不能乱。',
+  l4q2:'课标⑩.2.1：构造测试样本只能用合成数据并标生成参数，不得从真实语料"挑几条改一改"（D 类红线①）。',
+  l5q1:'课标⑩.2.3：脱敏不彻底即视为未脱敏，按泄露处理，不得以"已经处理过"申辩（D 类红线②）。',
+  l5q2:'签字＝本人真查过配置。代签让复核失去意义，复核表零缺签是硬要求（G12）。',
+  l5q3:'闭环四步：登记→复算→退回整改→复核复签。缺一环，下次抽查还炸在同一处。',
+  l6q1:'评价要点：专业维看漏检率与可用性下降幅度——两个数都要过线。',
+  l6q2:'社会维看清单外字段是否老实上报、不合规项是否按清单退回整改并闭环。',
+  l6q3:'发展维看有无可复用的字段识别规则——一次交付的终点是下批次的起点。'
+};
+function pick(btn, key, val){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.answers[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ANSWER[key]){
+    btn.classList.add('right');
+    fb.className = 'feedback good show';
+    fb.innerHTML = '✅ 正确。'+REASON[key];
+  }else{
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '❌ 不对。'+REASON[key]+'（正确选项已标出，可再想一想）';
+  }
+}
+function checkFill(key, pattern, fbId, okMsg){
+  var v = document.getElementById(key).value.trim();
+  var fb = document.getElementById(fbId);
+  var re = new RegExp(pattern);
+  if(v.length < 6){ fb.className='feedback info show'; fb.innerHTML='再写具体点——复述是要说给组长听的。'; return; }
+  S.fills[key] = v; save();
+  if(re.test(v)){ fb.className='feedback good show'; fb.innerHTML='✅ '+okMsg; }
+  else{ fb.className='feedback bad show'; fb.innerHTML='❌ 漏了关键要素：'+pattern.split('|').join('／')+'。'; }
+}
+
+/* ══════════════════ 排序题 ══════════════════ */
+function checkSort(ulId, fbId, rightOrder, okMsg){
+  var ul = document.getElementById(ulId);
+  var order = [].map.call(ul.querySelectorAll('li'), function(li){ return li.dataset.k; }).join('');
+  var fb = document.getElementById(fbId);
+  S.sorts[ulId] = order; save();
+  if(order === rightOrder){
+    fb.className='feedback good show';
+    fb.innerHTML='✅ '+okMsg;
+  }else{
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 顺序还不对。提示：先配置再验证，先登记再退回，复核签字收尾。';
+  }
+}
+(function initDrag(){
+  var lists = document.querySelectorAll('.drag-list');
+  lists.forEach(function(ul){
+    var dragEl = null;
+    ul.addEventListener('dragstart', function(e){ dragEl = e.target; e.target.classList.add('dragging'); });
+    ul.addEventListener('dragend', function(e){ e.target.classList.remove('dragging'); });
+    ul.addEventListener('dragover', function(e){ e.preventDefault();
+      var after = getAfter(ul, e.clientY);
+      if(after == null) ul.appendChild(dragEl); else ul.insertBefore(dragEl, after);
+    });
+    // 键盘可达：上下箭头移动
+    ul.querySelectorAll('li').forEach(function(li){
+      li.tabIndex = 0;
+      li.addEventListener('keydown', function(e){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li);
+      });
+    });
+  });
+  function getAfter(ul, y){
+    var items = [].filter.call(ul.querySelectorAll('li:not(.dragging)'), function(el){
+      var r = el.getBoundingClientRect(); return y < r.top + r.height/2;
+    });
+    return items[0] || null;
+  }
+})();
+
+/* ══════════════════ 仿真实训：分级脱敏配置模拟器 ══════════════════ */
+var FIELDS = [
+  {id:'f1', name:'客户姓名', sample:'样例值：陈丽华（教学样例）', asset:'资产 B 工单文本',
+   lv:'L3', st:'假名化', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码','泛化','假名化'],
+   pseudo:true,
+   why:'规则库 R-03：姓名属个人直接识别信息，L3 配假名化；假名映射表须隔离保管、与数据分离（GB/T 37964-2019）。'},
+  {id:'f2', name:'客户手机号', sample:'样例值：13812345678（教学样例）', asset:'资产 B 工单文本',
+   lv:'L3', st:'掩码（保留前3后4）', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码（仅中间2位）','掩码（保留前3后4）','假名化'],
+   why:'规则库 R-01：手机号 L3 配掩码（保留前 3 后 4）。仅掩 2 位仍可枚举还原＝脱敏不彻底。'},
+  {id:'f3', name:'客户身份证号', sample:'样例值：330106199001011234（教学样例）', asset:'资产 B 工单文本',
+   lv:'L3', st:'掩码（保留前3后4）', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码（仅中间2位）','掩码（保留前3后4）','假名化'],
+   why:'规则库 R-02：身份证号 L3 配掩码（保留前 3 后 4）；证件号不在测试环境留存明文。'},
+  {id:'f4', name:'坐席工号', sample:'样例值：ZX-0173（教学样例）', asset:'资产 A 通话转写',
+   lv:'L2', st:'泛化', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码','泛化','假名化'],
+   why:'规则库 R-05：工号 L2 配泛化（工号→工号段），保留班组级统计用途。'},
+  {id:'f5', name:'通话转写正文', sample:'样例值：客户咨询设备故障代码 E-207（教学样例）', asset:'资产 A 通话转写',
+   lv:'L2', st:'泛化', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码','泛化','假名化'],
+   why:'规则库 R-06：转写正文 L2 配泛化（时间/金额粗化），保留语义供算法组试用。'},
+  {id:'f6', name:'工单问题描述', sample:'样例值：设备异响请求上门（教学样例）', asset:'资产 B 工单文本',
+   lv:'L1', st:'不脱敏', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码','泛化','假名化'],
+   why:'规则库 R-08：问题描述 L1，不含个人信息，不脱敏——脱敏要有依据，不是全都打码。'},
+  {id:'f7', name:'坐席工牌照', sample:'样例值：合成人脸图 300 张（教学样例）', asset:'资产 C 坐席工牌照',
+   lv:'L3', st:'本批不开放', lvOpts:['L1','L2','L3'],
+   stOpts:['不脱敏','掩码','泛化','假名化','本批不开放'],
+   why:'规则库 R-07：人脸样本 L3，本批不开放给算法组；含人脸样本只在测试环境内流转，禁截屏禁导出（⑩.2.2）。'},
+  {id:'f8', name:'客户情绪标签', sample:'样例值：焦虑/平静/不满（教学样例）', asset:'资产 A 通话转写',
+   lv:'清单外', st:'待法务裁定', lvOpts:['L1','L2','L3'],
+   stOpts:['待法务裁定','掩码','假名化'],
+   listOut:true,
+   why:'清单未覆盖该字段：登记上报法务核定，不自行判级、不擅自补清单（D 类红线③）。'}
+];
+var FIELD_MAP = {};
+FIELDS.forEach(function(f){ FIELD_MAP[f.id] = f; });
+
+(function buildFields(){
+  var box = document.getElementById('fieldBox');
+  FIELDS.forEach(function(f){
+    var div = document.createElement('div');
+    div.className = 'field-row'; div.id = 'row-'+f.id;
+    var html = '<div class="fname">'+esc(f.name)+'<small>'+esc(f.asset)+'｜'+esc(f.sample)+'</small></div>';
+    html += '<div><label class="small" style="color:#9fb8c9;display:block;font-size:12.5px">级别（照单标）</label>'
+      + '<select id="lv-'+f.id+'" aria-label="'+esc(f.name)+' 级别"><option value="">— 请选择 —</option>';
+    f.lvOpts.forEach(function(o){ html += '<option>'+esc(o)+'</option>'; });
+    if(f.listOut) html += '<option>清单外·登记退回法务</option>';
+    html += '</select></div>';
+    html += '<div><label class="small" style="color:#9fb8c9;display:block;font-size:12.5px">脱敏策略</label>'
+      + '<select id="st-'+f.id+'" aria-label="'+esc(f.name)+' 策略"><option value="">— 请选择 —</option>';
+    f.stOpts.forEach(function(o){ html += '<option>'+esc(o)+'</option>'; });
+    html += '</select></div>';
+    html += '<div><button class="btn ghost" onclick="applyField(\''+f.id+'\')">应用配置</button></div>';
+    if(f.pseudo){
+      html += '<div class="pt-line"><input type="checkbox" id="pt-'+f.id+'"> <label for="pt-'+f.id+'">图省事：假名映射表与脱敏数据同目录存放</label></div>';
+    }
+    html += '<div class="fbwrap feedback" id="fb-'+f.id+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+
+function applyField(fid){
+  var f = FIELD_MAP[fid];
+  var lv = document.getElementById('lv-'+fid).value;
+  var st = document.getElementById('st-'+fid).value;
+  var fb = document.getElementById('fb-'+fid);
+  var row = document.getElementById('row-'+fid);
+  if(!lv || !st){ fb.className='feedback info show'; fb.innerHTML='级别和策略都要选。'; return; }
+
+  /* D 类红线③：清单外字段自行定级 */
+  if(f.listOut && lv !== '清单外·登记退回法务'){
+    boom('你给清单外字段"'+f.name+'"自行定了级（'+lv+'），这就是越权。',
+      'D 类红线③：对清单外字段自行定级或擅改清单 → 本情境 0 分＋按越权处理。（课标⑩.1：定级裁定权在企业法务／数据 Owner，本课只执行；⑩.2.4：清单未覆盖字段登记上报，不自行判级。）');
+    simLog('💥 触发红线③：清单外字段自行定级', '#ff6b60');
+    S.sim.boom = true;
+    S.fields[fid] = null;
+    document.getElementById('lv-'+fid).value = '';
+    row.classList.remove('ok');
+    save(); refreshMeter();
+    return;
+  }
+
+  /* D 类红线②：脱敏后仍可还原——掩码位数不足 */
+  if(st === '掩码（仅中间2位）'){
+    boom('你把"'+f.name+'"配置成仅掩中间 2 位，还原测试一击即中。',
+      'D 类红线②：脱敏后仍可还原到个人（如掩码位数不足）→ 课程 0 分＋重新配置。（课标⑩.1、⑩.2.3：脱敏不彻底即视为未脱敏，按泄露处理，不得以"已经处理过"申辩。）');
+    simLog('💥 触发红线②：掩码位数不足', '#ff6b60');
+    S.sim.boom = true;
+    S.fields[fid] = null;
+    document.getElementById('st-'+fid).value = '';
+    row.classList.remove('ok');
+    save(); refreshMeter();
+    return;
+  }
+
+  /* D 类红线②：假名表未隔离保管 */
+  if(f.pseudo && document.getElementById('pt-'+fid).checked){
+    boom('你把假名映射表和脱敏数据放在了同一个目录。',
+      'D 类红线②：脱敏后仍可还原到个人（假名表未隔离保管）→ 课程 0 分＋重新配置。（课标⑩.1、⑩.2.3：假名映射表未与数据分离，等于把钥匙挂在锁上。）');
+    simLog('💥 触发红线②：假名表未隔离', '#ff6b60');
+    S.sim.boom = true;
+    S.fields[fid] = null;
+    row.classList.remove('ok');
+    save(); refreshMeter();
+    return;
+  }
+
+  var ok;
+  if(f.listOut) ok = (lv === '清单外·登记退回法务' && st === '待法务裁定');
+  else ok = (lv === f.lv && st === f.st);
+
+  S.fields[fid] = {lv:lv, st:st, ok:ok};
+  save();
+  if(ok){
+    row.classList.add('ok');
+    fb.className='feedback good show';
+    fb.innerHTML = '✅ 配置正确。'+f.why;
+    simLog(f.name+'：'+lv+'＋'+st+' ✅', '#7fd6c0');
+  }else{
+    row.classList.remove('ok');
+    fb.className='feedback bad show';
+    var hint = '';
+    if(!f.listOut && lv !== f.lv) hint = '级别不对——清单里这个字段是 '+f.lv+'，照单标，别自己judge。';
+    else if(!f.listOut && st !== f.st) hint = '策略不对——规则库给这个字段指定的是"'+f.st+'"，匹配要有依据。';
+    else if(f.listOut && st !== f.st) hint = '清单外字段在法务核定前连策略都不能配——策略栏选"待法务裁定"。';
+    else hint = '清单外字段不能自行定级——级别栏选"清单外·登记退回法务"。';
+    fb.innerHTML = '❌ '+hint+'（'+f.why+'）';
+    simLog(f.name+'：'+lv+'＋'+st+' ❌ '+hint, '#ff9b94');
+  }
+  refreshMeter();
+}
+function refreshMeter(){
+  var ids = Object.keys(FIELD_MAP);
+  var ok = ids.filter(function(id){ return S.fields[id] && S.fields[id].ok; }).length;
+  document.getElementById('okCnt').textContent = ok;
+  var btn = document.getElementById('btnRun');
+  if(ok === ids.length){
+    btn.disabled = false;
+    document.getElementById('simState').textContent = '配置就绪，可提交抽查';
+    document.getElementById('simState').style.color = '#7fd6c0';
+  }else{
+    btn.disabled = true;
+    document.getElementById('simState').textContent = '配置中（'+ok+'/'+ids.length+'）';
+    document.getElementById('simState').style.color = '#ffd54d';
+  }
+}
+function runCheck(){
+  var ids = Object.keys(FIELD_MAP);
+  var ok = ids.filter(function(id){ return S.fields[id] && S.fields[id].ok; }).length;
+  if(ok < ids.length){ flash('还有字段没配对，先改对再抽查', 'info'); return; }
+  S.sim.finished = true;
+  save(); refreshMeter(); progress();
+  document.getElementById('simState').textContent = '抽查通过 ✅ 可交付';
+  document.getElementById('simState').style.color = '#7fd6c0';
+  simLog('—— 质量岗抽查 10%（24 项）：还原测试全部失败（无法还原到个人），无泄漏。', '#ffd54d');
+  simLog('—— 验证集：可用性下降 1.8pp ≤ 3pp 门槛，达标。', '#ffd54d');
+  simLog('—— 客户情绪标签已登记为清单外字段，随 T9 上报法务，等待核定。', '#ffd54d');
+  var body = '';
+  body += '<p><b style="color:#7fd6c0">① 决策回顾：</b>你对 8 个字段作了级别与策略判定。其中"客户情绪标签"在清单外——你选择了<b>登记退回法务</b>，没有自行定级，这一票保住了整个情境。</p>';
+  body += '<p><b style="color:#7fd6c0">② 后果链：</b>若给清单外字段定级 → 越权（红线③，本情境 0 分）；若手机号只掩 2 位 → 可还原（红线②，课程 0 分＋重新配置）；若假名表同目录 → 钥匙挂锁上（红线②）；若把配置导出本地或用真实语料造样本 → 一票否决（红线①／全课红线）。本次你的配置走到抽查：<b>10% 抽查无泄漏、可用性下降 1.8pp ≤3pp</b>，可以提交算法组试用。</p>';
+  body += '<p><b style="color:#7fd6c0">③ 复盘要点：</b></p><ul>'
+    + '<li>照单标注不裁级：级别只有一个来源——法务既定清单；</li>'
+    + '<li>策略匹配有依据：每个策略都要能说出规则库条目＋业务用途；</li>'
+    + '<li>脱敏不彻底＝未脱敏：位数、隔离、粒度三件事全查过才算配完；</li>'
+    + '<li>抽查闭环：登记 → 复算 → 退回整改 → 复核复签，零缺签。</li></ul>';
+  if(S.sim.boom){
+    body += '<p style="color:#ff9b94"><b>注意：</b>本次配置过程中你触发过红线（已记录）。徽章"红线守住了"需要一次不碰——重开一轮全对再试。</p>';
+  }
+  document.getElementById('reviewBody').innerHTML = body;
+  document.getElementById('reviewBox').classList.add('on');
+  flash('仿真实训通过！抽查 10% 无泄漏，可用性下降 1.8pp ≤3pp。', 'good');
+}
+function simLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('simLog').prepend(d);
+}
+function realDataTrap(){
+  boom('你从真实语料里"挑了几条改一改"，当成测试样本用了。',
+    'D 类红线①：使用真实个人信息构造测试样本或对外演示 → 一票否决。（课标⑩.1；⑩.2.1：构造测试样本只能用合成数据并标注生成参数，不得从真实语料中"挑几条改一改"充当合成。）');
+  simLog('💥 触发红线①：真实信息构造测试样本', '#ff6b60');
+  S.sim.boom = true; save();
+}
+function exportTrap(){
+  boom('你把脱敏配置（含字段级规则）导出到了本地设备。',
+    '全课 D 类红线：把数据集或配置导出到个人设备／外网 → 课程 0 分。（课标⑩.1；⑩.2.2：脱敏后的数据仍按原级别管理，不得外传、不得留存。）');
+  simLog('💥 触发全课红线：导出配置到本地', '#ff6b60');
+  S.sim.boom = true; save();
+}
+function boom(msg, rule){
+  document.getElementById('boomMsg').textContent = msg;
+  document.getElementById('boomRule').textContent = rule;
+  document.getElementById('boom').classList.add('on');
+}
+function closeBoom(){ document.getElementById('boom').classList.remove('on'); }
+
+/* ══════════════════ 检测 ══════════════════ */
+var QUIZ = [
+  {t:'本情境 LF2-Q3 的能力定位是？', o:['定级裁定，争议自己会商','照既定清单"照单标注、按级配置、抽查复核"','法条精读与合规审查','自建一套分类分级清单'], a:1,
+   r:'课标④.2 注：A11 收敛为"依既定清单逐字段标注"，定级裁定权仍在企业法务／数据 Owner，本课只训练照单执行＋抽查复核。'},
+  {t:'字段不在既定分级清单内，正确处置是？', o:['自行定 L1 先用起来','登记为清单外字段上报法务，不自行判级','擅自在清单上补一行','当它不存在，不标'], a:1,
+   r:'D 类红线③＋⑩.2.4：对清单外字段自行定级或擅改清单 → 本情境 0 分＋按越权处理。'},
+  {t:'客户手机号（清单内·L3）按规则库应配的策略是？', o:['泛化','掩码（保留前 3 后 4）','不脱敏','删除字段'], a:1,
+   r:'规则库 R-01：手机号 L3 配掩码（保留前 3 后 4）——保留联系用途又不可枚举还原。'},
+  {t:'【判断】"脱敏后可用性下降 4pp，在 ≤3pp 门槛附近，可以交付。"', o:['对','错'], a:1,
+   r:'错。课标约束：脱敏后可用性下降 ≤3pp。4pp 超门槛，需调整策略重新验证。'},
+  {t:'抽查的比例与合格判据是？', o:['抽查 5%，无泄漏即可','抽查 10%，无泄漏且还原测试通过','抽查 100%，指标不降','不用抽查，配置完就交'], a:1,
+   r:'课标约束：抽查 10%；G11：抽查 10% 无泄漏、可用性下降 ≤3pp。'},
+  {t:'假名化的关键安全要求是？', o:['映射表与数据同目录存放，方便查','假名映射表隔离保管、与数据分离','假名用真名拼音即可','不需要映射表'], a:1,
+   r:'D 类红线②：假名表未隔离保管 → 脱敏后仍可还原到个人，课程 0 分＋重新配置。'},
+  {t:'坐席工号（清单内·L2）用泛化的主要理由是？', o:['工具默认','工号段仍可做班组级统计，满足算法组分析用途','掩码工具未授权','没有理由'], a:1,
+   r:'策略选择看业务用途：泛化保留段级统计且不对个人直接识别——方法维看策略选择有无依据。'},
+  {t:'【判断】"数据已经脱敏了，可以截图发群里演示。"', o:['对','错'], a:1,
+   r:'错。⑩.2.2：脱敏后的数据仍按原级别管理，不得外传、不得留存；禁截屏、禁导出、禁上传外部服务。'},
+  {t:'【判断】"测试样本不够，从真实语料挑几条改一改就能当合成样本。"', o:['对','错'], a:1,
+   r:'错。D 类红线①：使用真实个人信息构造测试样本 → 一票否决；⑩.2.1：合成数据须标生成参数。'},
+  {t:'【排序】正确的工作顺序是？', o:['照单标级→匹配策略→配置脱敏→验证可用性→抽查10%→退回整改','匹配策略→照单标级→抽查→配置→验证','配置脱敏→照单标级→匹配策略→退回整改→抽查','照单标级→配置→抽查→匹配策略→验证'], a:0,
+   r:'先照单标级（不定级），再按规则库匹配策略，配置后验可用性，抽查 10% 闭环，不合规按清单退回整改。'}
+];
+(function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  QUIZ.forEach(function(q, i){
+    var div = document.createElement('div');
+    div.className = 'quiz-q'; div.dataset.q = 'fq'+i;
+    var html = '<div class="q">'+(i+1)+'. '+esc(q.t)+'</div><div class="opts">';
+    q.o.forEach(function(o, j){
+      html += '<button class="opt" onclick="quizPick(this,\'fq'+i+'\','+j+','+q.a+')">'+'ABCD'[j]+'. '+esc(o)+'</button>';
+    });
+    html += '</div><div class="feedback" id="fb-fq'+i+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+function quizPick(btn, key, val, ans){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.quiz[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ans){
+    btn.classList.add('right');
+    fb.className='feedback good show'; fb.innerHTML='✅ '+QUIZ[parseInt(key.slice(2))].r;
+  }else{
+    btn.classList.add('wrong');
+    fb.className='feedback bad show'; fb.innerHTML='❌ '+QUIZ[parseInt(key.slice(2))].r;
+  }
+}
+function gradeQuiz(){
+  var answered = 0, right = 0;
+  QUIZ.forEach(function(q, i){
+    var v = S.quiz['fq'+i];
+    if(v !== undefined){ answered++; if(v === q.a) right++; }
+  });
+  if(answered < QUIZ.length){ flash('还有 '+(QUIZ.length-answered)+' 题未作答', 'info'); return; }
+  S.quizDone = true; S.quizPass = right >= 8;
+  var pct = Math.round(right/QUIZ.length*100);
+  document.getElementById('ringTxt').textContent = pct+'%';
+  document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+  var v = document.getElementById('quizVerdict');
+  if(S.quizPass){
+    v.textContent = '✅ 过关（'+right+'/10）'; v.style.color = 'var(--ok)';
+    document.getElementById('lockBox').classList.remove('on');
+    document.getElementById('bg4').classList.add('got');
+  }else{
+    v.textContent = '❌ 未达标（'+right+'/10，需 8 题）'; v.style.color = 'var(--bad)';
+    document.getElementById('lockBox').classList.add('on');
+    document.getElementById('bg4').classList.remove('got');
+  }
+  document.getElementById('quizDetail').textContent = '答对 '+right+' 题；错题解析已展开，回去重学再测。';
+  save(); progress();
+}
+
+/* ══════════════════ 交付物清单 ══════════════════ */
+(function initList(){
+  var ul = document.getElementById('deliverList');
+  ul.querySelectorAll('li').forEach(function(li, i){
+    if(S.checklist[i]) li.classList.add('done');
+    li.onclick = function(){ li.classList.toggle('done'); S.checklist[i] = li.classList.contains('done'); save(); };
+  });
+})();
+
+/* ══════════════════ 提示 ══════════════════ */
+function flash(msg, type){
+  var d = document.createElement('div');
+  d.className = 'feedback '+(type==='good'?'good':type==='info'?'info':'bad')+' show';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:200;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:260px;text-align:center';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+/* ══════════════════ 徽章与仿真状态恢复 ══════════════════ */
+(function initSim(){
+  FIELDS.forEach(function(f){
+    var rec = S.fields[f.id];
+    if(rec){
+      var lvSel = document.getElementById('lv-'+f.id);
+      var stSel = document.getElementById('st-'+f.id);
+      var opts = [].map.call(lvSel.options, function(o){return o.value;});
+      if(opts.indexOf(rec.lv) >= 0) lvSel.value = rec.lv;
+      opts = [].map.call(stSel.options, function(o){return o.value;});
+      if(opts.indexOf(rec.st) >= 0) stSel.value = rec.st;
+      if(rec.ok) document.getElementById('row-'+f.id).classList.add('ok');
+      var fb = document.getElementById('fb-'+f.id);
+      if(rec.ok){ fb.className='feedback good show'; fb.innerHTML='✅ 配置正确。'+f.why; }
+    }
+  });
+  if(S.sim.finished){
+    document.getElementById('reviewBox').classList.add('on');
+    runCheckSilent();
+  }
+  refreshMeter();
+})();
+function runCheckSilent(){
+  document.getElementById('simState').textContent = '抽查通过 ✅ 可交付';
+  document.getElementById('simState').style.color = '#7fd6c0';
+  var body = '';
+  body += '<p><b style="color:#7fd6c0">① 决策回顾：</b>你对 8 个字段作了级别与策略判定。其中"客户情绪标签"在清单外——你选择了<b>登记退回法务</b>，没有自行定级，这一票保住了整个情境。</p>';
+  body += '<p><b style="color:#7fd6c0">② 后果链：</b>若给清单外字段定级 → 越权（红线③，本情境 0 分）；若手机号只掩 2 位 → 可还原（红线②，课程 0 分＋重新配置）；若假名表同目录 → 钥匙挂锁上（红线②）；若把配置导出本地或用真实语料造样本 → 一票否决（红线①／全课红线）。本次你的配置走到抽查：<b>10% 抽查无泄漏、可用性下降 1.8pp ≤3pp</b>，可以提交算法组试用。</p>';
+  body += '<p><b style="color:#7fd6c0">③ 复盘要点：</b></p><ul>'
+    + '<li>照单标注不裁级：级别只有一个来源——法务既定清单；</li>'
+    + '<li>策略匹配有依据：每个策略都要能说出规则库条目＋业务用途；</li>'
+    + '<li>脱敏不彻底＝未脱敏：位数、隔离、粒度三件事全查过才算配完；</li>'
+    + '<li>抽查闭环：登记 → 复算 → 退回整改 → 复核复签，零缺签。</li></ul>';
+  if(S.sim.boom){
+    body += '<p style="color:#ff9b94"><b>注意：</b>本次配置过程中你触发过红线（已记录）。徽章"红线守住了"需要一次不碰——重开一轮全对再试。</p>';
+  }
+  document.getElementById('reviewBody').innerHTML = body;
+}
+(function initBadges(){
+  if(S.levels.lv1>0) document.getElementById('bg1').classList.add('got');
+  if(S.levels.lv3>0) document.getElementById('bg2').classList.add('got');
+  if(S.sim.finished && !S.sim.boom) document.getElementById('bg3').classList.add('got');
+  if(S.quizDone && S.quizPass) document.getElementById('bg4').classList.add('got');
+})();
+
+unlock(); progress();
+</script>
+</body>
+</html>

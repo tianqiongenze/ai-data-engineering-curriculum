@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF2-Q1 数据集清洗与质量报告编制 · 学生互动学习模块</title>
+<style>
+/* ========== 主题变量（与金标准同一套变量体系） ========== */
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1a2b3c; --ink2:#5a6b7c;
+  --brand:#0e7c66; --brand2:#0b5f4e; --brand-soft:#e3f2ee;
+  --warn:#b3541e; --warn-soft:#fdeee2; --ok:#1e7d3c; --ok-soft:#e6f4ea;
+  --bad:#b3261e; --bad-soft:#fdecea; --line:#d8e2ea; --gold:#b8860b;
+  --shadow:0 2px 10px rgba(14,60,80,.08); --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.75;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* ========== ① 顶部条 ========== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#0e7c66,#0b5f4e);
+  color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;
+  font-size:14px;box-shadow:var(--shadow)}
+.topbar b{font-size:15px}
+.topbar .chip{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 12px;white-space:nowrap}
+.topbar .spacer{flex:1}
+.progress-mini{background:rgba(255,255,255,.2);border-radius:20px;height:8px;width:130px;overflow:hidden}
+.progress-mini i{display:block;height:100%;background:#ffd54d;width:0;transition:width .4s}
+
+/* ========== 通用卡片/区块 ========== */
+section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 28px;margin:22px 0}
+h2.sec{font-size:21px;border-left:6px solid var(--brand);padding-left:12px;margin-bottom:14px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:8px 0}
+.small{font-size:13.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font-size:15px;padding:9px 22px;border-radius:10px;
+  transition:.2s;font-family:inherit}
+.btn:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn:disabled{background:#b8c4ce;cursor:not-allowed;transform:none}
+.btn.warn{background:var(--warn)}
+.btn.warn:hover{background:#8f4115}
+.tag{display:inline-block;background:var(--brand-soft);color:var(--brand2);
+  border-radius:6px;padding:1px 10px;font-size:13px;margin:2px 4px 2px 0}
+.feedback{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px;display:none}
+.feedback.show{display:block;animation:pop .3s}
+.feedback.good{background:var(--ok-soft);border-left:5px solid var(--ok)}
+.feedback.bad{background:var(--bad-soft);border-left:5px solid var(--bad)}
+.feedback.info{background:var(--warn-soft);border-left:5px solid var(--warn)}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ========== ② 情境引入 ========== */
+.story{background:linear-gradient(135deg,#f0f7f5,#e8f0f6);border-radius:12px;
+  padding:18px 20px;border:1px dashed var(--brand);margin:12px 0}
+.mission{border:2px solid var(--brand);border-radius:12px;padding:16px 20px;margin:14px 0;background:#fff}
+.mission h3{color:var(--brand2);margin-top:0}
+.constraints li{margin:6px 0 6px 22px}
+
+/* ========== ③ 知识预习：翻卡 ========== */
+.flipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.flip{perspective:900px;height:130px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px;text-align:center}
+.flip-f{background:var(--brand);color:#fff;font-weight:600;font-size:16px}
+.flip-f small{font-weight:400;font-size:12px;opacity:.85;margin-top:4px}
+.flip-b{background:#fff;border:2px solid var(--brand);color:var(--ink);transform:rotateY(180deg);font-size:14px}
+.spec-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+.spec-table th,.spec-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.spec-table th{background:var(--brand-soft)}
+.spec-table tr:hover td{background:#fafdfc}
+
+/* ========== ④ 六步闯关 ========== */
+.level{border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}
+.level-head{display:flex;align-items:center;gap:12px;background:#eef3f7;padding:12px 16px;cursor:pointer;user-select:none}
+.level-head .no{background:var(--brand);color:#fff;width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.level-head .tt{font-weight:700;flex:1}
+.level-head .stars{color:#c9d4dd;font-size:18px;letter-spacing:2px}
+.level-head .stars b{color:var(--gold)}
+.level.locked .level-head{opacity:.55;cursor:not-allowed}
+.level-body{display:none;padding:16px 20px;border-top:1px solid var(--line)}
+.level.open .level-body{display:block}
+.quiz-q{margin:14px 0}
+.quiz-q .q{font-weight:600;margin-bottom:8px}
+.opts{display:grid;gap:8px}
+.opt{border:2px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;background:#fff;
+  font-size:15px;text-align:left;font-family:inherit;transition:.15s;width:100%}
+.opt:hover{border-color:var(--brand)}
+.opt.picked{border-color:var(--brand);background:var(--brand-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.drag-list{list-style:none;display:grid;gap:8px}
+.drag-list li{border:2px solid var(--line);border-radius:10px;padding:9px 14px;background:#fff;cursor:grab}
+.drag-list li.dragging{opacity:.4}
+.drag-list li.over{border-color:var(--brand);border-style:dashed}
+.fillin{border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;width:100%;
+  font-family:inherit;margin:6px 0}
+.fillin:focus{border-color:var(--brand);outline:none}
+
+/* ========== ⑤ 仿真实训 ========== */
+.flow-strip{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0;font-size:13.5px}
+.flow-strip span{background:var(--brand-soft);color:var(--brand2);border-radius:8px;padding:3px 10px;white-space:nowrap}
+.flow-strip i{color:var(--ink2);font-style:normal}
+.sim{background:#0f1e2a;color:#e8f0f6;border-radius:14px;padding:20px;margin:14px 0}
+.sim h3{color:#7fd6c0;margin-top:0}
+.phase{color:#7fd6c0;font-weight:700;margin:14px 0 6px;font-size:15px}
+.sample-card{background:#16293a;border:1px solid #2c4a63;border-radius:10px;padding:14px 16px;margin:10px 0}
+.sample-card .sid{color:#7fd6c0;font-size:13px;font-weight:700}
+.sample-card .scene{font-size:15.5px;margin:6px 0}
+.sample-card .ai{background:#1d3450;border-left:4px solid #e0a437;padding:8px 12px;border-radius:6px;
+  font-size:14px;margin-top:8px;color:#f0d9a8}
+.sim-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sim-controls label{font-size:13.5px;color:#9fb8c9;display:block;margin-bottom:4px}
+.sim-controls select,.sim-controls button{border:none;border-radius:8px;padding:9px 12px;font-size:14.5px;font-family:inherit}
+.sim-controls select{background:#1d3450;color:#e8f0f6;border:1px solid #2c4a63}
+.sim-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.sim-table td{border:1px solid #2c4a63;padding:6px 10px}
+.sim-table td.k{background:#1d3450;color:#9fb8c9;width:96px;font-size:12.5px;white-space:nowrap}
+.meters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}
+.metric{background:#0a141d;border:1px solid #2c4a63;border-radius:10px;padding:10px 8px;text-align:center}
+.metric b{display:block;font-size:20px;color:#ffd54d}
+.metric small{color:#9fb8c9;font-size:12px}
+.metric.ok b{color:#7fd6c0}
+.metric.bad b{color:#ff9b94}
+.meter{background:#0a141d;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14.5px}
+.meter b{color:#ffd54d;font-size:18px}
+.sim-log{background:#0a141d;border-radius:10px;padding:12px 16px;font-size:13.5px;max-height:220px;overflow-y:auto;margin-top:10px}
+.sim-log div{padding:3px 0;border-bottom:1px dashed #1d3450}
+.recheck{background:#0a141d;border:1px solid #2c4a63;border-radius:10px;padding:6px 16px 16px;margin:10px 0}
+.boom{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);z-index:999;
+  align-items:center;justify-content:center;padding:20px}
+.boom.on{display:flex}
+.boom-card{background:#1c1214;border:3px solid var(--bad);border-radius:16px;max-width:560px;
+  padding:30px;text-align:center;color:#ffd9d6}
+.boom-card h2{color:#ff6b60;font-size:26px;margin-bottom:10px}
+.boom-card .rule{background:#2a1618;border-radius:10px;padding:12px;margin:14px 0;text-align:left;font-size:14.5px}
+
+/* ========== ⑥ 检测 ========== */
+.quiz-score{display:flex;gap:18px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.score-ring{width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--brand) 0%,#e3eaf0 0);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--ink)}
+.score-ring i{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal}
+.locked-box{background:var(--warn-soft);border-left:5px solid var(--warn);border-radius:10px;
+  padding:14px 18px;margin:12px 0;display:none}
+.locked-box.on{display:block}
+
+/* ========== ⑦ 成就 ========== */
+.badges{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.badge{width:104px;text-align:center;opacity:.28;filter:grayscale(1);transition:.3s}
+.badge.got{opacity:1;filter:none}
+.badge .ico{width:76px;height:76px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:34px;background:linear-gradient(135deg,#ffd54d,#ffb300);
+  box-shadow:0 3px 10px rgba(255,179,0,.35)}
+.badge .nm{font-size:13.5px;font-weight:600}
+.checklist{list-style:none;margin:12px 0}
+.checklist li{padding:8px 12px;border:1px dashed var(--line);border-radius:8px;margin:6px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+.checklist li.done{background:var(--ok-soft);border-color:var(--ok);text-decoration:line-through}
+.checklist li::before{content:"☐";font-size:18px}
+.checklist li.done::before{content:"☑";color:var(--ok)}
+
+/* ========== 响应式/打印 ========== */
+@media(max-width:720px){
+  .sim-controls{grid-template-columns:1fr}
+  .meters{grid-template-columns:1fr 1fr}
+  section{padding:18px 16px}
+  .topbar{font-size:12.5px}
+}
+@media print{
+  .topbar,.btn,.sim-controls,.boom{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .level-body{display:block!important}
+  .feedback{display:block!important}
+  .opt.right,.opt.wrong{outline:1px solid #999}
+  .badge{opacity:1;filter:none}
+  .sim-log{max-height:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ ① 顶部条 ═══════════ -->
+<div class="topbar">
+  <b>LF2-Q1 数据集清洗与质量报告编制</b>
+  <span class="chip">学习情境 · 36h</span>
+  <span class="chip">任务等级 L2 · 学期 S3</span>
+  <span class="chip">达标线 80%</span>
+  <span class="chip">数据均为教学样例</span>
+  <span class="spacer"></span>
+  <span id="progressTxt">进度 0%</span>
+  <div class="progress-mini"><i id="progressBar"></i></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════════ ② 情境引入 ═══════════ -->
+<section id="s2">
+  <h2 class="sec">② 情境引入：你接了一个待入库的数据集</h2>
+  <div class="story">
+    <p>某装备企业<b>设备工况数据集</b>（传感器时序 <b>12 万行</b>＋LF1 交付的图像标注集 <b>3000 条</b>）入库待用，
+    算法组给定质量基线（完整率 <b>≥99%</b>、重复率 <b>≤0.5%</b>、异常占比 <b>≤1.5%</b>）并要求 <b>48h 内交付</b>。</p>
+    <p>组长只说了一句：<b>"洗干净不难，难的是每一刀都留得回来。"</b></p>
+  </div>
+  <div class="mission">
+    <h3>你的任务</h3>
+    <p>对入库数据集跑四类检测、按处置规则清洗、复检指标，编制<b>质量报告</b>并在 48h 内交付。</p>
+    <h3>硬约束（违反任何一条，后果见"红线"）</h3>
+    <ul class="constraints">
+      <li>质量基线：完整率 <b>≥99%</b>、重复率 <b>≤0.5%</b>、异常占比 <b>≤1.5%</b></li>
+      <li><b>原始副本不得覆盖</b></li>
+      <li><b>变更须可回溯</b></li>
+      <li><b>异常值只可标记不可删</b></li>
+    </ul>
+    <p class="small">已知条件：交付单、质量规则表、清洗 SOP、指标定义、只读样本库。<b>本模块所有数据均为教学样例（合成值），不对应任何真实设备与企业。</b></p>
+  </div>
+  <button class="btn" onclick="go('s3')">开始预习 →</button>
+</section>
+
+<!-- ═══════════ ③ 知识预习 ═══════════ -->
+<section id="s3">
+  <h2 class="sec">③ 知识预习：先把基线与规则搞清楚</h2>
+  <p>点击卡片翻转查看定义。看不懂的条文先标记，带着问题进关。</p>
+  <div class="flipgrid">
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">四类问题<small>missing / dup / outlier / format</small></div>
+      <div class="flip-b"><b>缺失</b>：字段空值／漏报<br><b>重复</b>：同一记录多次入库<br><b>异常</b>：超量程／哨兵值／跳变<br><b>格式</b>：时间戳／单位／编号不统一</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">完整率<small>completeness</small></div>
+      <div class="flip-b">必填字段非空的记录占比。<br>基线：<b>≥99%</b><br>缺失行的处置是<b>补采</b>，不是删</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">重复率<small>duplication rate</small></div>
+      <div class="flip-b">重复记录占总记录比例。<br>基线：<b>≤0.5%</b><br>重复行处置是<b>删除</b>（保留一条）</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">异常占比<small>outlier ratio</small></div>
+      <div class="flip-b">异常记录占比。<br>基线：<b>≤1.5%</b><br>异常只可<b>标记</b>不可删，<br>交付走"可用集口径"</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">原始副本<small>raw backup</small></div>
+      <div class="flip-b">清洗前备份到<b>只读区</b>并记哈希。<br>约束：<b>原始副本不得覆盖</b><br>它是"变更可回溯"的唯一凭据</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">变更日志<small>change log</small></div>
+      <div class="flip-b">逐条登记三要素：<br><b>谁改／改哪／依据</b><br>无日志变更 = 0 条（A08）<br>漏登记 → 该条变更判无效</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">双算<small>double check</small></div>
+      <div class="flip-b">自己算一遍、同伴独立算一遍。<br>3 项指标与工具结果<br><b>偏差 ≤1%</b>（A28）</div></div></div>
+    <div class="flip"><div class="flip-in">
+      <div class="flip-f">哈希<small>SHA-256</small></div>
+      <div class="flip-b">备份的"防伪封条"。<br>原文件被改动 → 哈希变 → <br>覆盖行为立刻被发现</div></div></div>
+  </div>
+  <h3>处置规则速查表（质量规则表摘要）</h3>
+  <table class="spec-table">
+    <tr><th>问题类型</th><th>长相（速记）</th><th>处置动作</th><th>依据</th></tr>
+    <tr><td><b>缺失</b></td><td>字段空值、漏报</td><td><b>补采</b></td><td>处置规则表 R1：联系采集端回补；补采不回须登记原因</td></tr>
+    <tr><td><b>重复</b></td><td>同一记录多次入库</td><td><b>删除</b>（保留一条）</td><td>处置规则表 R2：重复率基线 ≤0.5%</td></tr>
+    <tr><td><b>异常</b></td><td>超量程、哨兵值（如 -999）、阶跃跳变</td><td><b>保留并记录</b>（只标记不删）</td><td>约束："异常值只可标记不可删"</td></tr>
+    <tr><td><b>格式</b></td><td>时间戳／单位／编号不统一</td><td><b>泛化</b>（统一格式）</td><td>处置规则表 R4：口径一致才能双算</td></tr>
+  </table>
+  <p class="small">记不清时随时回到本表。正式关卡里不提供此表——但你可以先把"异常只标记不删"这条记住，它是本情境的头号陷阱。</p>
+  <button class="btn" onclick="go('s4')">进入六步闯关 →</button>
+</section>
+
+<!-- ═══════════ ④ 六步闯关 ═══════════ -->
+<section id="s4">
+  <h2 class="sec">④ 六步闯关：按真实工作流程练</h2>
+  <p class="small">关卡按顺序解锁，与课标六步一一对应（4／4／4／14／5／5 学时）。答错会告诉你是哪条规则没说清——回去翻速查表，比背答案有用。</p>
+
+  <!-- 第①关 资讯 -->
+  <div class="level" id="lv1">
+    <div class="level-head" onclick="toggleLevel('lv1')">
+      <span class="no">1</span><span class="tt">① 资讯 · 读懂交付单与基线（4 学时）</span><span class="stars" id="st1">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：组长发来交付单、质量规则表、清洗 SOP、指标定义。开工前先把<b>三项基线值</b>和<b>四类问题定义</b>划出来。</p>
+      <div class="quiz-q" data-q="l1q1">
+        <div class="q">1. 算法组给定的质量基线是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q1','A')">A. 完整率 ≥99%、重复率 ≤0.5%、异常占比 ≤1.5%</button>
+          <button class="opt" onclick="pick(this,'l1q1','B')">B. 完整率 ≥95%、重复率 ≤1%、异常占比 ≤2%</button>
+          <button class="opt" onclick="pick(this,'l1q1','C')">C. 一致率 Kappa ≥0.85、完整率 ≥99%</button>
+          <button class="opt" onclick="pick(this,'l1q1','D')">D. 没有基线，洗干净就行</button>
+        </div>
+        <div class="feedback" id="fb-l1q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q2">
+        <div class="q">2. 数据质量"四类问题"是指？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l1q2','A')">A. 缺失／重复／异常／格式</button>
+          <button class="opt" onclick="pick(this,'l1q2','B')">B. 缺失／损坏／越权／延迟</button>
+          <button class="opt" onclick="pick(this,'l1q2','C')">C. 空值／乱码／重复／错值</button>
+          <button class="opt" onclick="pick(this,'l1q2','D')">D. 脏数据／坏行／废字段／旧格式</button>
+        </div>
+        <div class="feedback" id="fb-l1q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l1q3">
+        <div class="q">3. 【复述】用一句话写出"异常值"的处置约束（提示：跟"删"有关）。</div>
+        <input class="fillin" id="l1q3" placeholder="例：异常值只能……不能……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l1q3','标记|不可删|只可标记','fb-l1q3','对。约束原文："异常值只可标记不可删"——这是本情境与"清洗就是删脏行"的最大区别。')">提交复述</button>
+        <div class="feedback" id="fb-l1q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv1','st1')">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第②关 计划 -->
+  <div class="level locked" id="lv2">
+    <div class="level-head" onclick="toggleLevel('lv2')">
+      <span class="no">2</span><span class="tt">② 计划 · 列检测项与处置规则（4 学时）</span><span class="stars" id="st2">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：计划表有两栏是强制的——<b>"异常值怎么处置""变更怎么记"</b>。四类问题各配什么动作，先配平再动手。</p>
+      <div class="quiz-q" data-q="l2q1">
+        <div class="q">1. 缺失行（如 temp_avg 空值）的处置动作是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q1','A')">A. 补采（联系采集端回补；补采不回须登记原因）</button>
+          <button class="opt" onclick="pick(this,'l2q1','B')">B. 直接删除，干净利落</button>
+          <button class="opt" onclick="pick(this,'l2q1','C')">C. 泛化成统一格式</button>
+          <button class="opt" onclick="pick(this,'l2q1','D')">D. 保留并记录就行</button>
+        </div>
+        <div class="feedback" id="fb-l2q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q2">
+        <div class="q">2. 重复行（与已有记录逐字段相同）的处置动作是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l2q2','A')">A. 保留并记录</button>
+          <button class="opt" onclick="pick(this,'l2q2','B')">B. 删除重复项、保留一条</button>
+          <button class="opt" onclick="pick(this,'l2q2','C')">C. 补采一条新的</button>
+          <button class="opt" onclick="pick(this,'l2q2','D')">D. 泛化后两条都留</button>
+        </div>
+        <div class="feedback" id="fb-l2q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l2q3">
+        <div class="q">3. 【填空】变更日志必须逐条登记的三要素是？（提示：谁／哪／凭）</div>
+        <input class="fillin" id="l2q3" placeholder="输入三要素">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l2q3','谁改|改哪|依据','fb-l2q3','对。原子 A08（G4）："逐条登记谁改／改哪／依据，无日志变更 0 条"。')">提交</button>
+        <div class="feedback" id="fb-l2q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv2','st2')">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第③关 决策 -->
+  <div class="level locked" id="lv3">
+    <div class="level-head" onclick="toggleLevel('lv3')">
+      <span class="no">3</span><span class="tt">③ 决策 · 讲清你的处置依据（4 学时）</span><span class="stars" id="st3">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：签字放行前，质检员必问两句：<b>"异常值为何只标记不删？""原始副本哈希怎么留？"</b>——答不上来不许开洗。</p>
+      <div class="quiz-q" data-q="l3q1">
+        <div class="q">1. 被质疑"异常值为何只标记不删"，正确的回答是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q1','A')">A. "删了更干净，指标好看"</button>
+          <button class="opt" onclick="pick(this,'l3q1','B')">B. "约束规定'异常值只可标记不可删'；删了会篡改数据分布、且无法回溯，模型会学到错误关联"</button>
+          <button class="opt" onclick="pick(this,'l3q1','C')">C. "AI 建议删的"</button>
+          <button class="opt" onclick="pick(this,'l3q1','D')">D. "看情况，忙不过就删"</button>
+        </div>
+        <div class="feedback" id="fb-l3q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q2">
+        <div class="q">2. "原始副本哈希怎么留"？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l3q2','A')">A. 备份到只读区并计算哈希，登记到变更日志首条</button>
+          <button class="opt" onclick="pick(this,'l3q2','B')">B. 记在脑子里，不会忘</button>
+          <button class="opt" onclick="pick(this,'l3q2','C')">C. 截图发到群里让大家看见</button>
+          <button class="opt" onclick="pick(this,'l3q2','D')">D. 不用留，反正还会再备份</button>
+        </div>
+        <div class="feedback" id="fb-l3q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l3q3">
+        <div class="q">3. 【一句话】为什么备份必须在清洗<b>之前</b>？</div>
+        <input class="fillin" id="l3q3" placeholder="输入你的答案">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l3q3','回溯|无法恢复|覆盖|原文件','fb-l3q3','对。清洗是对原文件的第一次变更——先备份，后面任何一步才回得去。')">提交</button>
+        <div class="feedback" id="fb-l3q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv3','st3')">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第④关 实施 -->
+  <div class="level locked" id="lv4">
+    <div class="level-head" onclick="toggleLevel('lv4')">
+      <span class="no">4</span><span class="tt">④ 实施 · 备份→检测→清洗→登记→复检→报告（14 学时）</span><span class="stars" id="st4">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：账号开通、只读样本库挂上。本关先把实施步的七件事排成队——顺序错了，后面全乱。</p>
+      <div class="quiz-q" data-q="l4q1">
+        <div class="q">1. 【排序】把实施步七件事按正确顺序排好（拖拽，或用上下箭头移动后回车检查）：</div>
+        <ul class="drag-list" id="sortL4">
+          <li draggable="true" data-k="6">复检四项指标</li>
+          <li draggable="true" data-k="1">备份并记哈希</li>
+          <li draggable="true" data-k="3">算指标</li>
+          <li draggable="true" data-k="7">写质量报告</li>
+          <li draggable="true" data-k="2">跑四类检测</li>
+          <li draggable="true" data-k="5">逐条记变更</li>
+          <li draggable="true" data-k="4">按规则清洗</li>
+        </ul>
+        <button class="btn ghost" style="margin-top:8px" onclick="checkSort('sortL4','fb-l4q1')">检查顺序</button>
+        <div class="feedback" id="fb-l4q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l4q2">
+        <div class="q">2. 跑到一半发现脚本回写、把原文件覆盖了。正确的处置是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l4q2','A')">A. 悄悄重跑一遍，当没发生</button>
+          <button class="opt" onclick="pick(this,'l4q2','B')">B. 立即停 → 从只读备份恢复 → 补记日志 → 报告教师</button>
+          <button class="opt" onclick="pick(this,'l4q2','C')">C. 把覆盖后的文件当清洗结果继续交</button>
+          <button class="opt" onclick="pick(this,'l4q2','D')">D. 怪工具坏了，重装一遍就好</button>
+        </div>
+        <div class="feedback" id="fb-l4q2"></div>
+      </div>
+      <p class="small">↳ 通过本关后，下方<b>仿真实训区</b>就是你的工位：12 行教学样例，逐行配处置规则（也可以直接下去玩）。</p>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv4','st4')">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑤关 检查 -->
+  <div class="level locked" id="lv5">
+    <div class="level-head" onclick="toggleLevel('lv5')">
+      <span class="no">5</span><span class="tt">⑤ 检查 · 自检、互检与双算（5 学时）</span><span class="stars" id="st5">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：你交前自检，教师只抽查 20%、双算 3 项指标并当众公布偏差。指标算得对不对，是本步的命门。</p>
+      <div class="quiz-q" data-q="l5q1">
+        <div class="q">1. 双算 3 项指标，自己算的结果与工具结果的偏差要求是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q1','A')">A. ≤1%</button>
+          <button class="opt" onclick="pick(this,'l5q1','B')">B. ≤5%</button>
+          <button class="opt" onclick="pick(this,'l5q1','C')">C. ≤10%</button>
+          <button class="opt" onclick="pick(this,'l5q1','D')">D. 没有要求，差不多就行</button>
+        </div>
+        <div class="feedback" id="fb-l5q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q2">
+        <div class="q">2. 自检清单逐项打勾之后，下一步是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q2','A')">A. 直接交，等教师来查</button>
+          <button class="opt" onclick="pick(this,'l5q2','B')">B. 同伴互检 → 双算指标</button>
+          <button class="opt" onclick="pick(this,'l5q2','C')">C. 不用互检，自检过了就算数</button>
+          <button class="opt" onclick="pick(this,'l5q2','D')">D. 先下班，明天再说</button>
+        </div>
+        <div class="feedback" id="fb-l5q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l5q3">
+        <div class="q">3. 检查时发现一条变更没登记日志。按红线③，正确处理是？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l5q3','A')">A. 事后补登一条就行</button>
+          <button class="opt" onclick="pick(this,'l5q3','B')">B. 该条变更判无效并整批重洗</button>
+          <button class="opt" onclick="pick(this,'l5q3','C')">C. 只在社会维扣一点分</button>
+          <button class="opt" onclick="pick(this,'l5q3','D')">D. 不用处理，日志是形式</button>
+        </div>
+        <div class="feedback" id="fb-l5q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv5','st5')">完成本关，领取星星</button>
+    </div>
+  </div>
+
+  <!-- 第⑥关 评价 -->
+  <div class="level locked" id="lv6">
+    <div class="level-head" onclick="toggleLevel('lv6')">
+      <span class="no">6</span><span class="tt">⑥ 评价 · 知道自己差在哪（5 学时）</span><span class="stars" id="st6">☆☆☆</span>
+    </div>
+    <div class="level-body">
+      <p><b>情境</b>：批次交付。教师按 Rubric 打分，讲评 2 个典型错（删异常值、指标口径不一致）。轮到你自评。</p>
+      <div class="quiz-q" data-q="l6q1">
+        <div class="q">1. 评价要点里，"专业维"看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q1','A')">A. 识别率、指标偏差与基线达成</button>
+          <button class="opt" onclick="pick(this,'l6q1','B')">B. 变更日志有无漏签</button>
+          <button class="opt" onclick="pick(this,'l6q1','C')">C. 清洗速度</button>
+          <button class="opt" onclick="pick(this,'l6q1','D')">D. 出勤</button>
+        </div>
+        <div class="feedback" id="fb-l6q1"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q2">
+        <div class="q">2. "发展维"看什么？</div>
+        <div class="opts">
+          <button class="opt" onclick="pick(this,'l6q2','A')">A. 报告是否指出"下次该改哪条规则"</button>
+          <button class="opt" onclick="pick(this,'l6q2','B')">B. 日志写了多少条</button>
+          <button class="opt" onclick="pick(this,'l6q2','C')">C. 脚本跑得多快</button>
+          <button class="opt" onclick="pick(this,'l6q2','D')">D. 和组友关系好不好</button>
+        </div>
+        <div class="feedback" id="fb-l6q2"></div>
+      </div>
+      <div class="quiz-q" data-q="l6q3">
+        <div class="q">3. 【填空】写 1 条你自己的改进项（要具体、可执行）。</div>
+        <input class="fillin" id="l6q3" placeholder="例：下次算完整率前先读指标定义，把 -999 当缺失算……">
+        <button class="btn ghost" style="margin-top:8px" onclick="checkFill('l6q3','.{6,}','fb-l6q3','改进项要具体可执行——"下次注意"在 Rubric 里只值 2 分。')">提交</button>
+        <div class="feedback" id="fb-l6q3"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" onclick="clearLevel('lv6','st6')">完成本关，领取星星</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑤ 仿真实训 ═══════════ -->
+<section id="s5">
+  <h2 class="sec">⑤ 仿真实训：清洗规则配置游戏</h2>
+  <p>核心决策点：<b>四类问题的处置规则匹配</b>——识别缺失／重复／异常／格式后，按处置规则选对动作（补采／删除／保留并记录／泛化）。仿真分三段：<b>① 决策</b>（备份门＋逐行配置）→ <b>② 后果</b>（指标复算＋红线炸号）→ <b>③ 复盘</b>（逐行对照＋真实后果链）。</p>
+  <div class="flow-strip">
+    <span>备份并记哈希</span><i>→</i><span>跑四类检测</span><i>→</i><span>算指标</span><i>→</i><span>按规则清洗</span><i>→</i><span>逐条记变更</span><i>→</i><span>复检四项指标</span><i>→</i><span>写质量报告</span>
+  </div>
+  <div class="sim">
+    <h3>🗂 批次 DS-2026-4801（教学样例）｜工位 D-03｜设备工况 12 万行＋图像标注集 3000 条</h3>
+
+    <div class="phase">第 0 步 · 决策①：原始副本（清洗的第一个动作）</div>
+    <div class="sample-card">
+      <div class="sid">原始副本状态：<b id="copyState" style="color:#ffd54d">未备份 ⚠</b></div>
+      <div class="scene">清洗是对原文件的第一次变更。先把原始副本备份到只读区并计算哈希——这是"变更可回溯"的唯一凭据。</div>
+      <div class="ai" id="hashBox" style="display:none">只读区 raw_backup_DS-2026-4801/ ｜ SHA-256：a3f9c2e7…b41d（已登记为变更日志首条：谁改=本人，改哪=无（备份），依据=约束"原始副本不得覆盖"）</div>
+    </div>
+    <div class="sim-controls">
+      <div><button class="btn" id="btnBackup" onclick="doBackup()">① 备份原始副本并计算哈希</button></div>
+      <div><button class="btn warn" id="btnSkip" onclick="skipBackupTrap()">⚡ 跳过备份，直接清洗（省 10 分钟）</button></div>
+    </div>
+
+    <div class="phase">第 1 步 · 决策②：逐行配置处置规则（12 行教学样例）</div>
+    <div class="sample-card" id="rowCard">
+      <div class="sid">数据行 <span id="rowNo">—</span> / 12（教学样例）</div>
+      <table class="sim-table">
+        <tr><td class="k">行号</td><td id="rId">—</td><td class="k">设备</td><td id="rDev">—</td></tr>
+        <tr><td class="k">字段</td><td id="rField">—</td><td class="k">样例值</td><td id="rVal">—</td></tr>
+      </table>
+      <div class="sim-controls">
+        <div>
+          <label>问题类型（先识别）</label>
+          <select id="selType">
+            <option value="">— 请识别 —</option>
+            <option>缺失</option><option>重复</option><option>异常</option><option>格式</option>
+          </select>
+        </div>
+        <div>
+          <label>处置动作（再配置）</label>
+          <select id="selAct">
+            <option value="">— 请选择 —</option>
+            <option>补采</option><option>删除</option><option>泛化</option><option>保留并记录</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn" id="btnSubmit" onclick="submitRow()">登记并执行本条处置</button>
+        <button class="btn warn" id="btnBatch" onclick="batchTrap()">⚡ 批量套用规则，跳过逐条登记（快 5 倍）</button>
+      </div>
+    </div>
+
+    <div class="phase">第 2 步 · 后果：指标复算 vs 基线（每登记一行，实时更新）</div>
+    <div class="meters">
+      <div class="metric" id="m1" data-base="基线 ≥99%"><b>—</b><small>完整率｜基线 ≥99%</small></div>
+      <div class="metric" id="m2" data-base="基线 ≤0.5%"><b>—</b><small>重复率｜基线 ≤0.5%</small></div>
+      <div class="metric" id="m3" data-base="基线 ≤1.5%"><b>—</b><small>异常占比｜基线 ≤1.5%｜可用集口径</small></div>
+      <div class="metric" id="m4" data-base="复检第四项"><b>—</b><small>格式一致率｜复检第四项</small></div>
+    </div>
+    <div class="meter">进度：<b id="simDone">0</b>/12 行　｜　处置正确：<b id="simRight">0</b> 行　｜　状态：<b id="simState">待开始</b></div>
+    <div class="sim-log" id="simLog"><div>系统：先备份，再清洗。每一行处置都会登记"谁改／改哪／依据"。</div></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+    <button class="btn" id="btnStart" onclick="startSim()">▶ 载入 12 行教学样例，开始清洗</button>
+  </div>
+  <p class="small">全部数据均为教学样例（合成值，不对应任何真实设备与企业）。12 行等比于全批：99% 基线意味着 12 行里最多容 0.12 行——<b>1 行漏处置即不达标</b>。四条红线里藏着三个"炸号"陷阱：跳过备份、删异常行、跳过登记。</p>
+  <div id="recheckBox"></div>
+  <div id="debriefBox"></div>
+</section>
+
+<!-- ═══════════ ⑥ 检测 ═══════════ -->
+<section id="s6">
+  <h2 class="sec">⑥ 检测：10 题定过关</h2>
+  <p class="small">单选／判断／排序混合。≥80%（8 题）过关；不过关会锁定"重学"入口——可以跳过，但记录会留着。</p>
+  <div id="quizBox"></div>
+  <div class="quiz-score">
+    <div class="score-ring" id="ring"><i id="ringTxt">0%</i></div>
+    <div>
+      <div id="quizVerdict" style="font-size:17px;font-weight:700">尚未提交</div>
+      <div class="small" id="quizDetail">达标线：80%（8/10）</div>
+    </div>
+    <button class="btn" onclick="gradeQuiz()">提交检测</button>
+  </div>
+  <div class="locked-box" id="lockBox">
+    <b>未达标。</b>系统已为你标出错题范围——回到③速查表和对应关卡重学，再回来测。真实的批次里，指标不达标的后果是<b>算法组退回、48h 交付期作废</b>。
+    <div style="margin-top:8px"><button class="btn ghost" onclick="go('s3')">回去重学</button></div>
+  </div>
+</section>
+
+<!-- ═══════════ ⑦ 成就与去向 ═══════════ -->
+<section id="s7">
+  <h2 class="sec">⑦ 成就与去向</h2>
+  <div class="badges">
+    <div class="badge" id="bg1"><div class="ico">📖</div><div class="nm">基线读得懂</div></div>
+    <div class="badge" id="bg2"><div class="ico">🧩</div><div class="nm">规则配得对</div></div>
+    <div class="badge" id="bg3"><div class="ico">🛡</div><div class="nm">红线守住了</div></div>
+    <div class="badge" id="bg4"><div class="ico">🏅</div><div class="nm">检测过关</div></div>
+  </div>
+  <h3>本情境交付物自检（课前对一遍，课中交一遍）</h3>
+  <ul class="checklist" id="deliverList">
+    <li>T1 签收单</li>
+    <li>T2 处置规则表</li>
+    <li>T3 检测与指标表</li>
+    <li>T4 变更日志</li>
+    <li>T5 质量报告＋交付包</li>
+    <li>T11 人机分工说明</li>
+  </ul>
+  <h3>接下来</h3>
+  <p>下一个情境 <b>LF2-Q2 数据质量异常根因定位与治理</b>（L3，40h）：Q1 交付后两周，算法组反馈"模型 mAP 下降 8pp"，只说"数据不对"——未给具体字段，清洗日志只保留 3 天已过期。你要在日志缺失、无真值反馈时定根因。那才是 L3 的活。</p>
+  <p class="small">教师授课包（六步四层网格表、工单、Rubric、错误案例卡）见同目录《LF2-Q1_数据集清洗与质量报告编制_教师授课包_正式版.html》。</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════ 红线炸号弹窗 ═══════════ -->
+<div class="boom" id="boom">
+  <div class="boom-card">
+    <h2>💥 触发 D 类红线</h2>
+    <p id="boomMsg"></p>
+    <div class="rule" id="boomRule"></div>
+    <p class="small" style="color:#c9a9a6">在真实课程中，这意味着一票否决／本情境 0 分。在这里，意味着本关重来、"红线守住了"徽章熄灭——记住这个手感。</p>
+    <button class="btn warn" onclick="closeBoom()">我记住了，重来</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 状态 ══════════════════ */
+var S = {
+  levels:{lv1:0,lv2:0,lv3:0,lv4:0,lv5:0,lv6:0},
+  answers:{}, ok:{}, fills:{}, sorts:{},
+  sim:{started:false, backed:false, idx:0, done:0, right:0, boom:false, finished:false,
+       wrong:{'缺失':0,'重复':0,'异常':0,'格式':0}, choices:[]},
+  quiz:{}, quizDone:false, quizPass:false,
+  checklist:{}
+};
+try{ var saved = localStorage.getItem('lf2q1_module'); if(saved) S = Object.assign(S, JSON.parse(saved)); }catch(e){}
+function save(){ try{ localStorage.setItem('lf2q1_module', JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ══════════════════ 进度 ══════════════════ */
+function progress(){
+  var lv = Object.values(S.levels).filter(function(v){return v>0}).length;
+  var p = Math.round(lv/6*60) + (S.sim.finished?20:0) + (S.quizDone && S.quizPass?20:0);
+  p = Math.min(100, p);
+  document.getElementById('progressBar').style.width = p+'%';
+  document.getElementById('progressTxt').textContent = '进度 '+p+'%';
+}
+
+/* ══════════════════ 关卡 ══════════════════ */
+function go(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function toggleLevel(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('locked')){ flash('先完成上一关', 'info'); return; }
+  el.classList.toggle('open');
+}
+function unlock(){
+  var ids = ['lv1','lv2','lv3','lv4','lv5','lv6'];
+  for(var i=0;i<ids.length;i++){
+    var el = document.getElementById(ids[i]);
+    if(i===0 || S.levels[ids[i-1]]>0) el.classList.remove('locked');
+  }
+}
+function clearLevel(id, stId){
+  var el = document.getElementById(id);
+  var qs = el.querySelectorAll('.quiz-q');
+  var answered = 0, right = 0;
+  qs.forEach(function(q){
+    var k = q.dataset.q;
+    if(S.answers[k] !== undefined || S.fills[k] || S.sorts[k]) answered++;
+    if(S.ok[k]) right++;
+  });
+  if(answered < qs.length){ flash('本关还有 '+(qs.length-answered)+' 题未作答', 'info'); return; }
+  var stars = Math.max(1, Math.min(3, right));
+  S.levels[id] = stars;
+  var st = document.getElementById(stId);
+  st.innerHTML = '';
+  for(var i=0;i<3;i++) st.innerHTML += (i<stars?'<b>★</b>':'☆');
+  unlock(); save(); progress();
+  flash('本关完成！得 '+stars+' 星'+(stars<3?'（有题答错，改对后再来领取满星）':'，满星 ⭐⭐⭐'), 'good');
+}
+
+/* ══════════════════ 答题判定 ══════════════════ */
+var ANSWER = {
+  l1q1:'A', l1q2:'A', l2q1:'A', l2q2:'B', l3q1:'B', l3q2:'A',
+  l4q2:'B', l5q1:'A', l5q2:'B', l5q3:'B', l6q1:'A', l6q2:'A'
+};
+var REASON = {
+  l1q1:'情境描述原文："算法组给定质量基线（完整率 ≥99%、重复率 ≤0.5%、异常占比 ≤1.5%）并要求 48h 内交付"。本课不用 Kappa（⑧.2.2）。',
+  l1q2:'课标③.3 K1：数据质量四类问题（缺失／重复／异常／格式）识别；Q1①资讯步要求"划出 3 项基线值与 4 类问题定义"。',
+  l2q1:'处置规则表 R1：缺失→补采。不补采就删，完整率基线（≥99%）必崩，48h 交付期作废。',
+  l2q2:'处置规则表 R2：重复→删除重复项、保留一条。重复率基线 ≤0.5%，留着就超标。',
+  l3q1:'约束原文："异常值只可标记不可删"。删了会篡改数据分布、无法回溯——模型会学到错误关联。',
+  l3q2:'Q1④学生活动："备份并记哈希"。哈希是"未被覆盖"的可检查凭证，登记进变更日志首条。',
+  l4q2:'红线①的现场版：覆盖原文件 → 本情境 0 分＋重做。唯一正确动作是停、恢复、留痕、上报。',
+  l5q1:'原子 A28（G2）："能按指标定义算出完整率／重复率／异常占比，与工具结果偏差 ≤1%"。',
+  l5q2:'Q1⑤学生活动："自检清单逐项打勾→同伴互检→双算指标"。',
+  l5q3:'D 类红线③原文："变更无日志 → 该条变更判无效并整批重洗"。',
+  l6q1:'评价要点原文："专业维看识别率、指标偏差与基线达成"。',
+  l6q2:'评价要点原文："发展维看报告是否指出「下次该改哪条规则」"。'
+};
+function pick(btn, key, val){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.answers[key] = val;
+  S.ok[key] = (val === ANSWER[key]);
+  save();
+  var fb = document.getElementById('fb-'+key);
+  if(S.ok[key]){
+    btn.classList.add('right');
+    fb.className = 'feedback good show';
+    fb.innerHTML = '✅ 正确。'+REASON[key];
+  }else{
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '❌ 不对。'+REASON[key]+'（可改选后重新提交本关）';
+  }
+}
+function checkFill(key, pattern, fbId, okMsg){
+  var v = document.getElementById(key).value.trim();
+  var fb = document.getElementById(fbId);
+  var re = new RegExp(pattern);
+  if(v.length < 6){ fb.className='feedback info show'; fb.innerHTML='再写具体点——这是要说给质检员听的。'; return; }
+  S.fills[key] = v;
+  S.ok[key] = re.test(v);
+  save();
+  if(S.ok[key]){ fb.className='feedback good show'; fb.innerHTML='✅ '+okMsg; }
+  else{ fb.className='feedback bad show'; fb.innerHTML='❌ 漏了关键要素：'+pattern.split('|').join('／')+'。'; }
+}
+
+/* ══════════════════ 排序题 ══════════════════ */
+(function initDrag(){
+  var lists = document.querySelectorAll('.drag-list');
+  lists.forEach(function(ul){
+    var dragEl = null;
+    ul.addEventListener('dragstart', function(e){ dragEl = e.target; e.target.classList.add('dragging'); });
+    ul.addEventListener('dragend', function(e){ e.target.classList.remove('dragging'); });
+    ul.addEventListener('dragover', function(e){ e.preventDefault();
+      var after = getAfter(ul, e.clientY);
+      if(after == null) ul.appendChild(dragEl); else ul.insertBefore(dragEl, after);
+    });
+    ul.querySelectorAll('li').forEach(function(li){
+      li.tabIndex = 0;
+      li.addEventListener('keydown', function(e){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li);
+      });
+    });
+  });
+  function getAfter(ul, y){
+    var items = [].filter.call(ul.querySelectorAll('li:not(.dragging)'), function(el){
+      var r = el.getBoundingClientRect(); return y < r.top + r.height/2;
+    });
+    return items[0] || null;
+  }
+})();
+function checkSort(ulId, fbId){
+  var ul = document.getElementById(ulId);
+  var order = [].map.call(ul.querySelectorAll('li'), function(li){ return li.dataset.k; }).join('');
+  var fb = document.getElementById(fbId);
+  S.sorts[ulId] = order;
+  S.ok[ulId] = (order === '1234567');
+  save();
+  if(S.ok[ulId]){
+    fb.className='feedback good show';
+    fb.innerHTML='✅ 顺序正确。Q1④学生活动原文："备份并记哈希→跑四类检测→算指标→按规则清洗→逐条记变更→复检四项指标→写质量报告"。';
+  }else{
+    fb.className='feedback bad show';
+    fb.innerHTML='❌ 顺序还不对。提示：备份永远第一；检测在清洗前；登记跟在每一次变更后面；报告是收尾。';
+  }
+}
+
+/* ══════════════════ 仿真实训：清洗规则配置游戏 ══════════════════ */
+var ROWS = [
+  {id:'R-003', dev:'CNC-07', field:'temp_avg', val:'（空值）', type:'缺失', act:'补采'},
+  {id:'R-017', dev:'CNC-07', field:'整行', val:'与 R-089 逐字段相同（同时间戳 2026-08-13 14:22:05、同读数）', type:'重复', act:'删除'},
+  {id:'R-031', dev:'CNC-11', field:'vib_peak', val:'99.99（量程 0—50）', type:'异常', act:'保留并记录'},
+  {id:'R-061', dev:'CNC-03', field:'ts', val:'2026/08/13 14:22（其余行为 2026-08-13 14:22:05）', type:'格式', act:'泛化'},
+  {id:'R-052', dev:'CNC-04', field:'rpm', val:'（空值）', type:'缺失', act:'补采'},
+  {id:'R-073', dev:'CNC-11', field:'temp_avg', val:'-999（哨兵占位值，非真实读数）', type:'异常', act:'保留并记录'},
+  {id:'R-082', dev:'CNC-05', field:'pressure', val:'6 bar（其余行为 kPa）', type:'格式', act:'泛化'},
+  {id:'R-044', dev:'CNC-03', field:'整行', val:'与 R-043 主键相同，重复上报', type:'重复', act:'删除'},
+  {id:'R-098', dev:'CNC-02', field:'rpm', val:'相邻行阶跃跳变＞3σ', type:'异常', act:'保留并记录'},
+  {id:'R-058', dev:'CNC-12', field:'load', val:'（空值）', type:'缺失', act:'补采'},
+  {id:'R-103', dev:'CNC-09', field:'dev_id', val:'cnc-07（其余行为 CNC-07）', type:'格式', act:'泛化'},
+  {id:'R-070', dev:'CNC-09', field:'整行', val:'二次入库产生的重复副本', type:'重复', act:'删除'}
+];
+var RULE = {'缺失':'补采','重复':'删除','异常':'保留并记录','格式':'泛化'};
+var CONSEQ = {
+  '缺失':'缺失未补采 → 完整率跌破 99% 基线 → 算法组退回 → 48h 交付期作废 → 客户追责',
+  '重复':'重复未删 → 重复率超标 → 模型对重复样本过拟合 → 评测虚高 → 上线后误检率上升',
+  '异常':'异常未标记 → 脏值混进训练集 → 模型学到错误关联——两周后算法组反馈"模型 mAP 下降 8pp"（正是 LF2-Q2 的开场）',
+  '格式':'格式未泛化 → 口径不一致 → 双算偏差 >1% → A28 不达成 → 检查步整批打回'
+};
+var LOGWHY = {'缺失':'处置规则表 R1','重复':'处置规则表 R2','异常':'约束"异常值只可标记不可删"','格式':'处置规则表 R4'};
+
+function simLog(txt, cls){
+  var d = document.createElement('div');
+  d.innerHTML = txt;
+  if(cls) d.style.color = cls;
+  document.getElementById('simLog').prepend(d);
+}
+function setM(id, txt, okState){
+  var el = document.getElementById(id);
+  el.innerHTML = '<b>'+txt+'</b><small>'+el.dataset.base+'</small>';
+  el.classList.remove('ok','bad');
+  if(okState === true) el.classList.add('ok');
+  if(okState === false) el.classList.add('bad');
+}
+function updMetrics(){
+  var w = S.sim.wrong;
+  var intact = 100 - w['缺失']*8.3;
+  var dup = w['重复']*8.3;
+  var abn = w['异常']*8.3;
+  var fmt = 100 - w['格式']*8.3;
+  setM('m1', intact.toFixed(1)+'%', intact>=99);
+  setM('m2', dup.toFixed(1)+'%', dup<=0.5);
+  setM('m3', abn.toFixed(1)+'%', abn<=1.5);
+  setM('m4', fmt.toFixed(1)+'%', null);
+}
+function doBackup(){
+  if(S.sim.backed) return;
+  S.sim.backed = true; save();
+  document.getElementById('copyState').textContent = '已备份＋哈希 ✅';
+  document.getElementById('copyState').style.color = '#7fd6c0';
+  document.getElementById('hashBox').style.display = 'block';
+  document.getElementById('btnBackup').disabled = true;
+  document.getElementById('btnSkip').style.display = 'none';
+  simLog('✅ 原始副本已备份至只读区 raw_backup_DS-2026-4801/，SHA-256：a3f9c2e7…b41d（日志首条已登记）', '#7fd6c0');
+  flash('副本已备份。现在可以开始清洗了。', 'good');
+}
+function skipBackupTrap(){
+  S.sim.boom = true; save();
+  boom('你跳过了备份，直接在原文件上开洗。',
+       'D 类红线①：未备份原始副本即清洗（覆盖原文件）→ 本情境 0 分＋重做。约束原文："原始副本不得覆盖"——它是"变更可回溯"的唯一凭据，覆盖了它，后面每一步都回不去。');
+  simLog('💥 触发红线①：跳过备份直接清洗', '#ff6b60');
+}
+function startSim(){
+  if(!S.sim.backed){
+    boom('你在未备份原始副本的情况下点击了"开始清洗"。',
+         'D 类红线①：未备份原始副本即清洗（覆盖原文件）→ 本情境 0 分＋重做。先做第 0 步：备份原始副本并计算哈希。');
+    simLog('💥 触发红线①：未备份即清洗', '#ff6b60');
+    S.sim.boom = true; save();
+    return;
+  }
+  S.sim = {started:true, backed:true, idx:0, done:0, right:0,
+           boom:S.sim.boom, finished:false,
+           wrong:{'缺失':0,'重复':0,'异常':0,'格式':0}, choices:[]};
+  save();
+  document.getElementById('recheckBox').innerHTML = '';
+  document.getElementById('debriefBox').innerHTML = '';
+  document.getElementById('simLog').innerHTML = '<div>系统：批次已载入。逐行识别问题类型 → 选处置动作 → 登记。每行登记三要素：谁改／改哪／依据。</div>';
+  document.getElementById('simState').textContent = '清洗中';
+  document.getElementById('simState').style.color = '#7fd6c0';
+  nextRow(); updMetrics();
+  flash('批次已载入：12 行教学样例。逐行配置处置规则。', 'info');
+}
+function nextRow(){
+  var r = ROWS[S.sim.idx];
+  document.getElementById('rowNo').textContent = (S.sim.idx+1);
+  document.getElementById('rId').textContent = r.id;
+  document.getElementById('rDev').textContent = r.dev;
+  document.getElementById('rField').textContent = r.field;
+  document.getElementById('rVal').textContent = r.val;
+  document.getElementById('selType').value = '';
+  document.getElementById('selAct').value = '';
+  document.getElementById('simDone').textContent = S.sim.done;
+  document.getElementById('simRight').textContent = S.sim.right;
+}
+function submitRow(){
+  if(!S.sim.started || S.sim.finished) return;
+  var r = ROWS[S.sim.idx];
+  var t = document.getElementById('selType').value;
+  var a = document.getElementById('selAct').value;
+  if(!t || !a){ simLog('⚠ 问题类型和处置动作都要选', '#e0a437'); return; }
+  if(t === '异常' && a === '删除'){
+    S.sim.boom = true; save();
+    boom('你把 '+r.id+'（'+r.field+'＝'+r.val+'）直接删除，而不是标记。',
+         'D 类红线②：删除异常记录而非标记 → 本情境 0 分＋恢复数据。约束原文："异常值只可标记不可删"——指标要好看，靠的是可用集口径，不是把不好看的数删掉。');
+    simLog('💥 触发红线②：删除异常记录 '+r.id, '#ff6b60');
+    return;
+  }
+  var correct = (t === r.type) && (a === RULE[r.type]);
+  S.sim.choices.push({id:r.id, t:t, a:a, right:correct});
+  if(correct){
+    S.sim.right++;
+    simLog('['+r.id+'] '+t+'→'+a+' ✅ 已登记：谁改=本人，改哪='+r.id+'，依据='+LOGWHY[t], '#7fd6c0');
+  }else{
+    S.sim.wrong[r.type]++;
+    simLog('['+r.id+'] '+t+'→'+a+' ❌ 规则要求：'+r.type+'→'+RULE[r.type]+'。'+CONSEQ[r.type], '#ff9b94');
+  }
+  S.sim.done++;
+  S.sim.idx++;
+  save();
+  updMetrics();
+  document.getElementById('simDone').textContent = S.sim.done;
+  document.getElementById('simRight').textContent = S.sim.right;
+  if(S.sim.idx >= ROWS.length) finishSim();
+  else nextRow();
+}
+function batchTrap(){
+  S.sim.boom = true; save();
+  boom('你点了"批量套用规则，跳过逐条登记"——已处理的变更一条都没登记。',
+       'D 类红线③：变更无日志 → 该条变更判无效并整批重洗。日志三要素：谁改／改哪／依据——漏一条，这条变更就不算数。');
+  simLog('💥 触发红线③：批量跳过逐条登记，未登记变更判无效', '#ff6b60');
+}
+function finishSim(){
+  S.sim.finished = true; save();
+  var w = S.sim.wrong;
+  var intact = 100 - w['缺失']*8.3, dup = w['重复']*8.3, abn = w['异常']*8.3, fmt = 100 - w['格式']*8.3;
+  var baseOk = intact>=99 && dup<=0.5 && abn<=1.5;
+  var allRight = S.sim.right === ROWS.length;
+  var pass = allRight && baseOk && S.sim.backed;
+  document.getElementById('simState').textContent = pass ? '本批通过 ✅' : '本批不通过 ❌';
+  document.getElementById('simState').style.color = pass ? '#7fd6c0' : '#ff9b94';
+  simLog('—— 批次结束：处置正确 '+S.sim.right+'/12 行；完整率 '+intact.toFixed(1)+'%、重复率 '+dup.toFixed(1)+'%、异常占比 '+abn.toFixed(1)+'%、格式一致率 '+fmt.toFixed(1)+'%。', '#ffd54d');
+  if(!pass) simLog('真实场景下：指标不达标 → 算法组退回 → 48h 交付期作废；任一红线触发 → 本情境 0 分。', '#ff9b94');
+
+  var chk = function(label, val){ return '<tr><td class="k">'+label+'</td><td>'+val+'</td></tr>'; };
+  var html = '<div class="recheck"><div class="phase">③ 复盘 · 复检与合规（决策→后果→复盘的最后一环）</div>';
+  html += '<table class="sim-table">';
+  html += '<tr><td class="k">完整率</td><td>'+intact.toFixed(1)+'%</td><td class="k">基线 ≥99%</td><td>'+(intact>=99?'达成 ✅':'未达成 ❌')+'</td></tr>';
+  html += '<tr><td class="k">重复率</td><td>'+dup.toFixed(1)+'%</td><td class="k">基线 ≤0.5%</td><td>'+(dup<=0.5?'达成 ✅':'未达成 ❌')+'</td></tr>';
+  html += '<tr><td class="k">异常占比</td><td>'+abn.toFixed(1)+'%</td><td class="k">基线 ≤1.5%｜可用集口径</td><td>'+(abn<=1.5?'达成 ✅':'未达成 ❌')+'</td></tr>';
+  html += '<tr><td class="k">格式一致率</td><td>'+fmt.toFixed(1)+'%</td><td class="k">复检第四项</td><td>'+(w['格式']===0?'按规则表核 ✅':'有未泛化行 ❌')+'</td></tr>';
+  html += '</table>';
+  html += '<table class="sim-table">';
+  html += chk('原始副本', S.sim.backed ? '已备份＋哈希 ✅' : '未备份 ❌（红线①）');
+  html += chk('变更日志', '已登记 '+S.sim.done+'/12 条，三要素（谁改／改哪／依据）齐全 ✅');
+  html += chk('红线炸号', S.sim.boom ? '本批触发过炸号 ❌（"红线守住了"徽章不可点亮）' : '本批 0 次 ✅');
+  html += '</table>';
+  html += '<p style="margin:10px 0">'+(pass
+    ? '<b style="color:#7fd6c0">本批通过 ✅</b>　三项基线达成、副本哈希已留、日志 12/12 条、零炸号。真实项目里，这一包才可以交付。'
+    : '<b style="color:#ff9b94">本批不通过 ❌</b>　见上方未达成项与下方复盘表。真实项目里：指标不达标 → 算法组退回 → 48h 交付期作废；触发过红线 → 本情境 0 分。')+'</p>';
+  html += '<p class="small" style="color:#9fb8c9">检查步口径：教师抽查 20%、双算 3 项指标（完整率／重复率／异常占比），与工具结果偏差 ≤1%（A28）——自己动手算一遍，别只信工具。</p>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">';
+  html += '<button class="btn" onclick="showDebrief()">📋 展开逐行复盘</button> ';
+  html += '<button class="btn ghost" style="background:#1d3450;color:#7fd6c0;border-color:#2c4a63" onclick="startSim()">↺ 整批重洗（再跑一次）</button>';
+  html += '</div></div>';
+  document.getElementById('recheckBox').innerHTML = html;
+  if(pass) flash('仿真实训通过！去点亮徽章吧。', 'good');
+  progress();
+}
+function showDebrief(){
+  var rows = '';
+  ROWS.forEach(function(r, i){
+    var c = S.sim.choices[i];
+    var mine = c ? (c.t+' → '+c.a) : '（未处理）';
+    var res = c && c.right ? '<span style="color:#1e7d3c">✅ 配得对</span>' : '<span style="color:#b3261e">❌ 配错了</span>';
+    var conseq = c && c.right ? '规则执行到位，指标与日志双闭环。' : CONSEQ[r.type];
+    rows += '<tr><td>'+r.id+'</td><td>'+r.type+'</td><td>'+mine+'</td><td><b>'+r.type+' → '+RULE[r.type]+'</b></td><td>'+res+'</td><td>'+conseq+'</td></tr>';
+  });
+  var boomNote = S.sim.boom
+    ? '<p style="color:#b3261e"><b>本批触发过红线炸号</b>：真实课程中＝本情境 0 分。"红线守住了"徽章需要零炸号——重跑一次，一条红线都不碰。</p>'
+    : '<p style="color:#1e7d3c"><b>本批零炸号</b>：三条 D 类红线一条都没碰，徽章"红线守住了"已点亮。</p>';
+  var html = '<h3 style="margin-top:18px">复盘表：你的选择 vs 处置规则（逐行对照）</h3>';
+  html += '<table class="spec-table"><tr><th>行号</th><th>问题类型</th><th>你的选择</th><th>规则要求</th><th>结果</th><th>真实后果链</th></tr>'+rows+'</table>';
+  html += boomNote;
+  html += '<p class="small">记住四条规则的口径：<b>缺失→补采；重复→删除；异常→保留并记录；格式→泛化</b>。清洗前必须备份原始副本，每一次变更必须留日志。</p>';
+  document.getElementById('debriefBox').innerHTML = html;
+  document.getElementById('debriefBox').scrollIntoView({behavior:'smooth'});
+}
+function boom(msg, rule){
+  document.getElementById('boomMsg').textContent = msg;
+  document.getElementById('boomRule').textContent = rule;
+  document.getElementById('boom').classList.add('on');
+}
+function closeBoom(){ document.getElementById('boom').classList.remove('on'); }
+
+/* ══════════════════ 检测 ══════════════════ */
+var QUIZ = [
+  {t:'本情境算法组给定的质量基线是？', o:['完整率 ≥99%、重复率 ≤0.5%、异常占比 ≤1.5%','完整率 ≥95%、重复率 ≤1%、异常占比 ≤2%','一致率 Kappa ≥0.85、完整率 ≥99%','没有基线，洗干净就行'], a:0,
+   r:'情境描述原文："算法组给定质量基线（完整率 ≥99%、重复率 ≤0.5%、异常占比 ≤1.5%）并要求 48h 内交付"。本课不使用 Kappa（⑧.2.2）。'},
+  {t:'数据质量"四类问题"是指？', o:['缺失／损坏／越权／延迟','缺失／重复／异常／格式','空值／乱码／重复／错值','脏数据／坏行／废字段／旧格式'], a:1,
+   r:'课标③.3 K1：数据质量四类问题（缺失／重复／异常／格式）识别；Q1①资讯步要求"划出 3 项基线值与 4 类问题定义"。'},
+  {t:'发现 vib_peak＝99.99（量程 0—50）的异常行，正确处置是？', o:['直接删除该行','保留并记录（只标记，不删）','把值改成量程上限 50','跳过不处理'], a:1,
+   r:'约束原文："异常值只可标记不可删"；D 类红线②："删除异常记录而非标记 → 本情境 0 分＋恢复数据"。'},
+  {t:'未备份原始副本就清洗、覆盖了原文件，后果是？', o:['补记一条日志就行','本情境 0 分＋重做','该条变更判无效','没有后果，数据还在'], a:1,
+   r:'D 类红线①原文："未备份原始副本即清洗（覆盖原文件）→ 本情境 0 分＋重做"。约束："原始副本不得覆盖"。'},
+  {t:'某条变更没有登记日志，按红线③如何处理？', o:['事后补一条就行','该条变更判无效并整批重洗','只扣社会维的分','不用处理'], a:1,
+   r:'D 类红线③原文："变更无日志 → 该条变更判无效并整批重洗"。'},
+  {t:'检查步"双算 3 项指标"的偏差要求是？', o:['≤5%','≤1%','≤10%','没有要求'], a:1,
+   r:'原子 A28（G2）："能按指标定义算出完整率／重复率／异常占比，与工具结果偏差 ≤1%"。'},
+  {t:'【排序】实施步七件事的正确顺序是？', o:['备份并记哈希→跑四类检测→算指标→按规则清洗→逐条记变更→复检四项指标→写质量报告','跑四类检测→备份→算指标→清洗→复检→写报告','备份→清洗→检测→算指标→记变更→复检→写报告','算指标→备份→检测→清洗→写报告→复检'], a:0,
+   r:'Q1④学生活动原文："备份并记哈希→跑四类检测→算指标→按规则清洗→逐条记变更→复检四项指标→写质量报告"。'},
+  {t:'【判断】"缺失行一律删除，效率最高。"', o:['对','错'], a:1,
+   r:'错。处置规则：缺失→补采。不补采就删，完整率基线（≥99%）必崩，48h 交付期作废。'},
+  {t:'下列哪项<b>不是</b>本情境的交付物？', o:['T1 签收单','T2 处置规则表','T6 问题界定书','T4 变更日志'], a:2,
+   r:'Q1 交付物：T1 签收单、T2 处置规则表、T3 检测与指标表、T4 变更日志、T5 质量报告＋交付包、T11 人机分工说明；T6 问题界定书是 LF2-Q2 的交付物。'},
+  {t:'评价要点中，"专业维"看什么？', o:['变更日志有无漏签','识别率、指标偏差与基线达成','报告是否指出"下次该改哪条规则"','处置规则是否被真正执行'], a:1,
+   r:'评价要点原文：专业维看识别率、指标偏差与基线达成；方法维看处置规则是否被真正执行；社会维看变更日志有无漏签；发展维看报告是否指出"下次该改哪条规则"。'}
+];
+(function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  QUIZ.forEach(function(q, i){
+    var div = document.createElement('div');
+    div.className = 'quiz-q'; div.dataset.q = 'fq'+i;
+    var html = '<div class="q">'+(i+1)+'. '+esc(q.t)+'</div><div class="opts">';
+    q.o.forEach(function(o, j){
+      html += '<button class="opt" onclick="quizPick(this,\'fq'+i+'\','+j+','+q.a+')">'+'ABCD'[j]+'. '+esc(o)+'</button>';
+    });
+    html += '</div><div class="feedback" id="fb-fq'+i+'"></div>';
+    div.innerHTML = html;
+    box.appendChild(div);
+  });
+})();
+function quizPick(btn, key, val, ans){
+  var box = btn.closest('.quiz-q');
+  box.querySelectorAll('.opt').forEach(function(b){ b.classList.remove('picked','right','wrong'); });
+  btn.classList.add('picked');
+  S.quiz[key] = val; save();
+  var fb = document.getElementById('fb-'+key);
+  if(val === ans){
+    btn.classList.add('right');
+    fb.className='feedback good show'; fb.innerHTML='✅ '+QUIZ[parseInt(key.slice(2))].r;
+  }else{
+    btn.classList.add('wrong');
+    fb.className='feedback bad show'; fb.innerHTML='❌ '+QUIZ[parseInt(key.slice(2))].r;
+  }
+}
+function gradeQuiz(){
+  var answered = 0, right = 0;
+  QUIZ.forEach(function(q, i){
+    var v = S.quiz['fq'+i];
+    if(v !== undefined){ answered++; if(v === q.a) right++; }
+  });
+  if(answered < QUIZ.length){ flash('还有 '+(QUIZ.length-answered)+' 题未作答', 'info'); return; }
+  S.quizDone = true; S.quizPass = right >= 8;
+  var pct = Math.round(right/QUIZ.length*100);
+  document.getElementById('ringTxt').textContent = pct+'%';
+  document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+  var v = document.getElementById('quizVerdict');
+  if(S.quizPass){
+    v.textContent = '✅ 过关（'+right+'/10）'; v.style.color = 'var(--ok)';
+    document.getElementById('lockBox').classList.remove('on');
+    document.getElementById('bg4').classList.add('got');
+  }else{
+    v.textContent = '❌ 未达标（'+right+'/10，需 8 题）'; v.style.color = 'var(--bad)';
+    document.getElementById('lockBox').classList.add('on');
+    document.getElementById('bg4').classList.remove('got');
+  }
+  document.getElementById('quizDetail').textContent = '答对 '+right+' 题；错题解析已展开，回去重学再测。';
+  save(); progress();
+}
+
+/* ══════════════════ 交付物清单 ══════════════════ */
+(function initList(){
+  var ul = document.getElementById('deliverList');
+  ul.querySelectorAll('li').forEach(function(li, i){
+    if(S.checklist[i]) li.classList.add('done');
+    li.onclick = function(){ li.classList.toggle('done'); S.checklist[i] = li.classList.contains('done'); save(); };
+  });
+})();
+
+/* ══════════════════ 提示 ══════════════════ */
+function flash(msg, type){
+  var d = document.createElement('div');
+  d.className = 'feedback '+(type==='good'?'good':type==='info'?'info':'bad')+' show';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:200;box-shadow:0 4px 18px rgba(0,0,0,.18);min-width:260px;text-align:center';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='.4s'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+/* ══════════════════ 键盘可达：翻卡/关卡头/清单 ══════════════════ */
+(function initKeys(){
+  document.querySelectorAll('.flip,.level-head,.checklist li').forEach(function(el){
+    el.tabIndex = 0;
+    el.addEventListener('keydown', function(e){
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); el.click(); }
+    });
+  });
+})();
+
+/* ══════════════════ 徽章初始 ══════════════════ */
+(function initBadges(){
+  if(S.levels.lv1>0) document.getElementById('bg1').classList.add('got');
+  if(S.levels.lv2>0) document.getElementById('bg2').classList.add('got');
+  if(S.sim.finished && !S.sim.boom) document.getElementById('bg3').classList.add('got');
+  if(S.quizDone && S.quizPass) document.getElementById('bg4').classList.add('got');
+})();
+
+/* ══════════════════ 恢复现场 ══════════════════ */
+(function restore(){
+  // 星星
+  var stMap = {lv1:'st1',lv2:'st2',lv3:'st3',lv4:'st4',lv5:'st5',lv6:'st6'};
+  Object.keys(stMap).forEach(function(id){
+    if(S.levels[id]>0){
+      var st = document.getElementById(stMap[id]); st.innerHTML='';
+      for(var i=0;i<3;i++) st.innerHTML += (i<S.levels[id]?'<b>★</b>':'☆');
+    }
+  });
+  // 仿真现场
+  if(S.sim.backed){
+    document.getElementById('copyState').textContent = '已备份＋哈希 ✅';
+    document.getElementById('copyState').style.color = '#7fd6c0';
+    document.getElementById('hashBox').style.display = 'block';
+    document.getElementById('btnBackup').disabled = true;
+    document.getElementById('btnSkip').style.display = 'none';
+  }
+  if(S.sim.started && !S.sim.finished){
+    document.getElementById('simState').textContent = '清洗中';
+    document.getElementById('simState').style.color = '#7fd6c0';
+    nextRow(); updMetrics();
+  }
+  // 检测已提交
+  if(S.quizDone){
+    var answered = 0, right = 0;
+    QUIZ.forEach(function(q, i){
+      var v = S.quiz['fq'+i];
+      if(v !== undefined){ answered++; if(v === q.a) right++; }
+    });
+    if(answered === QUIZ.length){
+      var pct = Math.round(right/QUIZ.length*100);
+      document.getElementById('ringTxt').textContent = pct+'%';
+      document.getElementById('ring').style.background = 'conic-gradient(var(--brand) '+pct+'%, #e3eaf0 0)';
+      var v2 = document.getElementById('quizVerdict');
+      if(right>=8){ v2.textContent='✅ 过关（'+right+'/10）'; v2.style.color='var(--ok)'; }
+      else{ v2.textContent='❌ 未达标（'+right+'/10，需 8 题）'; v2.style.color='var(--bad)'; }
+    }
+  }
+})();
+
+unlock(); progress();
+</script>
+</body>
+</html>
